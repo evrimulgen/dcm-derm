@@ -31,12 +31,12 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true);
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
-    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public static final Measurement Width = new Measurement("Width", true, true, false);
-    public static final Measurement Height = new Measurement("Height", true, true, false);
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X = new Measurement(Messages.getString("measure.centerx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y = new Measurement(Messages.getString("measure.centery"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT = new Measurement(Messages.getString("measure.height"), 6, true, true, false); //$NON-NLS-1$
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);
@@ -55,8 +55,7 @@ public class EllipseGraphic extends RectangleGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = new Rectangle2D.Double();
-        rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-            handlePointList.get(eHandlePoint.SE.index));
+        rectangle.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
         setShape(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(), rectangle.getHeight()),
             mouseevent);
@@ -64,7 +63,7 @@ public class EllipseGraphic extends RectangleGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -73,39 +72,36 @@ public class EllipseGraphic extends RectangleGraphic {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 Rectangle2D rect = new Rectangle2D.Double();
 
-                rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                    handlePointList.get(eHandlePoint.SE.index));
+                rect.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
                 double ratio = adapter.getCalibRatio();
 
-                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
-                            : null;
-                    measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
+                if (CENTER_X.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(rect.getCenterX()), adapter
+                        .getUnit()));
                 }
-                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
-                            : null;
-                    measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
+                if (CENTER_Y.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(rect.getCenterY()), adapter
+                        .getUnit()));
                 }
 
-                if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
-                    Double val = releaseEvent || Width.isQuickComputing() ? ratio * rect.getWidth() : null;
-                    measVal.add(new MeasureItem(Width, val, adapter.getUnit()));
+                if (WIDTH.isComputed()) {
+                    measVal.add(new MeasureItem(WIDTH, ratio * rect.getWidth(), adapter.getUnit()));
                 }
-                if (Height.isComputed() && (!drawOnLabel || Height.isGraphicLabel())) {
-                    Double val = releaseEvent || Height.isQuickComputing() ? ratio * rect.getHeight() : null;
-                    measVal.add(new MeasureItem(Height, val, adapter.getUnit()));
+                if (HEIGHT.isComputed()) {
+                    measVal.add(new MeasureItem(HEIGHT, ratio * rect.getHeight(), adapter.getUnit()));
                 }
 
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || Area.isQuickComputing() ? Math.PI * rect.getWidth() * ratio * rect.getHeight()
-                            * ratio / 4.0 : null;
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                if (AREA.isComputed()) {
+                    Double val = Math.PI * rect.getWidth() * ratio * rect.getHeight() * ratio / 4.0;
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
+                    measVal.add(new MeasureItem(AREA, val, unit));
+                }
+                if (PERIMETER.isComputed()) {
+                    double a = ratio * rect.getWidth() / 2.0;
+                    double b = ratio * rect.getHeight() / 2.0;
+                    Double val = 2.0 * Math.PI * Math.sqrt((a * a + b * b) / 2.0);
+                    measVal.add(new MeasureItem(PERIMETER, val, adapter.getUnit()));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);

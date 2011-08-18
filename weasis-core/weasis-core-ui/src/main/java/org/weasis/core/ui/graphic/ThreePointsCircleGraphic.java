@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -33,12 +34,12 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true);
-    public static final Measurement Diameter = new Measurement("Diameter", true, true, false);
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
-    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public static final Measurement Radius = new Measurement("Radius", true, true, false);
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement DIAMETER = new Measurement(Messages.getString("measure.diameter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(Messages.getString("measure.perimeter"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X = new Measurement(Messages.getString("measure.centerx"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y = new Measurement(Messages.getString("measure.centery"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement RADIUS = new Measurement(Messages.getString("measure.radius"), 6, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,7 +59,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
     @Override
     public String getUIName() {
-        return "Three Points Circle";
+        return Messages.getString("measure.three_pt_angle"); //$NON-NLS-1$
     }
 
     @Override
@@ -83,7 +84,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -93,35 +94,23 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
                 double ratio = adapter.getCalibRatio();
 
-                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || CenterX.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(centerPt.getX());
-                    }
-                    measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
+                if (CENTER_X.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(centerPt.getX()), adapter
+                        .getUnit()));
                 }
-                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || CenterY.isQuickComputing()) {
-                        val = adapter.getYCalibratedValue(centerPt.getY());
-                    }
-                    measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
+                if (CENTER_Y.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(centerPt.getY()), adapter
+                        .getUnit()));
                 }
-                if (Radius.isComputed() && (!drawOnLabel || Radius.isGraphicLabel())) {
-                    Double val = releaseEvent || Radius.isQuickComputing() ? ratio * radius : null;
-                    measVal.add(new MeasureItem(Radius, val, adapter.getUnit()));
+                if (RADIUS.isComputed()) {
+                    measVal.add(new MeasureItem(RADIUS, ratio * radius, adapter.getUnit()));
                 }
-                if (Diameter.isComputed() && (!drawOnLabel || Diameter.isGraphicLabel())) {
-                    Double val = releaseEvent || Diameter.isQuickComputing() ? ratio * radius * 2.0 : null;
-                    measVal.add(new MeasureItem(Diameter, val, adapter.getUnit()));
+                if (DIAMETER.isComputed()) {
+                    measVal.add(new MeasureItem(DIAMETER, ratio * radius * 2.0, adapter.getUnit()));
                 }
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || Area.isQuickComputing()) {
-                        val = Math.PI * radius * radius * ratio * ratio;
-                    }
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                if (AREA.isComputed()) {
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
+                    measVal.add(new MeasureItem(AREA, Math.PI * radius * radius * ratio * ratio, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
@@ -136,6 +125,18 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(CENTER_X);
+        list.add(CENTER_Y);
+        list.add(RADIUS);
+        list.add(DIAMETER);
+        list.add(AREA);
+        list.add(PERIMETER);
+        return list;
+    }
+
+    @Override
     public boolean isShapeValid() {
         updateTool();
         return (super.isShapeValid() && centerPt != null && radius < 50000);
@@ -144,10 +145,10 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void updateTool() {
-        Point2D C1 = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        Point2D ptA = getHandlePoint(0);
 
         centerPt = GeomUtil.getCircleCenter(handlePointList);
-        radius = (centerPt != null && C1 != null) ? centerPt.distance(C1) : 0;
+        radius = (centerPt != null && ptA != null) ? centerPt.distance(ptA) : 0;
     }
 
 }

@@ -98,8 +98,8 @@ public class SelectGraphic extends RectangleGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(org.weasis.core.api.media.data.ImageElement imageElement,
-        boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> computeMeasurements(org.weasis.core.api.media.data.ImageElement imageElement,
+        boolean releaseEvent) {
         return null;
     };
 

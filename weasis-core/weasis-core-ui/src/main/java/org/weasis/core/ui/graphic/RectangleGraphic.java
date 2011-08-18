@@ -36,14 +36,14 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true);
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public static final Measurement TopLeftPointX = new Measurement("Top Left X", true, true, false);
-    public static final Measurement TopLeftPointY = new Measurement("Top Left Y", true, true, false);
-    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
-    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public static final Measurement Width = new Measurement("Width", true, true, false);
-    public static final Measurement Height = new Measurement("Height", true, true, false);
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement(Messages.getString("measure.topx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(Messages.getString("measure.topy"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X = new Measurement(Messages.getString("measure.centerx"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y = new Measurement(Messages.getString("measure.centery"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT = new Measurement(Messages.getString("measure.height"), 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,8 +72,8 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         } else {
             Rectangle2D rectangle = new Rectangle2D.Double();
 
-            rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                handlePointList.get(eHandlePoint.SE.index));
+            rectangle
+                .setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
             double x = rectangle.getX(), y = rectangle.getY();
             double w = rectangle.getWidth(), h = rectangle.getHeight();
@@ -128,14 +128,14 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
             handlePointList.add(new Point.Double());
         }
 
-        handlePointList.get(eHandlePoint.NW.index).setLocation(new Point2D.Double(x, y));
-        handlePointList.get(eHandlePoint.N.index).setLocation(new Point2D.Double(x + w / 2, y));
-        handlePointList.get(eHandlePoint.NE.index).setLocation(new Point2D.Double(x + w, y));
-        handlePointList.get(eHandlePoint.E.index).setLocation(new Point2D.Double(x + w, y + h / 2));
-        handlePointList.get(eHandlePoint.SE.index).setLocation(new Point2D.Double(x + w, y + h));
-        handlePointList.get(eHandlePoint.S.index).setLocation(new Point2D.Double(x + w / 2, y + h));
-        handlePointList.get(eHandlePoint.SW.index).setLocation(new Point2D.Double(x, y + h));
-        handlePointList.get(eHandlePoint.W.index).setLocation(new Point2D.Double(x, y + h / 2));
+        setHandlePoint(eHandlePoint.NW.index, new Point2D.Double(x, y));
+        setHandlePoint(eHandlePoint.N.index, new Point2D.Double(x + w / 2, y));
+        setHandlePoint(eHandlePoint.NE.index, new Point2D.Double(x + w, y));
+        setHandlePoint(eHandlePoint.E.index, new Point2D.Double(x + w, y + h / 2));
+        setHandlePoint(eHandlePoint.SE.index, new Point2D.Double(x + w, y + h));
+        setHandlePoint(eHandlePoint.S.index, new Point2D.Double(x + w / 2, y + h));
+        setHandlePoint(eHandlePoint.SW.index, new Point2D.Double(x, y + h));
+        setHandlePoint(eHandlePoint.W.index, new Point2D.Double(x, y + h / 2));
     }
 
     @Override
@@ -143,10 +143,10 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         Rectangle2D rectangle = null;
 
         if (handlePointList.size() > 1) {
-            if (!handlePointList.get(eHandlePoint.NW.index).equals(handlePointList.get(eHandlePoint.SE.index))) {
+            if (!getHandlePoint(eHandlePoint.NW.index).equals(getHandlePoint(eHandlePoint.SE.index))) {
                 rectangle = new Rectangle2D.Double();
-                rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                    handlePointList.get(eHandlePoint.SE.index));
+                rectangle.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index),
+                    getHandlePoint(eHandlePoint.SE.index));
             }
         }
 
@@ -155,7 +155,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -164,59 +164,40 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 Rectangle2D rect = new Rectangle2D.Double();
 
-                rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                    handlePointList.get(eHandlePoint.SE.index));
+                rect.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
                 double ratio = adapter.getCalibRatio();
 
-                if (TopLeftPointX.isComputed() && (!drawOnLabel || TopLeftPointX.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || TopLeftPointX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getX())
-                            : null;
-                    measVal.add(new MeasureItem(TopLeftPointX, val, adapter.getUnit()));
+                if (TOP_LEFT_POINT_X.isComputed()) {
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_X, adapter.getXCalibratedValue(rect.getX()), adapter
+                        .getUnit()));
                 }
-                if (TopLeftPointY.isComputed() && (!drawOnLabel || TopLeftPointY.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || TopLeftPointY.isQuickComputing() ? adapter.getYCalibratedValue(rect.getY())
-                            : null;
-                    measVal.add(new MeasureItem(TopLeftPointY, val, adapter.getUnit()));
+                if (TOP_LEFT_POINT_Y.isComputed()) {
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, adapter.getYCalibratedValue(rect.getY()), adapter
+                        .getUnit()));
                 }
-                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
-                            : null;
-                    measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
+                if (CENTER_X.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(rect.getCenterX()), adapter
+                        .getUnit()));
                 }
-                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
-                            : null;
-                    measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
+                if (CENTER_Y.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(rect.getCenterY()), adapter
+                        .getUnit()));
                 }
-                if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
-                    Double val = releaseEvent || Width.isQuickComputing() ? ratio * rect.getWidth() : null;
-                    measVal.add(new MeasureItem(Width, val, adapter.getUnit()));
+                if (WIDTH.isComputed()) {
+                    measVal.add(new MeasureItem(WIDTH, ratio * rect.getWidth(), adapter.getUnit()));
                 }
-                if (Height.isComputed() && (!drawOnLabel || Height.isGraphicLabel())) {
-                    Double val = releaseEvent || Height.isQuickComputing() ? ratio * rect.getHeight() : null;
-                    measVal.add(new MeasureItem(Height, val, adapter.getUnit()));
+                if (HEIGHT.isComputed()) {
+                    measVal.add(new MeasureItem(HEIGHT, ratio * rect.getHeight(), adapter.getUnit()));
                 }
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || Area.isQuickComputing()) {
-                        val = rect.getWidth() * rect.getHeight() * ratio * ratio;
-                    }
-
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                if (AREA.isComputed()) {
+                    Double val = rect.getWidth() * rect.getHeight() * ratio * ratio;
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
+                    measVal.add(new MeasureItem(AREA, val, unit));
                 }
-                if (Perimeter.isComputed() && (!drawOnLabel || Perimeter.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || Perimeter.isQuickComputing()) {
-                        val = (rect.getWidth() + rect.getHeight()) * 2 * ratio;
-                    }
-
-                    measVal.add(new MeasureItem(Perimeter, val, adapter.getUnit()));
+                if (PERIMETER.isComputed()) {
+                    Double val = (rect.getWidth() + rect.getHeight()) * 2 * ratio;
+                    measVal.add(new MeasureItem(PERIMETER, val, adapter.getUnit()));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
@@ -227,6 +208,20 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(TOP_LEFT_POINT_X);
+        list.add(TOP_LEFT_POINT_Y);
+        list.add(CENTER_X);
+        list.add(CENTER_Y);
+        list.add(WIDTH);
+        list.add(HEIGHT);
+        list.add(AREA);
+        list.add(PERIMETER);
+        return list;
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,8 +246,9 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
         static eHandlePoint valueFromIndex(int index) {
             eHandlePoint point = map.get(index);
-            if (point == null)
-                throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index);
+            if (point == null) {
+                throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index); //$NON-NLS-1$
+            }
             return point;
         }
 
