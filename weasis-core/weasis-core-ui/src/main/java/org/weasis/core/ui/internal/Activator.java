@@ -17,24 +17,44 @@ import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class Activator implements BundleActivator, ServiceListener {
 
+    private static final String pluginViewerFilter = String.format(
+        "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
+    public static final BundlePreferences PREFERENCES = new BundlePreferences();
+    private static ServiceTracker prefs_tracker = null;
+
     private BundleContext bundleContext = null;
-    private static final String pluginViewerFilter =
-        String.format("(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
 
     // @Override
+    @Override
     public void start(final BundleContext bundleContext) throws Exception {
         this.bundleContext = bundleContext;
+        PREFERENCES.init(bundleContext);
+        MeasureTool.viewSetting.applyPreferences(PREFERENCES.getDefaultPreferences());
+
+        prefs_tracker = new ServiceTracker(bundleContext, PreferencesPageFactory.class.getName(), null);
+        try {
+            // Must keep the tracker open, because calling close() will unget service. This is a problem because
+            // the deactivate method is called although the service stay alive in UI.
+            prefs_tracker.open();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
         bundleContext.addServiceListener(this, pluginViewerFilter);
         // must be instantiate in the EDT
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
                 ServiceTracker m_tracker = new ServiceTracker(bundleContext, SeriesViewerFactory.class.getName(), null);
                 m_tracker.open();
@@ -53,14 +73,19 @@ public class Activator implements BundleActivator, ServiceListener {
     }
 
     // @Override
+    @Override
     public void stop(BundleContext bundleContext) throws Exception {
-
+        // Save preferences
+        MeasureTool.viewSetting.savePreferences(PREFERENCES.getDefaultPreferences());
+        PREFERENCES.close();
     }
 
+    @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
         // must be instantiate in the EDT
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
                 ServiceReference m_ref = event.getServiceReference();
                 SeriesViewerFactory viewerFactory = (SeriesViewerFactory) bundleContext.getService(m_ref);
@@ -84,6 +109,10 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
             }
         });
+    }
+
+    public static Object[] getPreferencesPages() {
+        return prefs_tracker == null ? null : prefs_tracker.getServices();
     }
 
 }

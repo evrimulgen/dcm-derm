@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
@@ -92,13 +93,14 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager) {
         super("measure2dBar", TYPE.tool); //$NON-NLS-1$
-        if (eventManager == null)
+        if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+        }
         this.eventManager = eventManager;
 
-        ViewSetting setting = eventManager.getViewSetting();
+        // Do not apply to selectionGraphic
         for (int i = 1; i < graphicList.size(); i++) {
-            applyDefaultSetting(setting, graphicList.get(i));
+            applyDefaultSetting(MeasureTool.viewSetting, graphicList.get(i));
         }
 
         GroupRadioMenu menu = null;
@@ -142,8 +144,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     protected AbstractLayerModel getCurrentLayerModel() {
         DefaultView2d view = eventManager.getSelectedViewPane();
-        if (view != null)
+        if (view != null) {
             return view.getLayerModel();
+        }
         return null;
     }
 
@@ -179,8 +182,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static Graphic getGraphic(String action) {
         if (action != null) {
             for (Graphic g : graphicList) {
-                if (action.equals(g.toString()))
+                if (action.equals(g.toString())) {
                     return g;
+                }
             }
         }
         return null;
