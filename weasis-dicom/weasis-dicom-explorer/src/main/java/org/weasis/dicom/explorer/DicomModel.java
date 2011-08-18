@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -568,9 +569,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (prop != null && baseDir != null) {
                         String[] dirs = prop.split(","); //$NON-NLS-1$
+                        for (int i = 0; i < dirs.length; i++) {
+                            dirs[i] = dirs[i].trim().replaceAll("/", File.separator); //$NON-NLS-1$
+                        }
                         File[] files = new File[dirs.length];
+                        boolean notCaseSensitive = AbstractProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
+                        if (notCaseSensitive) {
+                            Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
+                        }
+                        String last = null;
                         for (int i = 0; i < files.length; i++) {
-                            files[i] = new File(baseDir, dirs[i].trim().replaceAll("/", File.separator)); //$NON-NLS-1$
+                            if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
+                                last = null;
+                            } else {
+                                last = dirs[i];
+                                files[i] = new File(baseDir, dirs[i]);
+                            }
                         }
                         loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, true));
                     }

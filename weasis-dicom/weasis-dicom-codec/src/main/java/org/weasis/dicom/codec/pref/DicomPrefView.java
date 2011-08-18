@@ -10,9 +10,12 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.pref;
 
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,9 +24,11 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.dcm4che2.imageio.ImageReaderFactory;
@@ -32,9 +37,14 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 public class DicomPrefView extends AbstractItemDialogPage {
 
     private final JPanel panel = new JPanel();
-    private final JComboBox comboBox;
+    private JComboBox comboBox;
 
     public DicomPrefView() {
+        initGUI();
+    }
+
+    private void initGUI() {
+        setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle("DICOM"); //$NON-NLS-1$
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         add(panel);
@@ -81,6 +91,22 @@ public class DicomPrefView extends AbstractItemDialogPage {
                 }
             }
         }
+
+        JPanel panel_2 = new JPanel();
+        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
+        flowLayout_1.setHgap(10);
+        flowLayout_1.setAlignment(FlowLayout.RIGHT);
+        flowLayout_1.setVgap(7);
+        add(panel_2);
+
+        JButton btnNewButton = new JButton("Restore default values");
+        panel_2.add(btnNewButton);
+        btnNewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetoDefaultValues();
+            }
+        });
     }
 
     @Override
@@ -93,8 +119,8 @@ public class DicomPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        // TODO Auto-generated method stub
-
+        DicomPrefManager.getInstance().restoreDefaultValues();
+        comboBox.setSelectedIndex(0);
     }
 
     public List<Decoder> getJpeg2000ReaderClassName() {

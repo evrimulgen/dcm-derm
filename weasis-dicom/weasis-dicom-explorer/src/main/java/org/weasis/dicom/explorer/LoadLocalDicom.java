@@ -73,6 +73,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     protected Boolean doInBackground() throws Exception {
         // if (flatSearch) {
         addSelectionAndnotify(files, true);
+        // Issue on linux to many files opened
         // } else {
         // addSelection(files, true);
         // }
@@ -100,7 +101,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
-            if (file[i].isDirectory()) {
+            if (file[i] == null) {
+                continue;
+            } else if (file[i].isDirectory()) {
                 if (firstLevel || recursive) {
                     folders.add(file[i]);
                 }
@@ -240,6 +243,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     }
                 }
             } else {
+                // Test if SOPInstanceUID already exists
+                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader.getTagValue(TagW.SOPInstanceUID)))
+                    return null;
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {

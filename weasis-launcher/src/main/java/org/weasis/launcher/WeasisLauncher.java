@@ -27,9 +27,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -85,13 +87,15 @@ public class WeasisLauncher {
 
     private static HostActivator m_activator = null;
     private static Felix m_felix = null;
-    protected static ServiceTracker m_tracker = null;
+    static ServiceTracker m_tracker = null;
 
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
     public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     static Properties modulesi18n = null;
     private static String look = null;
+
+    private static RemotePreferences REMOTE_PREFS;
 
     /**
      * <p>
@@ -213,14 +217,14 @@ public class WeasisLauncher {
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             File basePortableDir = new File(portable);
-            String baseURL = "";
+            String baseURL = ""; //$NON-NLS-1$
             try {
                 baseURL = basePortableDir.toURI().toURL().toString();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.setProperty("weasis.codebase.url", baseURL + "weasis");
-            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties");
+            System.setProperty("weasis.codebase.url", baseURL + "weasis"); //$NON-NLS-1$ //$NON-NLS-2$
+            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties"); //$NON-NLS-1$
         }
         // Read configuration properties.
         Properties configProps = WeasisLauncher.loadConfigProperties();
@@ -259,13 +263,17 @@ public class WeasisLauncher {
                     try {
                         if (m_felix != null) {
                             m_felix.stop();
-                            // wait asynchronous stop (max 25 seconds)
-                            m_felix.waitForStop(25000);
+                            // wait asynchronous stop (max 20 seconds to stop all bundles)
+                            m_felix.waitForStop(20000);
                         }
                     } catch (Exception ex) {
                         exitStatus = -1;
                         System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
                     } finally {
+                        // After all bundles has been stopped, we can copy the preferences
+                        if (REMOTE_PREFS != null) {
+                            REMOTE_PREFS.store();
+                        }
                         // Clean temp folder.
                         FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir()); //$NON-NLS-1$
                         Runtime.getRuntime().halt(exitStatus);
@@ -330,8 +338,9 @@ public class WeasisLauncher {
                 }
             }
             // TODO Handle Weasis version without ui
-            if (!uiStarted)
+            if (!uiStarted) {
                 throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+            }
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -379,8 +388,9 @@ public class WeasisLauncher {
     }
 
     public static Object getCommandSession(Object commandProcessor) {
-        if (commandProcessor == null)
+        if (commandProcessor == null) {
             return null;
+        }
         Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
@@ -400,8 +410,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_close(Object commandSession) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         try {
             Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
             nameMethod.invoke(commandSession, null);
@@ -417,8 +428,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         Class[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
@@ -656,6 +668,19 @@ public class WeasisLauncher {
     public static WebStartLoader loadProperties(Properties config) {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
+        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
+        if (REMOTE_PREFS == null && user != null) {
+            ServiceLoader<RemotePreferences> prefs = ServiceLoader.load(RemotePreferences.class);
+            Iterator<RemotePreferences> commandsIterator = prefs.iterator();
+            while (commandsIterator.hasNext()) {
+                REMOTE_PREFS = commandsIterator.next();
+                REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user); //$NON-NLS-1$
+                break;
+            }
+        }
+        if (REMOTE_PREFS != null) {
+            REMOTE_PREFS.read();
+        }
 
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
@@ -663,7 +688,6 @@ public class WeasisLauncher {
                 .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         File basdir;
         if (user == null) {
             basdir = new File(dir); //$NON-NLS-1$
@@ -739,7 +763,11 @@ public class WeasisLauncher {
         // changing Look and Feel when upgrade version
         if (LookAndFeels.installSubstanceLookAndFeels()
             && (look == null || (!forceLook && versionNew != null && !versionNew.equals(versionOld)))) {
-            look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
+            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+                look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            } else {
+                look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
+            }
         }
 
         // Set look and feels

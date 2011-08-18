@@ -66,6 +66,7 @@ public class InfoLayer implements AnnotationsLayer {
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
         displayPreferences.put(ANNOTATIONS, true);
+        displayPreferences.put(ANONYM_ANNOTATIONS, false);
         displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(SCALE, true);
         displayPreferences.put(LUT, false);
@@ -205,10 +206,11 @@ public class InfoLayer implements AnnotationsLayer {
             MediaSeriesGroup study = model.getParent(series, DicomModel.study);
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
+            boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
             drawY = fontHeight;
             TagW[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         paintFontOutline(g2, infos[j].getFormattedText(value), BORDER, drawY);
@@ -220,7 +222,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = fontHeight;
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
@@ -233,7 +235,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = bound.height - BORDER;
             infos = corner.getInfos();
             for (int j = infos.length - 1; j >= 0; j--) {
-                if (infos[j] != null) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
@@ -317,13 +319,13 @@ public class InfoLayer implements AnnotationsLayer {
 
     private String getLossyTransferSyntaxUID(String tsuid) {
         if (tsuid != null) {
-            if ("1.2.840.10008.1.2.4.50".equals(tsuid))
+            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) //$NON-NLS-1$
                 return "JPEG Baseline"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.51".equals(tsuid))
+            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) //$NON-NLS-1$
                 return "JPEG Extended"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.81".equals(tsuid))
+            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) //$NON-NLS-1$
                 return "JPEG-LS (Near-Lossless)"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.91".equals(tsuid))
+            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) //$NON-NLS-1$
                 return "JPEG 2000"; //$NON-NLS-1$
         }
         return null;
