@@ -17,10 +17,10 @@ import java.awt.event.KeyEvent;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
 
-import org.weasis.base.ui.Messages;
-import org.weasis.base.ui.gui.PreferenceDialog;
+import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.ui.util.AbstractUIAction;
+import org.weasis.core.ui.util.PreferenceDialog;
 
 public class OpenPreferencesAction extends AbstractUIAction {
 
@@ -36,13 +36,14 @@ public class OpenPreferencesAction extends AbstractUIAction {
     }
 
     private OpenPreferencesAction() {
-        super(Messages.getString("OpenPreferencesAction.title")); //$NON-NLS-1$
-        setDescription(Messages.getString("OpenPreferencesAction.description")); //$NON-NLS-1$
+        super(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title")); //$NON-NLS-1$
+        setDescription(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.description")); //$NON-NLS-1$
         putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_MASK));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        PreferenceDialog dialog = new PreferenceDialog();
+        PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance());
         JMVUtils.showCenterScreen(dialog);
         dialog.showPageFirstPage();
 
