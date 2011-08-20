@@ -130,7 +130,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private final JScrollPane thumnailView = new JScrollPane();
     private final SeriesSelectionModel selectionList = new SeriesSelectionModel();
 
-    private final DicomModel model;
+    private DicomModel model;
 
     private final Comparator patientComparator = new Comparator() {
 
