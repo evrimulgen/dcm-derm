@@ -30,7 +30,7 @@
 		<weasis.jmc.version>0.5.8-SNAPSHOT</weasis.jmc.version>
 		<weasis.base.version>0.5.8-SNAPSHOT</weasis.base.version>
 		<weasis.dicom.version>0.5.8-SNAPSHOT</weasis.dicom.version>
-
+		<weasis.derm.version>1.0.0-SNAPSHOT</weasis.derm.version>
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>6.1.0-b02</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
@@ -259,6 +259,15 @@
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-viewer2d</artifactId>
 									<version>${weasis.dicom.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<!-- ===================================== -->
+								<!-- Weasis DERM bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.derm</groupId>
+									<artifactId>weasis-derm-image</artifactId>
+									<version>${weasis.derm.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 							</artifactItems>

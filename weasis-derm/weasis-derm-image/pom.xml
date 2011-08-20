@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-derm-parent</artifactId>
+		<groupId>org.weasis.derm</groupId>
+		<version>1.0-SNAPSHOT</version>
+		<relativePath>../weasis-derm-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-derm-image</artifactId>
+	<packaging>bundle</packaging>
+	<name>DERM Image Explorer [${project.artifactId}]</name>
+	<version>1.0.0-SNAPSHOT</version>
+	<dependencyManagement>
+		<dependencies>
+		</dependencies>
+	</dependencyManagement>
+	<properties>
+		<bundle.namespace>org.weasis.derm.explorer</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Service-Component>OSGI-INF/DermExplorer.xml</Service-Component>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-ui</artifactId>
+			<version>0.5.7-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-codec</artifactId>
+			<version>0.5.7-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+                <dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-explorer</artifactId>
+			<version>0.5.7-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+                <!-- <dependency>
+			<groupId>org.netbeans.external</groupId>
+			<artifactId>swing-layout</artifactId>
+			<version>1.0.4</version>
+        	</dependency> -->
+	</dependencies>
+</project>

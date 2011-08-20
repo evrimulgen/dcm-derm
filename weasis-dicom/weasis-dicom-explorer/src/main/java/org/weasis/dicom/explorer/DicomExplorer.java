@@ -1904,4 +1904,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     public Action getOpenImportDialogAction() {
         return importAction;
     }
+    
+    //mdiaz - necesario para poder visualizar el modelo luego de importar una
+    //imagen como DICOM usando este plugin
+    public void setDicomModel(DicomModel model) {
+        this.model = model;
+    }
 }
