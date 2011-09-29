@@ -10,6 +10,10 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.Polygon;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -42,6 +46,7 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -357,9 +362,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             Date birthdate = getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null);
             setTagNoNull(TagW.PatientBirthDate, birthdate);
             // Identifier for the patient. Tend to be unique.
-            // TODO set preferences for what is PatientUID
-            setTag(TagW.PatientPseudoUID, getTagValue(TagW.PatientID).toString()
-                + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString())); //$NON-NLS-1$
+            setTag(
+                TagW.PatientPseudoUID,
+                getTagValue(TagW.PatientID).toString()
+                    + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()) + name.substring(0, name.length() < 5 ? name.length() : 5)); //$NON-NLS-1$
             setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, unknown));
             setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, unknown));
             setTag(TagW.Modality, dicomObject.getString(Tag.Modality, unknown));
@@ -371,9 +377,22 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             writeOnlyinstance(dicomObject);
             writeSharedFunctionalGroupsSequence(dicomObject);
             writePerFrameFunctionalGroupsSequence(tags, dicomObject, 0);
-
+            if (mimeType == SERIES_PR_MIMETYPE) {
+                // Set the series list for applying the PR
+                setTagNoNull(TagW.ReferencedSeriesSequence, dicomObject.get(Tag.ReferencedSeriesSequence));
+                // Set the name of the PR
+                setTagNoNull(TagW.SeriesDescription, dicomObject.getString(Tag.SeriesDescription));
+            }
             validateDicomImageValues(tags);
             computeSlicePositionVector(tags);
+            Area shape = buildShutterArea(dicomObject);
+            if (shape != null) {
+                setTagNoNull(TagW.ShutterFinalShape, shape);
+                setTagNoNull(TagW.ShutterPSValue,
+                    getIntegerFromDicomElement(dicomObject, Tag.ShutterPresentationValue, null));
+                setTagNoNull(TagW.ShutterRGBColor,
+                    dicomObject.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+            }
             computeSUVFactor(dicomObject, tags, 0);
         }
     }
@@ -444,10 +463,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 getIntegerFromDicomElement(dicomObject, Tag.SmallestImagePixelValue, null));
             setTagNoNull(TagW.LargestImagePixelValue,
                 getIntegerFromDicomElement(dicomObject, Tag.LargestImagePixelValue, null));
-            setTagNoNull(TagW.PixelPaddingValue, getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingValue, null));
             setTagNoNull(TagW.NumberOfFrames, getIntegerFromDicomElement(dicomObject, Tag.NumberOfFrames, null));
-            setTagNoNull(TagW.PixelPaddingRangeLimit,
-                getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingRangeLimit, null));
             setTagNoNull(TagW.OverlayRows, getIntegerFromDicomElement(dicomObject, Tag.OverlayRows, null));
 
             Integer samplesPerPixel = getIntegerFromDicomElement(dicomObject, Tag.SamplesPerPixel, null);
@@ -466,6 +482,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 getIntegerFromDicomElement(dicomObject, Tag.BitsStored, (Integer) getTagValue(TagW.BitsAllocated)));
             setTagNoNull(TagW.PixelRepresentation,
                 getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, null));
+
+            // Bug fix: http://www.dcm4che.org/jira/browse/DCM-460
+            boolean signed = dicomObject.getInt(Tag.PixelRepresentation) != 0;
+            setTagNoNull(TagW.PixelPaddingValue,
+            // TODO change the method from org.dcm4che2.image.LookupTable 2.0.25
+                getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, stored));
+            setTagNoNull(TagW.PixelPaddingRangeLimit,
+                getIntPixelValue(dicomObject, Tag.PixelPaddingRangeLimit, signed, stored));
 
             setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
         }
@@ -555,31 +579,42 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
                             Date injectDateTime =
                                 getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-                            Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
+                            Date acquisitionDateTime =
+                                TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
+                                    (Date) tagList.get(TagW.AcquisitionTime));
+                            Date scanDate = (Date) tagList.get(TagW.SeriesDate);
                             if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
-                                && halfLife != null && injectTime != null && acqTime != null) {
+                                && halfLife != null && acquisitionDateTime != null
+                                && (injectDateTime != null || (scanDate != null && injectTime != null))) {
                                 double time = 0.0;
-                                if (injectDateTime != null) {
-                                    Date acqDate = (Date) tagList.get(TagW.AcquisitionDate);
-                                    if (acqDate != null) {
-                                        Date dateTime = TagW.dateTime(acqDate, acqTime);
-                                        time = dateTime.getTime() - injectDateTime.getTime();
+                                long scanDateTime =
+                                    TagW.dateTime(scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
+                                        .getTime();
+                                if (injectDateTime == null) {
+                                    if (scanDateTime > acquisitionDateTime.getTime()) {
+                                        // per GE docs, may have been updated during post-processing into new series
+                                        String privateCreator = dicomObject.getString(0x00090010);
+                                        Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
+                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //$NON-NLS-1$
+                                            scanDate = privateScanDateTime;
+                                        } else {
+                                            scanDate = null;
+                                        }
                                     }
-                                }
-                                if (time == 0.0) {
-                                    // Difference is seconds divided by halfLife
-                                    time =
-                                        (acqTime.getTime() % TagW.MILLIS_PER_DAY)
-                                            - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
-                                    // Handle case over midnight
-                                    // TODO NEED to be validated, time more than one day ?
-                                    if (time < 0) {
-                                        time += TagW.MILLIS_PER_DAY;
+                                    if (scanDate != null) {
+                                        injectDateTime = TagW.dateTime(scanDate, injectTime);
+                                        time = scanDateTime - injectDateTime.getTime();
                                     }
+
+                                } else {
+                                    time = scanDateTime - injectDateTime.getTime();
                                 }
-                                double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                                // Weight convert in kg to g
-                                suvFactor = weight * 1000.0 / correctedDose;
+                                // Exclude negative value (case over midnight)
+                                if (time > 0) {
+                                    double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
+                                    // Weight convert in kg to g
+                                    suvFactor = weight * 1000.0 / correctedDose;
+                                }
                             }
                         }
                     }
@@ -608,7 +643,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         }
-        String[] s = dicom.getStrings(tag);
+        String[] s = element.getStrings(dicom.getSpecificCharacterSet(), false);
         if (s.length == 1) {
             return s[0];
         }
@@ -628,7 +663,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             return defaultValue;
         } else {
             try {
-                return dicom.getDate(tag);
+                return element.getDate(false);
             } catch (Exception e) {
                 // Value that not respect DICOM standard
                 e.printStackTrace();
@@ -642,7 +677,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getFloat(tag);
+            return element.getFloat(false);
         }
     }
 
@@ -651,7 +686,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getInt(tag);
+            return element.getInt(false);
         }
     }
 
@@ -660,8 +695,28 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getDouble(tag);
+            return element.getDouble(false);
         }
+    }
+
+    public static Integer getIntPixelValue(DicomObject ds, int tag, boolean signed, int stored) {
+        DicomElement de = ds.get(tag);
+        if (de == null) {
+            return null;
+        }
+        VR vr = de.vr();
+        if (vr == VR.OB || vr == VR.OW) {
+            int ret = ByteUtils.bytesLE2ushort(de.getBytes(), 0);
+            if (signed) {
+                if ((ret & (1 << (stored - 1))) != 0) {
+                    int andmask = (1 << stored) - 1;
+                    int ormask = ~andmask;
+                    ret |= ormask;
+                }
+            }
+            return ret;
+        }
+        return de.getInt(false);
     }
 
     // public boolean readMediaTags(ImageInputStream iis) {
@@ -1000,8 +1055,70 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
                 // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));
 
+                // Frame Display Shutter Sequence (0018,9472)
+                // Display Shutter Macro Table C.7-17A in PS 3.3
+                seq = dcm.get(Tag.FrameDisplayShutterSequence);
+                if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                    DicomObject frame = seq.getDicomObject(0);
+                    Area shape = buildShutterArea(frame);
+                    if (shape != null) {
+                        setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
+                        setTagNoNull(tagList, TagW.ShutterPSValue,
+                            getIntegerFromDicomElement(frame, Tag.ShutterPresentationValue, null));
+                        setTagNoNull(tagList, TagW.ShutterRGBColor,
+                            frame.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+                    }
+                }
             }
         }
+    }
+
+    private Area buildShutterArea(DicomObject dcmObject) {
+        Area shape = null;
+        String shutterShape = getStringFromDicomElement(dcmObject, Tag.ShutterShape, null);
+        if (shutterShape != null) {
+            // RECTANGULAR is legal
+            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) {
+                Rectangle2D rect = new Rectangle2D.Double();
+                rect.setFrameFromDiagonal(getIntegerFromDicomElement(dcmObject, Tag.ShutterLeftVerticalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterUpperHorizontalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterRightVerticalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterLowerHorizontalEdge, 0));
+                shape = new Area(rect);
+
+            }
+            if (shutterShape.contains("CIRCULAR")) {
+                int[] centerOfCircularShutter = dcmObject.getInts(Tag.CenterOfCircularShutter, (int[]) null);
+                if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
+                    Ellipse2D ellipse = new Ellipse2D.Double();
+                    int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
+                    // Thanks Dicom for reversing x,y by row,column
+                    ellipse.setFrameFromCenter(centerOfCircularShutter[1], centerOfCircularShutter[0],
+                        centerOfCircularShutter[1] + radius, centerOfCircularShutter[0] + radius);
+                    if (shape == null) {
+                        shape = new Area(ellipse);
+                    } else {
+                        shape.intersect(new Area(ellipse));
+                    }
+                }
+            }
+            if (shutterShape.contains("POLYGONAL")) {
+                int[] points = dcmObject.getInts(Tag.VerticesOfThePolygonalShutter, (int[]) null);
+                if (points != null) {
+                    Polygon polygon = new Polygon();
+                    for (int i = 0; i < points.length / 2; i++) {
+                        // Thanks Dicom for reversing x,y by row,column
+                        polygon.addPoint(points[i * 2 + 1], points[i * 2]);
+                    }
+                    if (shape == null) {
+                        shape = new Area(polygon);
+                    } else {
+                        shape.intersect(new Area(polygon));
+                    }
+                }
+            }
+        }
+        return shape;
     }
 
     @Override

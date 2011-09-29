@@ -42,6 +42,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.basic.BasicColorChooserUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -329,18 +330,19 @@ public class WeasisLauncher {
                 }
             });
 
-            boolean uiStarted = false;
-
-            for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
-                    uiStarted = true;
-                    break;
-                }
-            }
+            // FIXME find other solution
+            // boolean uiStarted = false;
+            //
+            // for (Bundle b : m_felix.getBundleContext().getBundles()) {
+            //                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
+            // uiStarted = true;
+            // break;
+            // }
+            // }
             // TODO Handle Weasis version without ui
-            if (!uiStarted) {
-                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
-            }
+            // if (!uiStarted) {
+            //                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+            // }
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -710,18 +712,23 @@ public class WeasisLauncher {
         String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         // Set the locale of the previous launch if exists
         lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
-        if (!lang.equals("en")) { //$NON-NLS-1$
-            String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
-            if (translation_modules != null) {
 
-                try {
-                    translation_modules +=
-                        translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    modulesi18n = readProperties(new URL(translation_modules));
-                } catch (MalformedURLException ex) {
-                    System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
+        String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
+        if (translation_modules != null) {
+            try {
+                translation_modules +=
+                    translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                modulesi18n = readProperties(new URL(translation_modules));
+                if (modulesi18n != null) {
+                    System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
                 }
+            } catch (MalformedURLException ex) {
+                System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
             }
+        }
+        if (lang.equals("en")) { //$NON-NLS-1$
+            // if English no need to load i18n bundle fragments
+            modulesi18n = null;
         }
         country = s_prop.getProperty("locale.country", country); //$NON-NLS-1$ 
         variant = s_prop.getProperty("locale.variant", variant); //$NON-NLS-1$ 
@@ -934,6 +941,8 @@ public class WeasisLauncher {
      */
 
     public static String setLookAndFeel(String look) {
+        // Workaround in substance 6.3 to work with JAVA 7
+        UIManager.put("ColorChooserUI", BasicColorChooserUI.class.getName());
         // Do not display metal LAF in bold, it is ugly
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF

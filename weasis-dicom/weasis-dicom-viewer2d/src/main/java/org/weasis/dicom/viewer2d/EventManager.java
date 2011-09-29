@@ -76,7 +76,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom", "wl", "move" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    public static final String[] functions = { "zoom", "wl", "move", "scroll" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -96,7 +96,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ToggleButtonListener inverseLutAction;
     private final ToggleButtonListener inverseStackAction;
     private final ToggleButtonListener showLensAction;
-    private final ToggleButtonListener imageOverlayAction;
+    // private final ToggleButtonListener imageOverlayAction;
     private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener presetAction;
@@ -143,7 +143,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(inverseStackAction = newInverseStackAction());
         iniAction(showLensAction = newLensAction());
         iniAction(lensZoomAction = newLensZoomAction());
-        iniAction(imageOverlayAction = newImageOverlayAction());
+        // iniAction(imageOverlayAction = newImageOverlayAction());
         iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(presetAction = newPresetAction());
@@ -470,15 +470,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ToggleButtonListener newImageOverlayAction() {
-        return new ToggleButtonListener(ActionW.IMAGE_OVERLAY, true) {
-
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
-            }
-        };
-    }
+    // private ToggleButtonListener newImageOverlayAction() {
+    // return new ToggleButtonListener(ActionW.IMAGE_OVERLAY, true) {
+    //
+    // @Override
+    // public void actionPerformed(boolean selected) {
+    // firePropertyChange(action.cmd(), null, selected);
+    // }
+    // };
+    // }
 
     private ComboItemListener newSortStackAction() {
         return new ComboItemListener(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
@@ -666,8 +666,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
             .cmd()));
         filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
-        imageOverlayAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
-            .cmd()));
+        // imageOverlayAction.setSelectedWithoutTriggerAction((Boolean)
+        // defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
+        // .cmd()));
         sortStackAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.SORTSTACK.cmd()));
         viewingProtocolAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.VIEWINGPROTOCOL
             .cmd()));
@@ -926,4 +927,42 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         });
     }
+
+    public void scroll(String[] argv) throws IOException {
+        final String[] usage = { "Scroll into the images of the selected series", //$NON-NLS-1$
+            "Usage: dicom:scroll [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+            "  -s --set [integer value]  set a new value from 0 to series size less one", //$NON-NLS-1$
+            "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
+            "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    if (opt.isSet("increase")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        moveTroughSliceAction.setValue(moveTroughSliceAction.getValue() + val);
+                    } else if (opt.isSet("decrease")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        moveTroughSliceAction.setValue(moveTroughSliceAction.getValue() - val);
+                    } else if (opt.isSet("set")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        moveTroughSliceAction.setValue(val);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
 }

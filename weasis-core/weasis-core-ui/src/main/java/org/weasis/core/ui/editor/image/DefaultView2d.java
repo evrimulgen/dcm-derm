@@ -71,12 +71,14 @@ import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
+import org.weasis.core.api.image.ShutterOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -183,6 +185,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.FILTER.cmd(), KernelData.NONE);
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
+        actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -346,7 +349,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             synchronized (this) {
                 GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
                 if (list != null) {
-                    // TODO handle graphics without shape, ecxlude them!
+                    // TODO handle graphics without shape, exclude them!
                     layer.setGraphics(list);
                 } else {
                     GraphicList graphics = new GraphicList();
@@ -354,6 +357,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     layer.setGraphics(graphics);
                 }
             }
+            setShutter(img);
             setWindowLevel(img);
             Rectangle2D area = getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
@@ -601,10 +605,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setWindowLevel(E img) {
-        float min = img.getMinValue();
-        float max = img.getMaxValue();
-        actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-        actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        if (img != null) {
+            float min = img.getMinValue();
+            float max = img.getMaxValue();
+            actionsInView.put(ActionW.WINDOW.cmd(), max - min);
+            actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        }
+    }
+
+    protected void setShutter(MediaElement media) {
+        if (media != null) {
+            actionsInView.put(TagW.ShutterFinalShape.getName(), media.getTagValue(TagW.ShutterFinalShape));
+            actionsInView.put(TagW.ShutterPSValue.getName(), media.getTagValue(TagW.ShutterPSValue));
+            actionsInView.put(TagW.ShutterRGBColor.getName(), media.getTagValue(TagW.ShutterRGBColor));
+        }
     }
 
     public Object getLensActionValue(String action) {
@@ -731,6 +745,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.FILTER.cmd())) {
             actionsInView.put(ActionW.FILTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
+        } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
+            actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(ShutterOperation.name);
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
             imageLayer.updateAllImageOperations();
@@ -1270,13 +1287,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-                imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                    .getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                        .getSystemClipboard(), TransferHandler.COPY);
+                }
+            };
         exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);

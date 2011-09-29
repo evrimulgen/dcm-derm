@@ -7,7 +7,6 @@
 package org.weasis.base.explorer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,6 +73,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return al.toArray(dol);
     }
 
+    @Override
     public OrderedFileList getDiskObjectList() {
         return this.sortedList;
     }
@@ -82,6 +82,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return this.sortedList.subList(0, sortedList.size());
     }
 
+    @Override
     public void setData() {
         if (this.loading) {
             return;
@@ -108,6 +109,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         }
     }
 
+    @Override
     public void reload() {
         setData();
     }
@@ -157,19 +159,12 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
 
     public MediaReader getMedia(File file) {
         if (file != null && file.canRead()) {
-            String mime = null;
-            try {
-                mime = MimeInspector.getMimeType(file);
-            } catch (IOException e) {
-            }
-            if (mime != null) {
-                String[] mimeTypes = mime.split(",");
-                for (String mimeType : mimeTypes) {
-                    // TODO should be in data explorer model
-                    Codec codec = BundleTools.getCodec(mimeType, null);
-                    if (codec != null) {
-                        return codec.getMediaIO(file.toURI(), mimeType, null);
-                    }
+            String mimeType = MimeInspector.getMimeType(file);
+            if (mimeType != null) {
+                // TODO should be in data explorer model
+                Codec codec = BundleTools.getCodec(mimeType, null);
+                if (codec != null) {
+                    return codec.getMediaIO(file.toURI(), mimeType, null);
                 }
             }
         }
@@ -179,6 +174,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
     /**
      * @return the reloadContext
      */
+    @Override
     public final synchronized JIExplorerContext getReloadContext() {
         return this.reloadContext;
     }
@@ -187,6 +183,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
      * @param reloadContext
      *            the reloadContext to set
      */
+    @Override
     public final synchronized void setReloadContext(final JIExplorerContext reloadContext) {
         this.reloadContext = reloadContext;
     }
@@ -198,6 +195,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return this.loading;
     }
 
+    @Override
     public int getSize() {
         if (this.sortedList == null) {
             return 0;
@@ -205,6 +203,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return this.sortedList.size();
     }
 
+    @Override
     public Object getElementAt(final int index) {
         if (this.sortedList == null) {
             return null;
