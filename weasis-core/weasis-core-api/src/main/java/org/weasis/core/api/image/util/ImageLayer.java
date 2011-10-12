@@ -15,6 +15,7 @@ import java.awt.image.RenderedImage;
 
 import javax.media.jai.iterator.RandomIter;
 
+import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageLayer<E extends ImageElement> {
@@ -23,9 +24,16 @@ public interface ImageLayer<E extends ImageElement> {
 
     E getSourceImage();
 
+    /**
+     * Returns the source image for display. All preprocessing operations has been applied to this image.
+     * 
+     * @return the source image for display
+     */
+    RenderedImage getSourceRenderedImage();
+
     RenderedImage getDisplayImage();
 
-    void setImage(E image);
+    void setImage(E image, OperationsManager preprocessing);
 
     AffineTransform getTransform();
 

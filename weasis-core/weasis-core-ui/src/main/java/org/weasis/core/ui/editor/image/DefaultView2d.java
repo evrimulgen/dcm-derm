@@ -186,6 +186,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
+
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -196,8 +197,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         ImageElement imageElement = imageLayer.getSourceImage();
         StringBuffer message = new StringBuffer();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-
-            PlanarImage image = imageElement.getImage();
+            PlanarImage image =
+                imageElement.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             Point realPoint =
                 new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
                     / imageElement.getRescaleY() - 0.5));
@@ -280,9 +281,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            // All the action values are initialized again with the series changing
+            initActionWState();
         }
         if (series == null) {
-            imageLayer.setImage(null);
+            imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
@@ -325,7 +328,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         series.setSelected(false, 0);
     }
 
-    private int getImageSize(E img, TagW tag1, TagW tag2) {
+    protected int getImageSize(E img, TagW tag1, TagW tag2) {
         Integer size = (Integer) img.getTagValue(tag1);
         if (size == null) {
             size = (Integer) img.getTagValue(tag2);
@@ -333,18 +336,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return (size == null) ? ImageFiler.TILESIZE : size;
     }
 
-    protected void setImage(E img, boolean bestFit) {
-        E oldImage = imageLayer.getSourceImage();
-        if (img != null && !img.equals(oldImage)) {
-
-            RenderedImage source = img.getImage();
+    protected Rectangle getImageBounds(E img) {
+        if (img != null) {
+            RenderedImage source = img.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+            // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
                     TagW.ImageWidth, TagW.Columns)) : source.getWidth();
             int height =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(img,
                     TagW.ImageHeight, TagW.Rows)) : source.getHeight();
-            final Rectangle modelArea = new Rectangle(0, 0, width, height);
+            return new Rectangle(0, 0, width, height);
+        }
+        return new Rectangle(0, 0, 512, 512);
+    }
+
+    protected void setImage(E img, boolean bestFit) {
+        E oldImage = imageLayer.getSourceImage();
+        if (img != null && !img.equals(oldImage)) {
+            actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+            final Rectangle modelArea = getImageBounds(img);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {
                 GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
@@ -369,7 +380,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (bestFit) {
                 actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
             }
-            imageLayer.setImage(img);
+            imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
         }
     }
 
@@ -438,7 +449,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image == null) {
             return null;
         }
-        return image.getImage();
+        return image.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
     public final void center() {
@@ -500,7 +511,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Remove the selection of graphics
         getLayerModel().setSelectedGraphics(null);
         // Throws to the tool listener the current graphic selection.
-        getLayerModel().fireGraphicsSelectionChanged(getImage());
+        getLayerModel().fireGraphicsSelectionChanged(imageLayer);
     }
 
     /** paint routine */
@@ -559,8 +570,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void updateAffineTransform() {
         double viewScale = getViewModel().getViewScale();
+        affineTransform.setToScale(viewScale, viewScale);
 
         Boolean flip = (Boolean) actionsInView.get(ActionW.FLIP.cmd());
+        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
+        if (rotationAngle != null && rotationAngle > 0) {
+            if (flip != null && flip) {
+                rotationAngle = 360 - rotationAngle;
+            }
+            Rectangle2D imageCanvas = getViewModel().getModelArea();
+            affineTransform.rotate(Math.toRadians(rotationAngle), imageCanvas.getWidth() / 2.0,
+                imageCanvas.getHeight() / 2.0);
+        }
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
@@ -575,21 +596,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
             // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
             // at.translate(-imageWid, -imageHt);
-            affineTransform.setToScale(-viewScale, viewScale);
+            affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
-        } else {
-            affineTransform.setToScale(viewScale, viewScale);
         }
 
-        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
-        if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
-                rotationAngle = 360 - rotationAngle;
-            }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
-        }
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
@@ -733,6 +743,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
         } else if (command.equals(ActionW.FLIP.cmd())) {
+            // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
             actionsInView.put(ActionW.FLIP.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FlipOperation.name);
             updateAffineTransform();
@@ -1022,7 +1033,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(getImage());
+            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
 
         }
 
@@ -1108,7 +1119,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(getImage());
+            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
 
             Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
 

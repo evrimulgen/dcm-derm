@@ -31,8 +31,9 @@ public class MprView extends View2d {
         Iterator<JComponent> enumVal = mprModel.getConstraints().values().iterator();
         int index = 0;
         while (enumVal.hasNext()) {
-            if (enumVal.next() == this)
+            if (enumVal.next() == this) {
                 return index;
+            }
             index++;
         }
         return -1;
@@ -47,10 +48,12 @@ public class MprView extends View2d {
             MediaSeries<DicomImageElement> oldsequence = this.series;
             if (oldsequence != null) {
                 closingSeries(oldsequence);
+                // All the action values are initialized again with the series changing
+                initActionWState();
             }
 
             if (series == null) {
-                imageLayer.setImage(null);
+                imageLayer.setImage(null, null);
                 getLayerModel().deleteAllGraphics();
                 closeLens();
             } else {

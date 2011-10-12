@@ -29,6 +29,7 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
@@ -108,8 +109,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     protected boolean isGrayImage(RenderedImage source) {
         // Binary images have indexColorModel
-        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel)
+        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel) {
             return false;
+        }
         return true;
     }
 
@@ -159,15 +161,21 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     public void setPixelSize(double pixelSize) {
         if (pixelSizeX == pixelSizeY) {
-            this.pixelSizeX = pixelSize;
-            this.pixelSizeY = pixelSize;
+            setPixelSize(pixelSize, pixelSize);
         } else if (pixelSizeX < pixelSizeY) {
-            pixelSizeX = pixelSize;
-            pixelSizeY = (pixelSizeY / pixelSizeX) * pixelSize;
+            setPixelSize(pixelSize, (pixelSizeY / pixelSizeX) * pixelSize);
         } else {
-            pixelSizeX = (pixelSizeX / pixelSizeY) * pixelSize;
-            pixelSizeY = pixelSize;
+            setPixelSize((pixelSizeX / pixelSizeY) * pixelSize, pixelSize);
         }
+    }
+
+    public void setPixelSize(double pixelSizeX, double pixelSizeY) {
+        // Image is always displayed with a 1/1 aspect ratio, otherwise it becomes very
+        // difficult (even impossible) to handle measurement tools.
+        // When the ratio is not 1/1, the image is stretched. The smallest ratio keeps
+        // the pixel size and the largest one is downscaled
+        this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
+        this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
     }
 
     public void setPixelValueUnit(String pixelValueUnit) {
@@ -211,8 +219,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
             PlanarImage img2 = image.getImage();
             if (img != null && img2 != null) {
                 if (getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
-                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight()))
+                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
                     return true;
+                }
             }
         }
         return false;
@@ -235,7 +244,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * 
      * @return
      */
-    public synchronized PlanarImage getImage() {
+    public synchronized PlanarImage getImage(OperationsManager manager) {
         PlanarImage cacheImage;
         try {
             cacheImage = startImageLoading();
@@ -251,7 +260,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
             cacheImage = startImageLoading();
         }
+        if (manager != null && cacheImage != null) {
+            cacheImage = PlanarImage.wrapRenderedImage(manager.getFinalImage());
+        }
         return cacheImage;
+    }
+
+    public PlanarImage getImage() {
+        return getImage(null);
     }
 
     private PlanarImage startImageLoading() throws OutOfMemoryError {
