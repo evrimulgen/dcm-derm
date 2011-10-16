@@ -37,19 +37,19 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>0.5.7-SNAPSHOT</version>
+			<version>0.5.8-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>0.5.7-SNAPSHOT</version>
+			<version>0.5.8-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
                 <dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>0.5.7-SNAPSHOT</version>
+			<version>0.5.8-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
                 <!-- <dependency>
