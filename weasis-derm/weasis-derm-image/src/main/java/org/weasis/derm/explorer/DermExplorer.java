@@ -48,7 +48,6 @@ public class DermExplorer implements DataExplorerView {
     
     @Override
     public void dispose() {
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

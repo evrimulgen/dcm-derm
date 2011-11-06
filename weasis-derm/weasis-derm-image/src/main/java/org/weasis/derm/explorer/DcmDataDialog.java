@@ -29,7 +29,7 @@ public class DcmDataDialog extends javax.swing.JDialog {
 
     /** Creates new form DcmDataDialog */
     public DcmDataDialog(java.awt.Frame parent, boolean modal,
-            DicomModel model, boolean loadInDcmExp, File inputFile, File outputFile) {
+            DicomModel model, boolean loadInDcmExp, File[] inputFile, File outputFile) {
         super(parent,"Set basic DICOM data", modal);
         dicomModel = model;
         srcFile = inputFile;
@@ -413,7 +413,7 @@ private void convertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN
         LoadLocalIMG.convertImgToDICOM(srcFile, dstFile, getBasicDcmDataBean()); //tratar errores, si no hay errores cerrar la ventana
         
         if (loadInDicomExplorer) {
-            //mdiaz - Seteo el modelo DICOM generado a partir de una imagen al
+            //se setea el modelo DICOM generado a partir de una imagen al
             //plugin DicomExplorer para poder visualizar las series
             try {
                 DataExplorerView dcmExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
@@ -503,7 +503,7 @@ private BasicDcmDataBean getBasicDcmDataBean() {
     private final DicomModel dicomModel;
     private boolean loadInDicomExplorer;
     private static final Logger log = LoggerFactory.getLogger(DcmDataDialog.class);
-    private File srcFile;
+    private File[] srcFile;
     private File dstFile;
 
     private void setPatientAgeAndBirthdate(BasicDcmDataBean bean) {

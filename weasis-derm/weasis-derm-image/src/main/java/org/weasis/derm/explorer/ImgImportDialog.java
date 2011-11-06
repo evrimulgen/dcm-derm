@@ -166,7 +166,7 @@ private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
 private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
     log.info("DERM Action command: next action performed");
     DcmDataDialog dialog = new DcmDataDialog(null, true,
-            dicomModel, loadInExplorer.isSelected(), inFile, outFile);
+            dicomModel, loadInExplorer.isSelected(), inFiles, outFile);
     JMVUtils.showCenterScreen(dialog);
     this.dispose();
 }//GEN-LAST:event_nextButtonActionPerformed
@@ -175,15 +175,20 @@ private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     String directory = ""; 
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    fileChooser.setMultiSelectionEnabled(false);
+    fileChooser.setMultiSelectionEnabled(true);
     
-    File selectedFile = null;
-    if (fileChooser.showOpenDialog(this) != 0 || (selectedFile = fileChooser.getSelectedFile()) == null) {
-         inFile = null;
+    File[] selectedFiles = null;
+    if (fileChooser.showOpenDialog(this) != 0 || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
+         inFiles = null;
          return;
     } else {
-        inFile = selectedFile;
-        openField.setText(inFile.getPath());
+        inFiles = selectedFiles;
+        if (inFiles.length == 1) {
+            openField.setText(inFiles[0].getPath());
+        }
+        else {
+            openField.setText(Messages.getString("ImgImportDialog.multiseletion"));
+        }
     }
 }//GEN-LAST:event_openButtonActionPerformed
 
@@ -217,6 +222,6 @@ private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     // End of variables declaration//GEN-END:variables
     private final DicomModel dicomModel;
     private static final Logger log = LoggerFactory.getLogger(ImgImportDialog.class);
-    private File inFile = null;
+    private File[] inFiles = null;
     private File outFile = null;
 }
