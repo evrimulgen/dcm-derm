@@ -21,13 +21,19 @@ import org.noos.xing.mydoggy.DockedTypeDescriptor;
 import org.noos.xing.mydoggy.ToolWindow;
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.noos.xing.mydoggy.ToolWindowType;
+import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.api.service.BundlePreferences;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
 
     private static final long serialVersionUID = -204558500055275231L;
 
+    public enum TYPE {
+        mainExplorer, explorer, mainTool, tool
+    };
+
+    private final TYPE type;
     private final String dockableUID;
     private String toolName;
     private Icon icon;
@@ -35,19 +41,38 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     private boolean hide;
     private ToolWindowAnchor anchor;
 
-    public PluginTool(String id, String toolName, ToolWindowAnchor anchor) {
+    public PluginTool(String id, String toolName, ToolWindowAnchor anchor, TYPE type) {
         this.toolName = toolName;
         this.icon = null;
-        // this.dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement();
-        // TODO works if there is only one instance of a pluginTool class at the same time
+        // Works only if there is only one instance of pluginTool at the same time
         this.dockableUID = id;
         this.dockableWidth = -1;
         this.anchor = anchor;
+        this.type = type;
         this.hide = true;
+    }
+
+    public void applyPreferences(Preferences prefs) {
+        if (prefs != null) {
+            Preferences p = prefs.node(this.getClass().getSimpleName());
+            //            available = p.getBoolean("show", isAvailable()); //$NON-NLS-1$
+        }
+    }
+
+    public void savePreferences(Preferences prefs) {
+        if (prefs != null) {
+            Preferences p = prefs.node(this.getClass().getSimpleName());
+            BundlePreferences.putBooleanPreferences(p, "show", isAvailable()); //$NON-NLS-1$
+        }
     }
 
     protected abstract void changeToolWindowAnchor(ToolWindowAnchor anchor);
 
+    public TYPE getType() {
+        return type;
+    }
+
+    @Override
     public ToolWindow registerToolAsDockable() {
         ToolWindow win = getToolWindow();
         if (win == null) {
@@ -78,6 +103,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         return win;
     }
 
+    @Override
     public Component getToolComponent() {
         return this;
     }
@@ -86,6 +112,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         this.dockableWidth = width;
     }
 
+    @Override
     public String getDockableUID() {
         return dockableUID;
     }
@@ -117,6 +144,14 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         }
     }
 
+    public boolean isAvailable() {
+        ToolWindow win = getToolWindow();
+        if (win == null) {
+            return win.isAvailable();
+        }
+        return false;
+    }
+
     public boolean isHide() {
         return hide;
     }
@@ -129,10 +164,12 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         return dockableWidth;
     }
 
+    @Override
     public final ToolWindow getToolWindow() {
         return UIManager.toolWindowManager.getToolWindow(dockableUID);
     }
 
+    @Override
     public void showDockable() {
         GuiExecutor.instance().execute(new Runnable() {
 
@@ -147,6 +184,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         });
     }
 
+    @Override
     public void closeDockable() {
         GuiExecutor.instance().execute(new Runnable() {
 

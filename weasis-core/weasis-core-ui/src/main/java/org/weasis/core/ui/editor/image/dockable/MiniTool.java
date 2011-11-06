@@ -41,7 +41,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     private final JSliderW slider;
 
     public MiniTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
         setDockableWidth(40);
         currentAction = getActions()[0];
         slider = createSlider(currentAction, getAnchor());
@@ -117,8 +117,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         SliderChangeListener[] actions = getActions();
         for (int i = 0; i < actions.length; i++) {
             JRadioButtonMenuItem radio =
-                new JRadioButtonMenuItem(actions[i].toString(), actions[i].getActionW().getSmallIcon(), actions[i]
-                    .equals(currentAction));
+                new JRadioButtonMenuItem(actions[i].toString(), actions[i].getActionW().getSmallIcon(),
+                    actions[i].equals(currentAction));
             radio.setActionCommand("" + i); //$NON-NLS-1$
             radio.addActionListener(this);
             popupMouseScroll.add(radio);
@@ -128,6 +128,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         return popupMouseScroll;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JRadioButtonMenuItem) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();

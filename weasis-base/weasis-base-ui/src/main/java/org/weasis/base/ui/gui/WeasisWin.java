@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -45,6 +46,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
@@ -60,6 +62,7 @@ import org.noos.xing.mydoggy.MultiSplitConstraint;
 import org.noos.xing.mydoggy.MultiSplitContentManagerUI;
 import org.noos.xing.mydoggy.TabbedContentManagerUI;
 import org.noos.xing.mydoggy.TabbedContentUI;
+import org.noos.xing.mydoggy.ToolWindow;
 import org.noos.xing.mydoggy.event.ContentManagerEvent;
 import org.noos.xing.mydoggy.event.ContentManagerUIEvent;
 import org.noos.xing.mydoggy.plaf.ui.content.MyDoggyMultiSplitContentManagerUI;
@@ -83,6 +86,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -93,14 +97,16 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.UriListFlavor;
-import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
+    private static final JMenu menuDisplay = new JMenu("Display");
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
     private static final WeasisWin instance = new WeasisWin();
@@ -125,16 +131,18 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            if (!closeWindow())
+            if (!closeWindow()) {
                 return;
+            }
         }
         super.processWindowEvent(e);
     }
 
     public boolean closeWindow() {
-        if (busy)
+        if (busy) {
             // TODO add a message, Please wait or kill
             return false;
+        }
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
             int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
@@ -314,6 +322,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         });
                     }
                 }
+            } else if (event.getSource() instanceof ViewerPlugin) {
+                ViewerPlugin plugin = (ViewerPlugin) event.getSource();
+                if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
+                    updateToolbars(selectedPlugin == null ? null : selectedPlugin.getToolBar(), plugin.getToolBar(),
+                        true);
+                }
             }
         }
     }
@@ -337,8 +351,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
         List<MediaSeries> seriesList, boolean removeOldSeries) {
-        if (factory == null || seriesList == null || seriesList.size() == 0)
+        if (factory == null || seriesList == null || seriesList.size() == 0) {
             return;
+        }
         if (factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
@@ -392,8 +407,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     public void registerPlugin(final ViewerPlugin plugin) {
         synchronized (UIManager.VIEWER_PLUGINS) {
-            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin))
+            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin)) {
                 return;
+            }
             UIManager.VIEWER_PLUGINS.add(plugin);
             ContentManager contentManager = UIManager.toolWindowManager.getContentManager();
             if (contentManager.getContentCount() > 0) {
@@ -427,8 +443,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
-        if (plugin == null)
+        if (plugin == null) {
             return;
+        }
         if (selectedPlugin == plugin) {
             plugin.requestFocusInWindow();
             return;
@@ -438,31 +455,36 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         selectedPlugin.setSelected(true);
         selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
 
-        PluginTool[] tool = selectedPlugin.getToolPanel();
-        PluginTool[] oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+        List<DockableTool> tool = selectedPlugin.getToolPanel();
+        List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
 
         if (tool == null) {
             if (oldTool != null) {
-                for (PluginTool p : oldTool) {
+                for (DockableTool p : oldTool) {
                     p.closeDockable();
                 }
             }
         } else {
             if (tool != oldTool) {
                 if (oldTool != null) {
-                    for (PluginTool p : oldTool) {
+                    for (DockableTool p : oldTool) {
                         p.closeDockable();
                     }
                 }
-                for (PluginTool p : tool) {
+                for (DockableTool p : tool) {
                     p.registerToolAsDockable();
                 }
             }
         }
 
-        WtoolBar[] toolBar = selectedPlugin.getToolBar();
-        WtoolBar[] oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
+        List<Toolbar> toolBar = selectedPlugin.getToolBar();
+        List<Toolbar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
 
+        updateToolbars(oldToolBar, toolBar, false);
+
+    }
+
+    private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar, boolean force) {
         if (toolBar == null) {
             if (oldToolBar != null) {
                 toolbarContainer.unregisterAll();
@@ -471,18 +493,17 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             toolbarContainer.revalidate();
             toolbarContainer.repaint();
         } else {
-            if (toolBar != oldToolBar) {
+            if (force || toolBar != oldToolBar) {
                 if (oldToolBar != null) {
                     toolbarContainer.unregisterAll();
                 }
-                for (WtoolBar t : toolBar) {
+                for (Toolbar t : toolBar) {
                     toolbarContainer.registerToolBar(t);
                 }
                 toolbarContainer.revalidate();
                 toolbarContainer.repaint();
             }
         }
-
     }
 
     @Override
@@ -539,6 +560,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         JMenuBar menuBar = new JMenuBar();
         buildMenuFile();
         menuBar.add(menuFile);
+        buildMenuDisplay();
+        menuBar.add(menuDisplay);
         menuBar.add(menuSelectedPlugin);
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
@@ -572,6 +595,19 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         });
         helpMenuItem.add(webMenuItem);
+        final JMenuItem websiteMenuItem = new JMenuItem("Online Help");
+        websiteMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    URL url = new URL("http://www.dcm4che.org/confluence/display/WEA/Home"); //$NON-NLS-1$
+                    JMVUtils.OpenInDefaultBrowser(websiteMenuItem, url);
+                } catch (MalformedURLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem = new JMenuItem(Messages.getString("WeasisAboutBox.title")); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 
@@ -584,6 +620,51 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         helpMenuItem.add(aboutMenuItem);
         menuBar.add(helpMenuItem);
         return menuBar;
+    }
+
+    private void buildToolBarSubMenu(final JMenu toolBarMenu) {
+        List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
+        for (final Toolbar bar : bars) {
+            if (!TYPE.main.equals(bar.getType()) && !TYPE.conditional.equals(bar.getType())) {
+                JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getBarName(), bar.getComponent().isEnabled());
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (e.getSource() instanceof JCheckBoxMenuItem) {
+                            bar.getComponent().setEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                            toolbarContainer.showToolbar(bar.getComponent());
+                        }
+                    }
+                });
+                toolBarMenu.add(item);
+            }
+        }
+    }
+
+    private void buildToolSubMenu(final JMenu toolMenu) {
+        ToolWindow[] tools = UIManager.toolWindowManager.getDockables();
+        if (tools != null) {
+            for (final ToolWindow t : tools) {
+                Component c = t.getComponent();
+                if (c instanceof JScrollPane) {
+                    c = ((JScrollPane) c).getViewport().getView();
+                }
+                if (c instanceof PluginTool && PluginTool.TYPE.tool.equals(((PluginTool) c).getType())) {
+                    JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getTitle(), t.isAvailable());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                t.setAvailable(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                            }
+                        }
+                    });
+                    toolMenu.add(item);
+                }
+            }
+        }
     }
 
     private static void buildImportSubMenu(final JMenu importMenu) {
@@ -637,6 +718,77 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 }
             }
         }
+    }
+
+    private void buildMenuDisplay() {
+        menuDisplay.removeAll();
+        final JMenu toolBarMenu = new JMenu("Toolbars");
+        JPopupMenu menuImport = toolBarMenu.getPopupMenu();
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
+            toolBarMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (toolBarMenu.isSelected()) {
+                        buildToolBarSubMenu(toolBarMenu);
+                    } else {
+                        toolBarMenu.removeAll();
+                    }
+                }
+            });
+        } else {
+            menuImport.addPopupMenuListener(new PopupMenuListener() {
+
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildToolBarSubMenu(toolBarMenu);
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    toolBarMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
+        menuDisplay.add(toolBarMenu);
+
+        final JMenu toolMenu = new JMenu("Tools");
+        JPopupMenu menuTool = toolMenu.getPopupMenu();
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
+            toolMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (toolMenu.isSelected()) {
+                        buildToolSubMenu(toolMenu);
+                    } else {
+                        toolMenu.removeAll();
+                    }
+                }
+            });
+        } else {
+            menuTool.addPopupMenuListener(new PopupMenuListener() {
+
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildToolSubMenu(toolMenu);
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    toolMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
+        menuDisplay.add(toolMenu);
     }
 
     private static void buildMenuFile() {
@@ -724,27 +876,31 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         public Transferable createTransferable(JComponent comp) {
             if (comp instanceof Thumbnail) {
                 MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series)
+                if (t instanceof Series) {
                     return t;
+                }
             }
             return null;
         }
 
         @Override
         public boolean canImport(TransferSupport support) {
-            if (!support.isDrop())
+            if (!support.isDrop()) {
                 return false;
+            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor))
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
                 return true;
+            }
             return false;
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (!canImport(support))
+            if (!canImport(support)) {
                 return false;
+            }
 
             Transferable transferable = support.getTransferable();
 
@@ -804,10 +960,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         private boolean dropFiles(List<File> files, DataExplorerView explorer) {
             // TODO get the current explorer
-            if (files != null)
+            if (files != null) {
                 // LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
                 // DicomModel.loadingExecutor.execute(dicom);
                 return true;
+            }
             return false;
         }
     }

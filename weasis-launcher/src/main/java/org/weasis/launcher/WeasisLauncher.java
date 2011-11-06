@@ -12,7 +12,6 @@ package org.weasis.launcher;
 
 import java.awt.Color;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,9 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -36,7 +34,6 @@ import java.util.ServiceLoader;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -65,14 +62,6 @@ public class WeasisLauncher {
      **/
     public static final String SHUTDOWN_HOOK_PROP = "felix.shutdown.hook"; //$NON-NLS-1$
     /**
-     * The property name used to specify an URL to the system property file.
-     **/
-    public static final String SYSTEM_PROPERTIES_PROP = "felix.system.properties"; //$NON-NLS-1$
-    /**
-     * The default name used for the system properties file.
-     **/
-    public static final String SYSTEM_PROPERTIES_FILE_VALUE = "system.properties"; //$NON-NLS-1$
-    /**
      * The property name used to specify an URL to the configuration property file to be used for the created the
      * framework instance.
      **/
@@ -81,6 +70,14 @@ public class WeasisLauncher {
      * The default name used for the configuration properties file.
      **/
     public static final String CONFIG_PROPERTIES_FILE_VALUE = "config.properties"; //$NON-NLS-1$
+    /**
+     * The property name used to specify an URL to the extended property file.
+     **/
+    public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties"; //$NON-NLS-1$
+    /**
+     * The default name used for the extended properties file.
+     **/
+    public static final String EXTENDED_PROPERTIES_FILE_VALUE = "ext-config.properties"; //$NON-NLS-1$
     /**
      * Name of the configuration directory.
      */
@@ -212,10 +209,6 @@ public class WeasisLauncher {
             }
         }
 
-        // TODO use with felix framework 4 (split properties) - and make ext-config for end-user
-        // Load system properties.
-        // WeasisLauncher.loadSystemProperties();
-
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             File basePortableDir = new File(portable);
@@ -236,9 +229,6 @@ public class WeasisLauncher {
             System.err.println("No " + CONFIG_PROPERTIES_FILE_VALUE + " found."); //$NON-NLS-1$ //$NON-NLS-2$
             configProps = new Properties();
         }
-
-        // Copy framework properties from the system properties.
-        WeasisLauncher.copySystemProperties(configProps);
 
         // If there is a passed in bundle auto-deploy directory, then
         // that overwrites anything in the config file.
@@ -277,7 +267,7 @@ public class WeasisLauncher {
                             REMOTE_PREFS.store();
                         }
                         // Clean temp folder.
-                        FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir()); //$NON-NLS-1$
+                        FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir());
                         Runtime.getRuntime().halt(exitStatus);
                     }
                 }
@@ -331,19 +321,21 @@ public class WeasisLauncher {
                 }
             });
 
-            // FIXME find other solution
-            // boolean uiStarted = false;
-            //
-            // for (Bundle b : m_felix.getBundleContext().getBundles()) {
-            //                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
-            // uiStarted = true;
-            // break;
-            // }
-            // }
-            // TODO Handle Weasis version without ui
-            // if (!uiStarted) {
-            //                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
-            // }
+            String mainUI = configProps.getProperty("weasis.main.ui", "");
+            mainUI = mainUI.trim();
+            if (!mainUI.equals("")) {
+                boolean uiStarted = false;
+                for (Bundle b : m_felix.getBundleContext().getBundles()) {
+                    if (b.getSymbolicName().equals(mainUI)) { //$NON-NLS-1$
+                        uiStarted = true;
+                        break;
+                    }
+                }
+                if (!uiStarted) {
+                    throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+                }
+            }
+
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -460,46 +452,6 @@ public class WeasisLauncher {
 
     /**
      * <p>
-     * Loads the properties in the system property file associated with the framework installation into
-     * <tt>System.setProperty()</tt>. These properties are not directly used by the framework in anyway. By default, the
-     * system property file is located in the <tt>conf/</tt> directory of the Felix installation directory and is called
-     * "<tt>system.properties</tt>". The installation directory of Felix is assumed to be the parent directory of the
-     * <tt>felix.jar</tt> file as found on the system class path property. The precise file from which to load system
-     * properties can be set by initializing the "<tt>felix.system.properties</tt>" system property to an arbitrary URL.
-     * </p>
-     **/
-    public static void loadSystemProperties() {
-        // The system properties file is either specified by a system
-        // property or it is in the same directory as the Felix JAR file.
-        // Try to load it from one of these places.
-
-        // See if the property URL was specified as a property.
-
-        // Read the properties file.
-        Properties props = new Properties();
-        InputStream is = null;
-        try {
-            is = WeasisLauncher.class.getResourceAsStream("/" + SYSTEM_PROPERTIES_FILE_VALUE);
-            props.load(is);
-            is.close();
-        } catch (FileNotFoundException ex) {
-            // Ignore file not found.
-        } catch (Exception ex) {
-            System.err.println("Main: Error loading system properties"); //$NON-NLS-1$
-            System.err.println("Main: " + ex); //$NON-NLS-1$
-            FileUtil.safeClose(is);
-            return;
-        }
-
-        // Perform variable substitution on specified properties.
-        for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            System.setProperty(name, Util.substVars(props.getProperty(name), name, null, null));
-        }
-    }
-
-    /**
-     * <p>
      * Loads the configuration properties in the configuration property file associated with the framework installation;
      * these properties are accessible to the framework and to bundles and are intended for configuration purposes. By
      * default, the configuration property file is located in the <tt>conf/</tt> directory of the Felix installation
@@ -512,19 +464,42 @@ public class WeasisLauncher {
      * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
      **/
     public static Properties loadConfigProperties() {
+        URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+        // Read the properties file
+        Properties props = null;
+        if (propURI != null) {
+            props = readProperties(propURI, null);
+        }
+        propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+        if (propURI != null) {
+            // Extended properties, add or override existing properties
+            props = readProperties(propURI, props);
+        }
+        if (props != null) {
+            // Perform variable substitution for system properties.
+            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
+                String name = (String) e.nextElement();
+                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
+            }
+        }
+        return props;
+    }
+
+    public static URI getPropertiesURI(String configProp, String configFile) {
+
         // The config properties file is either specified by a system
         // property or it is in the conf/ directory of the Felix
         // installation directory. Try to load it from one of these
         // places.
 
         // See if the property URL was specified as a property.
-        URL propURL = null;
-        String custom = System.getProperty(CONFIG_PROPERTIES_PROP);
+        URI propURL = null;
+        String custom = System.getProperty(configProp);
         if (custom != null) {
             try {
-                propURL = new URL(custom);
-            } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
+                propURL = new URI(custom);
+            } catch (URISyntaxException e) {
+                System.err.print(configProp + ": " + e); //$NON-NLS-1$
                 return null;
             }
         } else {
@@ -546,49 +521,32 @@ public class WeasisLauncher {
             }
 
             try {
-                propURL = new File(confDir, CONFIG_PROPERTIES_FILE_VALUE).toURL();
-            } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
+                propURL = new File(confDir, configFile).toURI();
+            } catch (Exception ex) {
+                System.err.print(configFile + ": " + ex); //$NON-NLS-1$
                 return null;
             }
         }
-
-        // Read the properties file.
-        Properties props = readProperties(propURL);
-
-        if (props != null) {
-            // Perform variable substitution for system properties.
-            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
-                String name = (String) e.nextElement();
-                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
-            }
-        }
-        return props;
+        return propURL;
     }
 
-    public static Properties readProperties(URL propURL) {
+    public static Properties readProperties(URI propURI, Properties props) {
         // Read the properties file.
-        Properties props = new Properties();
+        if (props == null) {
+            props = new Properties();
+        }
         InputStream is = null;
         try {
             // Try to load config.properties.
-            is = propURL.openConnection().getInputStream();
+            is = propURI.toURL().openConnection().getInputStream();
             props.load(is);
             is.close();
         } catch (Exception ex) {
+            System.err.println("Cannot read properties file: " + propURI); //$NON-NLS-1$
             FileUtil.safeClose(is);
-            return null;
+            return props;
         }
         return props;
-    }
-
-    public static void copySystemProperties(Properties configProps) {
-        for (Enumeration e = System.getProperties().propertyNames(); e.hasMoreElements();) {
-            String key = (String) e.nextElement();
-            if (key.startsWith("felix.") || key.startsWith("org.osgi.framework.")) { //$NON-NLS-1$ //$NON-NLS-2$
-                configProps.setProperty(key, System.getProperty(key));
-            }
-        }
     }
 
     public static void setSystemSpecification() {
@@ -659,7 +617,7 @@ public class WeasisLauncher {
 
         File basdir;
         if (user == null) {
-            basdir = new File(dir); //$NON-NLS-1$
+            basdir = new File(dir);
         } else {
             basdir = new File(dir + File.separator + "preferences" + File.separator //$NON-NLS-1$
                 + user);
@@ -680,17 +638,30 @@ public class WeasisLauncher {
         // Set the locale of the previous launch if exists
         lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
 
-        String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
-        if (translation_modules != null) {
-            try {
-                translation_modules +=
-                    translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                modulesi18n = readProperties(new URL(translation_modules));
-                if (modulesi18n != null) {
-                    System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
+        URI translation_modules = null;
+        if (portable != null) {
+            File file = new File(portable, "weasis/bundle-i18n/buildNumber.properties");
+            if (file.canRead()) {
+                translation_modules = file.toURI();
+                String path = file.getParentFile().toURI().toString();
+                System.setProperty("weasis.i18n", path); //$NON-NLS-1$
+                System.err.println("i18n path: " + path);
+            }
+        } else {
+            String path = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
+            if (path != null) {
+                path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                try {
+                    translation_modules = new URI(path);
+                } catch (URISyntaxException e) {
+                    System.err.println("Cannot find translation modules: " + e); //$NON-NLS-1$
                 }
-            } catch (MalformedURLException ex) {
-                System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
+            }
+        }
+        if (translation_modules != null) {
+            modulesi18n = readProperties(translation_modules, null);
+            if (modulesi18n != null) {
+                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
             }
         }
         if (lang.equals("en")) { //$NON-NLS-1$
@@ -702,13 +673,10 @@ public class WeasisLauncher {
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
-        boolean forceLook = false;
 
         look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
         if (look == null) {
             look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
-        } else {
-            forceLook = true;
         }
         if (look == null) {
             String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -717,7 +685,6 @@ public class WeasisLauncher {
                 String sys = sys_spec.substring(0, index);
                 String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
                 if (weasisNativeLaf != null) {
-                    forceLook = true;
                     look = weasisNativeLaf;
                 }
             }
@@ -735,8 +702,7 @@ public class WeasisLauncher {
         String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // changing Look and Feel when upgrade version
-        if (LookAndFeels.installSubstanceLookAndFeels()
-            && (look == null || (!forceLook && versionNew != null && !versionNew.equals(versionOld)))) {
+        if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) {
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
@@ -822,6 +788,9 @@ public class WeasisLauncher {
                 }
             });
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
+            final StringBuffer message = new StringBuffer("<P>");
+            message.append(String.format("Weasis version has changed from %s to %s.", versionOld, versionNew));
+
             EventQueue.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -863,15 +832,13 @@ public class WeasisLauncher {
                     jTextPane1.setBackground(Color.WHITE);
                     StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
                     ss.addRule("p {font-size:12}"); //$NON-NLS-1$
-                    try {
-                        jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html")); //$NON-NLS-1$
-                        jTextPane1.setPreferredSize(new Dimension(630, 375));
-                        JScrollPane sp = new JScrollPane(jTextPane1);
-                        JOptionPane.showMessageDialog(loader.getWindow(), sp,
-                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    message.append("<BR>");
+                    message.append(String.format("See <a href=\"%s\">release notes</a>.",
+                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10431"));
+                    message.append("</P>");
+                    jTextPane1.setText(message.toString());
+                    JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
+                        Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                 }
             });
         }
@@ -917,19 +884,23 @@ public class WeasisLauncher {
         UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
         laf_exist: if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
-                if (lafs[i].getClassName().equals(look)) { //$NON-NLS-1$
+                if (lafs[i].getClassName().equals(look)) {
                     break laf_exist;
                 }
             }
             look = null;
         }
         if (look == null) {
-            // Try to set Nimbus, concurrent thread issue
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-            for (int i = 0, n = lafs.length; i < n; i++) {
-                if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
-                    look = lafs[i].getClassName();
-                    break;
+            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+                look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            } else {
+                // Try to set Nimbus, concurrent thread issue
+                // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
+                for (int i = 0, n = lafs.length; i < n; i++) {
+                    if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
+                        look = lafs[i].getClassName();
+                        break;
+                    }
                 }
             }
             // Should never happen

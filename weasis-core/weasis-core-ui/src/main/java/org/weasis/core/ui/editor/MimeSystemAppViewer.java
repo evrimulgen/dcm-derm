@@ -21,7 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MimeSystemAppViewer implements SeriesViewer {
@@ -78,7 +79,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
     }
 
     @Override
-    public WtoolBar[] getToolBar() {
+    public List<Toolbar> getToolBar() {
         return null;
     }
 
@@ -88,7 +89,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
     }
 
     @Override
-    public PluginTool[] getToolPanel() {
+    public List<DockableTool> getToolPanel() {
         return null;
     }
 

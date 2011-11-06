@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -31,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
 import org.noos.xing.mydoggy.Content;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -49,6 +51,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -58,6 +61,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -65,6 +69,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.viewer2d.internal.Activator;
 
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -94,9 +99,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
-    private static PluginTool[] toolPanels;
+    public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
+    public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
     private static WtoolBar statusBar = null;
-    private static WtoolBar[] toolBars;
+    private static boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -105,6 +111,59 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public View2dContainer(GridBagLayoutModel layoutModel) {
         super(EventManager.getInstance(), layoutModel, View2dFactory.NAME, View2dFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
+        if (!INI_COMPONENTS) {
+            INI_COMPONENTS = true;
+            // Add standard toolbars
+            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
+            TOOLBARS.add(0, bar);
+            TOOLBARS.add(1, bar.getMeasureToolBar());
+            CineToolBar cineBar = new CineToolBar<DicomImageElement>();
+            TOOLBARS.add(2, cineBar);
+
+            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            if (prefs != null) {
+                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+                cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
+            }
+
+            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+
+                    @Override
+                    public SliderChangeListener[] getActions() {
+
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                    }
+                };
+            tool.setHide(false);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new DisplayTool(DisplayTool.BUTTON_NAME);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+            eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+
+            tool = new MeasureTool(eventManager);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+        }
     }
 
     @Override
@@ -216,42 +275,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public PluginTool[] getToolPanel() {
-        if (toolPanels == null) {
-            toolPanels = new PluginTool[4];
-            toolPanels[0] = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
-
-                    @Override
-                    public SliderChangeListener[] getActions() {
-
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                        if (seqAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) seqAction);
-                        }
-                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                        if (zoomAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) zoomAction);
-                        }
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) rotateAction);
-                        }
-                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                    }
-                };
-            toolPanels[0].setHide(false);
-            toolPanels[0].registerToolAsDockable();
-            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-            toolPanels[1].registerToolAsDockable();
-            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME);
-            toolPanels[2].registerToolAsDockable();
-            toolPanels[3] = new MeasureTool(eventManager);
-            toolPanels[3].registerToolAsDockable();
-            eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
-            // toolPanels[3] = new DrawToolsDockable();
-        }
-        return toolPanels;
+    public List<DockableTool> getToolPanel() {
+        return TOOLS;
     }
 
     @Override
@@ -476,14 +501,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public synchronized WtoolBar[] getToolBar() {
-        if (toolBars == null) {
-            toolBars = new WtoolBar[2];
-            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(eventManager);
-            toolBars[0] = bar;
-            toolBars[1] = bar.getMeasureToolBar();
-        }
-        return toolBars;
+    public synchronized List<Toolbar> getToolBar() {
+        return TOOLBARS;
     }
 
     @Override

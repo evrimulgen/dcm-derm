@@ -15,10 +15,12 @@
 
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<felix.framework.version>3.2.2</felix.framework.version>
+		<felix.framework.version>4.0.1</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
+		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
+		
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.bundlerepository.version>1.6.4</felix.bundlerepository.version>
+		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
 		<felix.configadmin.version>1.2.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.scr.version>1.6.0</felix.scr.version>
@@ -32,7 +34,7 @@
 		<weasis.dicom.version>0.5.8-SNAPSHOT</weasis.dicom.version>
 		<weasis.derm.version>1.0.0-SNAPSHOT</weasis.derm.version>
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>6.3.0</substance.version>
+		<substance.version>6.3.1</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 <!-- 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
@@ -50,7 +52,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.1</version>
+				<version>2.3</version>
 				<executions>
 					<execution>
 						<id>copy-bundles</id>
@@ -111,7 +113,7 @@
 								<artifactItem>
 									<groupId>org.apache.felix</groupId>
 									<artifactId>org.apache.felix.gogo.command</artifactId>
-									<version>${felix.gogo.version}</version>
+									<version>${felix.gogo.command.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -278,7 +280,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.4</version>
+				<version>1.6</version>
 				<executions>
 					<execution>
 						<id>bindex</id>
@@ -306,7 +308,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-5</version>
+				<version>2.2.1</version>
 				<executions>
 					<execution>
 						<id>web</id>
@@ -417,7 +419,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-assembly-plugin</artifactId>
-						<version>2.2-beta-5</version>
+						<version>2.2.1</version>
 						<executions>
 							<execution>
 								<id>portable</id>

@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -52,13 +53,18 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -153,6 +159,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(viewingProtocolAction = newViewingProtocolAction());
         iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
         iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
+        synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
@@ -407,6 +414,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 return 0;
             }
 
+            @Override
+            public boolean isCining() {
+                return currentCine != null;
+            }
+
         };
     }
 
@@ -536,9 +548,49 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     return a;
                 }
             }
+            if (keyEvent == ActionW.CINESTART.getKeyCode()) {
+                if (moveTroughSliceAction.isCining()) {
+                    moveTroughSliceAction.stop();
+                } else {
+                    moveTroughSliceAction.start();
+                }
+                return null;
+            } else if (keyEvent == KeyEvent.VK_D) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof LineGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
+            } else if (keyEvent == KeyEvent.VK_A) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof AngleToolGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
+            }
         }
 
         return action;
+    }
+
+    private void setMeasurement(Object obj) {
+        ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+        if (view != null) {
+            final ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                String cmd = ActionW.MEASURE.cmd();
+                if (!toolBar.isCommandActive(cmd)) {
+                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                }
+            }
+        }
+        measureAction.setSelectedItem(obj);
     }
 
     @Override
@@ -568,14 +620,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public void actionPerformed(ActionEvent evt) {
-        String command = evt.getActionCommand();
+        cinePlay(evt.getActionCommand());
+    }
 
-        if (command.equals(ActionW.CINESTART.cmd())) {
-            // turn cining on.
-            moveTroughSliceAction.start();
-        } else if (command.equals(ActionW.CINESTOP.cmd())) {
-            // turn cine off.
-            moveTroughSliceAction.stop();
+    private void cinePlay(String command) {
+        if (command != null) {
+            if (command.equals(ActionW.CINESTART.cmd())) {
+                moveTroughSliceAction.start();
+            } else if (command.equals(ActionW.CINESTOP.cmd())) {
+                moveTroughSliceAction.stop();
+            }
         }
     }
 
@@ -677,7 +731,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
 
-        for (PluginTool p : selectedView2dContainer.getToolPanel()) {
+        for (DockableTool p : selectedView2dContainer.getToolPanel()) {
             if (p instanceof GraphicsListener) {
                 defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
             }
@@ -825,6 +879,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
+            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+            for (Toolbar tb : View2dContainer.TOOLBARS) {
+                if (tb instanceof CineToolBar) {
+                    BundlePreferences.putBooleanPreferences(prefNode, CineToolBar.class.getName(),
+                        ((CineToolBar) tb).isEnabled());
+                    break;
+                }
+            }
         }
     }
 

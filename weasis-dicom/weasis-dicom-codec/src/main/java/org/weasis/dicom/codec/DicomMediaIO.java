@@ -145,7 +145,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
                 if (stored > 0) {
                     numberOfFrame = getNumImages(false);
-                    if ("1.2.840.10008.1.2.4.100".equals(dicomObject.getString(Tag.TransferSyntaxUID))) { //$NON-NLS-1$
+                    String tsuid = dicomObject.getString(Tag.TransferSyntaxUID, "");
+                    if (tsuid.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$
+                        // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
+                        // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
+                        // MPEG4 AVC/H.264 1.2.840.10008.1.2.4.102
+                        // MPEG4 AVC/H.264 BD 1.2.840.10008.1.2.4.103
                         mimeType = SERIES_VIDEO_MIMETYPE;
                     } else {
                         mimeType = IMAGE_MIMETYPE;
@@ -559,6 +564,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     private void computeSUVFactor(DicomObject dicomObject, HashMap<TagW, Object> tagList, int index) {
+        // From vendor neutral code at http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
         String modlality = (String) tagList.get(TagW.Modality);
         if ("PT".equals(modlality)) { //$NON-NLS-1$
             String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage, null);
@@ -584,7 +590,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             Date acquisitionDateTime =
                                 TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
                                     (Date) tagList.get(TagW.AcquisitionTime));
-                            Date scanDate = (Date) tagList.get(TagW.SeriesDate);
+                            Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
                             if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
                                 && halfLife != null && acquisitionDateTime != null
                                 && (injectDateTime != null || (scanDate != null && injectTime != null))) {
@@ -1060,7 +1066,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
                 }
 
-                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Frame Display Shutter
+                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Real World Value Mapping
 
                 // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                 // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
