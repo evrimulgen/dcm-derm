@@ -67,6 +67,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.dockable.DermAnalisysTool;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.internal.Activator;
@@ -163,6 +164,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             tool = new MeasureTool(eventManager);
             tool.registerToolAsDockable();
             TOOLS.add(tool);
+            
+            //panel de analisis
+            tool = new DermAnalisysTool(DermAnalisysTool.BUTTON_NAME);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+            //fin panel de analisis
         }
     }
 
@@ -274,7 +281,48 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         return menuRoot;
     }
 
-    @Override
+  /*  @Override
+    public PluginTool[] getToolPanel() {
+        if (toolPanels == null) {
+            toolPanels = new PluginTool[5];
+            toolPanels[0] = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+
+                    @Override
+                    public SliderChangeListener[] getActions() {
+
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                    }
+                };
+            toolPanels[0].setHide(false);
+            toolPanels[0].registerToolAsDockable();
+            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
+            toolPanels[1].registerToolAsDockable();
+            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME);
+            toolPanels[2].registerToolAsDockable();
+            toolPanels[3] = new MeasureTool(eventManager);
+            toolPanels[3].registerToolAsDockable();
+            //panel de analisis
+            toolPanels[4] = new DermAnalisysTool(DermAnalisysTool.BUTTON_NAME, null);
+            toolPanels[4].registerToolAsDockable();
+            //fin panel de analisis
+            eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
+            // toolPanels[3] = new DrawToolsDockable();
+        }
+        return toolPanels;
+*/
     public List<DockableTool> getToolPanel() {
         return TOOLS;
     }
