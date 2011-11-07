@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -37,7 +36,7 @@ import javax.swing.JLabel;
  */
 public class DermAnalisysTool extends PluginTool {
 
-    public static final String BUTTON_NAME = "Derm Analisys";
+    public static final String BUTTON_NAME = Messages.getString("DermAnalisysTool.button");
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
