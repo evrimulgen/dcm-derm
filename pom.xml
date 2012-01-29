@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-framework</artifactId>
-	<version>1.1.1-SNAPSHOT</version>
+	<version>1.1.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>
@@ -39,6 +39,6 @@
 		<module>weasis-base</module>
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>
-                <module>weasis-derm</module>
+        <module>weasis-derm</module>
 	</modules>
 </project>

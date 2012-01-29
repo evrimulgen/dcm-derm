@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
 package org.weasis.core.ui.editor.image.dockable;
 
 import java.awt.BorderLayout;
@@ -76,7 +86,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     public static final String BUTTON_NAME = Messages.getString("Tools.meas"); //$NON-NLS-1$
     public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
     public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null ? javax.swing.UIManager
-        .getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205;
+        .getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;

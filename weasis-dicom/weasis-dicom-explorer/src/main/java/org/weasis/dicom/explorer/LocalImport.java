@@ -17,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
-import java.util.Properties;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -25,12 +24,12 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
@@ -43,12 +42,9 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     private JTextField textField;
     private JButton button;
     private File[] files;
-    private final Properties props;
 
     public LocalImport() {
         setTitle(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
-        props = new Properties();
-        FileUtil.readProperties(new File(Activator.PREFERENCES.getDataFolder(), "local-import.properties"), props);//$NON-NLS-1$
         initGUI();
         initialize(true);
     }
@@ -56,8 +52,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
+        setBorder(new TitledBorder(null,
+            Messages.getString("LocalImport.imp_files"), TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalImport.imp_files")); //$NON-NLS-1$
+        lblImportAFolder = new JLabel("Path:");
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
@@ -73,7 +71,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         gbc_textField.gridx = 1;
         gbc_textField.gridy = 0;
         JMVUtils.setPreferredWidth(textField, 375, 325);
-        textField.setText(props.getProperty(lastDirKey, ""));//$NON-NLS-1$
+        textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, ""));//$NON-NLS-1$
         add(textField, gbc_textField);
 
         button = new JButton(" ... "); //$NON-NLS-1$
@@ -116,12 +114,11 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         }
     }
 
-    private synchronized void readLocalProperties() {
-
-    }
-
     public void browseImgFile() {
-        String directory = props.getProperty(lastDirKey, "");//$NON-NLS-1$
+        String directory = getImportPath();
+        if (directory == null) {
+            directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, "");//$NON-NLS-1$
+        }
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fileChooser.setMultiSelectionEnabled(true);
@@ -131,17 +128,18 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             || (selectedFiles = fileChooser.getSelectedFiles()) == null || selectedFiles.length == 0) {
             return;
         } else {
-            files = selectedFiles;
+            files = null;
             String lastDir = null;
-            if (files.length == 1) {
-                lastDir = files[0].getPath();
+            if (selectedFiles.length == 1) {
+                lastDir = selectedFiles[0].getPath();
                 textField.setText(lastDir);
             } else {
+                files = selectedFiles;
                 lastDir = files[0].getParent();
                 textField.setText(Messages.getString("LocalImport.multi_dir")); //$NON-NLS-1$
             }
             if (lastDir != null) {
-                props.setProperty(lastDirKey, lastDir);
+                Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDirKey, lastDir);
             }
         }
     }
@@ -151,8 +149,6 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
 
     public void applyChange() {
-        FileUtil.storeProperties(
-            new File(Activator.PREFERENCES.getDataFolder(), "local-import.properties"), props, null);//$NON-NLS-1$
     }
 
     protected void updateChanges() {
@@ -168,11 +164,19 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void resetoDefaultValues() {
     }
 
+    private String getImportPath() {
+        String path = textField.getText().trim();
+        if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            return path;
+        }
+        return null;
+    }
+
     @Override
     public void importDICOM(DicomModel dicomModel, JProgressBar info) {
         if (files == null) {
-            String path = textField.getText().trim();
-            if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            String path = getImportPath();
+            if (path != null) {
                 File file = new File(path);
                 if (file.canRead()) {
                     files = new File[] { file };
@@ -189,9 +193,9 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             }
         }
         if (files != null) {
-            LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel, false);
-            dicom.setProgressBar(info);
+            LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel);
             DicomModel.loadingExecutor.execute(dicom);
+            files = null;
         }
     }
 }

@@ -31,6 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.beans.PropertyChangeEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,6 +59,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -66,6 +68,7 @@ import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -81,8 +84,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
@@ -121,7 +126,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
 
     private JPanel panel = null;
+    private JPanel panel_4 = null;
     private PatientPane selectedPatient = null;
+    final CircularProgressBar globalProgress = new CircularProgressBar(0, 100);
     private final List<PatientPane> patientPaneList = new ArrayList<PatientPane>();
     private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study =
         new HashMap<MediaSeriesGroup, List<StudyPane>>();
@@ -129,8 +136,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         new HashMap<MediaSeriesGroup, List<SeriesPane>>();
     private final JScrollPane thumnailView = new JScrollPane();
     private final SeriesSelectionModel selectionList = new SeriesSelectionModel();
+    private final ArrayList<SwingWorker<Boolean, String>> loadingTasks = new ArrayList<SwingWorker<Boolean, String>>();
 
-    private DicomModel model;
+    private final DicomModel model;
 
     private final Comparator patientComparator = new Comparator() {
 
@@ -263,15 +271,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private final JPanel panel_3 = new JPanel();
     private final JButton btnExport = new JButton(Messages.getString("DicomExplorer.export")); //$NON-NLS-1$
     private final JButton btnImport = new JButton(Messages.getString("DicomExplorer.import")); //$NON-NLS-1$
-    private final AbstractAction importAction = new AbstractAction(
-        Messages.getString("DicomExplorer.to") + DicomExplorer.NAME) { //$NON-NLS-1$
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DicomImport dialog = new DicomImport(model);
-                JMVUtils.showCenterScreen(dialog);
-            }
-        };
     private final AbstractAction exportAction = new AbstractAction(
         Messages.getString("DicomExplorer.from") + DicomExplorer.NAME) { //$NON-NLS-1$
 
@@ -1428,6 +1428,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             }
                         }
                     }
+                } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {
+                    if (newVal instanceof SwingWorker) {
+                        addTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    }
+                } else if (ObservableEvent.BasicAction.LoadingStop.equals(action)) {
+                    if (newVal instanceof SwingWorker) {
+                        removeTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {
                 if (ObservableEvent.BasicAction.Select.equals(action)) {
@@ -1489,6 +1497,61 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             }
         }
         add(thumnailView, BorderLayout.CENTER);
+        if (loadingTasks.size() > 0) {
+            add(getLoadingPanel(), vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
+        }
+
+    }
+
+    private JPanel getLoadingPanel() {
+        if (panel_4 == null) {
+            panel_4 = new JPanel();
+            panel_4.add(globalProgress);
+            final JLabel labelNewLabel = new JLabel(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
+            panel_4.add(labelNewLabel);
+        }
+        return panel_4;
+    }
+
+    public synchronized void addTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
+        if (!loadingTasks.contains(task)) {
+            loadingTasks.add(task);
+            if (loadingTasks.size() > 0) {
+                GuiExecutor.instance().invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        JPanel loadingPanel = getLoadingPanel();
+                        if (getComponentZOrder(loadingPanel) == -1) {
+                            globalProgress.setIndeterminate(true);
+                            boolean vertical =
+                                ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+                            add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
+                            revalidate();
+                            repaint();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    public synchronized void removeTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
+        if (task != null) {
+            loadingTasks.remove(task);
+            if (loadingTasks.size() == 0) {
+                GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        globalProgress.setIndeterminate(false);
+                        remove(getLoadingPanel());
+                        revalidate();
+                        repaint();
+                    }
+                });
+
+            }
+        }
     }
 
     public static Thumbnail createThumbnail(final Series series, final DicomModel dicomModel, final int thumbnailSize) {
@@ -1626,7 +1689,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     JPanel panel = new JPanel();
                                     panel.setLayout(new BorderLayout());
                                     panel.add(view);
-                                    frame.add(panel);
+                                    frame.getContentPane().add(panel);
                                     frame.setVisible(true);
                                 }
                             });
@@ -1898,20 +1961,50 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     }
 
     @Override
-    public Action getOpenExportDialogAction() {
+    public List<Action> getOpenExportDialogAction() {
         // TODO preference to allow dicom export
         // return exportAction;
         return null;
     }
 
     @Override
-    public Action getOpenImportDialogAction() {
-        return importAction;
-    }
-    
-    //mdiaz - necesario para poder visualizar el modelo luego de importar una
-    //imagen como DICOM usando este plugin
-    public void setDicomModel(DicomModel model) {
-        this.model = model;
+    public List<Action> getOpenImportDialogAction() {
+        ArrayList<Action> actions = new ArrayList<Action>(1);
+        AbstractAction importAction = new AbstractAction(Messages.getString("DicomExplorer.to") + DicomExplorer.NAME) { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    DicomImport dialog = new DicomImport(model);
+                    JMVUtils.showCenterScreen(dialog);
+                }
+            };
+        actions.add(importAction);
+        AbstractAction importCDAction =
+            new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    File file = DicomDirImport.getDcmDirFromMedia();
+                    if (file == null) {
+                        int response =
+                            JOptionPane
+                                .showConfirmDialog(
+                                    WinUtil.getParentWindow(DicomExplorer.this),
+                                    "Cannot find DICOMDIR on media device, do you want to import manually?", (String) this.getValue(AbstractAction.NAME),//$NON-NLS-1$ 
+                                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (response == 0) {
+                            DicomImport dialog = new DicomImport(model);
+                            JMVUtils.showCenterScreen(dialog);
+                            // TODO select DICOMDIR
+                        }
+                    } else {
+                        DicomDirImport.loadDicomDir(file, model);
+                    }
+
+                }
+            };
+        actions.add(importCDAction);
+        return actions;
     }
 }

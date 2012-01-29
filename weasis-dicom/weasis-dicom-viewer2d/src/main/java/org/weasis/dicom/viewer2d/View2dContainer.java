@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -42,9 +43,11 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -61,13 +64,13 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.dockable.DermAnalisysTool;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.internal.Activator;
@@ -164,12 +167,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             tool = new MeasureTool(eventManager);
             tool.registerToolAsDockable();
             TOOLS.add(tool);
-            
-            //panel de analisis
-            tool = new DermAnalisysTool(DermAnalisysTool.BUTTON_NAME);
-            tool.registerToolAsDockable();
-            TOOLS.add(tool);
-            //fin panel de analisis
         }
     }
 
@@ -186,6 +183,26 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (menuRoot != null) {
             menuRoot.removeAll();
             menuRoot.setText(View2dFactory.NAME);
+
+            List<Action> actions = getPrintActions();
+            if (actions != null) {
+                JMenu printMenu = new JMenu("Print");
+                for (Action action : actions) {
+                    JMenuItem item = new JMenuItem(action);
+                    printMenu.add(item);
+                }
+                // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
+                // menuDicomPrint.addActionListener(new ActionListener() {
+                //
+                // @Override
+                // public void actionPerformed(ActionEvent e) {
+                //
+                // }
+                // });
+                // printMenu.add(menuDicomPrint);
+                menuRoot.add(printMenu);
+            }
+
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
             if (viewingAction instanceof ComboItemListener) {
                 menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
@@ -281,48 +298,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         return menuRoot;
     }
 
-  /*  @Override
-    public PluginTool[] getToolPanel() {
-        if (toolPanels == null) {
-            toolPanels = new PluginTool[5];
-            toolPanels[0] = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
-
-                    @Override
-                    public SliderChangeListener[] getActions() {
-
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                        if (seqAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) seqAction);
-                        }
-                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                        if (zoomAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) zoomAction);
-                        }
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) rotateAction);
-                        }
-                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                    }
-                };
-            toolPanels[0].setHide(false);
-            toolPanels[0].registerToolAsDockable();
-            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-            toolPanels[1].registerToolAsDockable();
-            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME);
-            toolPanels[2].registerToolAsDockable();
-            toolPanels[3] = new MeasureTool(eventManager);
-            toolPanels[3].registerToolAsDockable();
-            //panel de analisis
-            toolPanels[4] = new DermAnalisysTool(DermAnalisysTool.BUTTON_NAME, null);
-            toolPanels[4].registerToolAsDockable();
-            //fin panel de analisis
-            eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
-            // toolPanels[3] = new DrawToolsDockable();
-        }
-        return toolPanels;
-*/
+    @Override
     public List<DockableTool> getToolPanel() {
         return TOOLS;
     }
@@ -615,6 +591,25 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             actions.add(importAll);
         }
+        return actions;
+    }
+
+    @Override
+    public List<Action> getPrintActions() {
+        ArrayList<Action> actions = new ArrayList<Action>(1);
+        final String title = "Print 2D viewer layout";
+        AbstractAction printStd =
+            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$//$NON-NLS-2$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
+                    JMVUtils.showCenterScreen(dialog, parent);
+                }
+            };
+        actions.add(printStd);
+
         return actions;
     }
 }

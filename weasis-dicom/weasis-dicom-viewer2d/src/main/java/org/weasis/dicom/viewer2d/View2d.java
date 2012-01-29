@@ -48,12 +48,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.VR;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -107,7 +102,6 @@ import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -264,7 +258,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setShutter(reader.getDicom());
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
 
-        actionsInView.put("originalPixelSpacing",
+        actionsInView.put("originalPixelSpacing", //$NON-NLS-1$
             reader.getTagValue(TagW.PixelSpacing.getName(), new double[] { 1.0, 1.0 }));
 
         if (area != null) {
@@ -692,6 +686,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                // Do not add series without medias. BUG WEA-100
+                if (seq == null || seq.size() == 0) {
+                    return false;
+                }
                 if (seq instanceof DicomSeries) {
                     MediaSeriesGroup p1 = model.getParent(seq, DicomModel.patient);
                     MediaSeriesGroup p2 = null;
@@ -750,7 +748,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         private boolean dropDicomFiles(List<File> files, DicomModel model) {
             if (files != null) {
-                LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model, false);
+                LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
                 DicomModel.loadingExecutor.execute(dicom);
                 return true;
             }
@@ -1021,70 +1019,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (viewingAction instanceof ComboItemListener) {
                         popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
                             .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-                    }
-                    if (series != null) {
-                        DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
-                        if (model instanceof DicomModel) {
-                            MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
-                            List list = (List) study.getTagValue(TagW.DicomSpecialElementList);
-                            if (list != null) {
-                                JMenu menu = new JMenu("Presentation State");
-                                JMenuItem mItem = new JMenuItem("None");
-                                mItem.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
-                                            ActionW.PR_STATE.cmd(), null, null));
-                                    }
-                                });
-                                menu.add(mItem);
-                                String suid = (String) series.getTagValue(TagW.SeriesInstanceUID);
-                                for (Object object : list) {
-                                    if (object instanceof DicomSpecialElement) {
-                                        final DicomSpecialElement element = (DicomSpecialElement) object;
-                                        DicomElement seq =
-                                            (DicomElement) element.getTagValue(TagW.ReferencedSeriesSequence);
-                                        if (seq != null && seq.vr() == VR.SQ) {
-                                            for (int i = 0; i < seq.countItems(); ++i) {
-                                                DicomObject dcmObj = null;
-                                                try {
-                                                    dcmObj = seq.getDicomObject(i);
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-                                                if (dcmObj != null
-                                                    && suid.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
-                                                    String desc = (String) element.getTagValue(TagW.SeriesDescription);
-                                                    if (desc == null) {
-                                                        desc = "Presentation State";
-                                                    } else {
-                                                        int limit = 25;
-                                                        int size = desc.length();
-                                                        if (size > limit) {
-                                                            desc = desc.substring(0, limit) + "..."; //$NON-NLS-1$
-                                                        }
-                                                    }
-                                                    JMenuItem menuItem = new JMenuItem(desc);
-                                                    menuItem.addActionListener(new ActionListener() {
-
-                                                        @Override
-                                                        public void actionPerformed(ActionEvent e) {
-                                                            propertyChange(new PropertyChangeEvent(EventManager
-                                                                .getInstance(), ActionW.PR_STATE.cmd(), null,
-                                                                new PresentationStateReader(element)));
-                                                        }
-                                                    });
-                                                    menu.add(menuItem);
-                                                }
-                                            }
-                                        }
-
-                                    }
-                                }
-                                popupMenu.add(menu);
-                            }
-                        }
                     }
                     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                     if (presetAction instanceof ComboItemListener) {

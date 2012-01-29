@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 
 import javax.swing.SwingUtilities;
 
-import org.noos.xing.mydoggy.plaf.persistence.xml.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
@@ -48,6 +47,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
@@ -60,6 +60,7 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
+import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
@@ -277,7 +278,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (dicomSeries != null) {
             if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
                 if (dicomSeries instanceof DicomSeries) {
-                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries);
+                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries, this);
                 }
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -298,7 +299,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
                     if (group instanceof DicomSeries) {
-                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
+                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
                     }
                 }
             }
@@ -320,7 +321,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
                         MediaSeriesGroup group = it2.next();
                         if (group instanceof DicomSeries) {
-                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
+                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
                         }
                     }
                 }
@@ -540,7 +541,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < files.length; i++) {
                         files[i] = new File(args.get(i));
                     }
-                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, false));
+                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                 } else if (opt.isSet("remote")) { //$NON-NLS-1$
                     loadingExecutor.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]),
                         DicomModel.this));
@@ -559,6 +560,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                                 new FileOutputStream(tempFile)) == -1) {
                                 xmlFiles[i] = tempFile;
                             }
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -586,12 +588,23 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         for (int i = 0; i < files.length; i++) {
                             if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
                                 last = null;
-                            } else {
                                 last = dirs[i];
                                 files[i] = new File(baseDir, dirs[i]);
                             }
                         }
-                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, true));
+
+                        ArrayList<LoadSeries> loadSeries = null;
+                        File dcmDirFile = new File(baseDir, "DICOMDIR");
+                        if (dcmDirFile.canRead()) {
+                            DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this);
+                            loadSeries = dirImport.readDicomDir();
+                        }
+                        if (loadSeries != null && loadSeries.size() > 0) {
+                            loadingExecutor.execute(new LoadDicomDir(loadSeries, DicomModel.this));
+
+                        } else {
+                            loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                        }
                     }
                 }
             }
@@ -608,7 +621,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$
+        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();
             return;
         }
