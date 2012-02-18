@@ -380,10 +380,4 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         }
         return false;
     }
-
-    @Override
-    public List<Action> getPrintActions() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }
