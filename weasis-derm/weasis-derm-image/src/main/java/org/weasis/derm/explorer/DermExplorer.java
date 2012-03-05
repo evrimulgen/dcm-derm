@@ -16,26 +16,26 @@ import org.weasis.dicom.explorer.DicomModel;
  *
  * @author mariano
  */
-public class DermExplorer implements DataExplorerView {
+public class DermExplorer {
 
-    private static final Logger log = LoggerFactory.getLogger(DermExplorer.class);
-    
+	private static final Logger log = LoggerFactory.getLogger(DermExplorer.class);
+//    
     public final static String NAME = Messages.getString("DermExplorer.title");
     public final static String BUTTON_NAME = Messages.getString("DermExplorer.btn_title");
     public final static String DESCRIPTION = Messages.getString("DermExplorer.desc");
     private final DicomModel model;
-    
-    private final AbstractAction importAction = new AbstractAction(
-        Messages.getString("DermExplorer.to")) { 
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                log.info("DERM Action command: " + e.getActionCommand());
-                
-                ImgImportDialog dialog = new ImgImportDialog(null, true, model);
-                JMVUtils.showCenterScreen(dialog);
-            }
-    };
+//    
+//    private final AbstractAction importAction = new AbstractAction(
+//        Messages.getString("DermExplorer.to")) { 
+//
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                log.info("DERM Action command: " + e.getActionCommand());
+//                
+//                ImgImportDialog dialog = new ImgImportDialog(null, true, model);
+//                JMVUtils.showCenterScreen(dialog);
+//            }
+//    };
     
     public DermExplorer() {
         this(null);
@@ -46,41 +46,41 @@ public class DermExplorer implements DataExplorerView {
         log.info("DermExplorer initialized.");
     }
     
-    @Override
+
     public void dispose() {
     }
 
-    @Override
+
     public DataExplorerModel getDataExplorerModel() {
          return model;
     }
 
-    @Override
+
     public Action getOpenImportDialogAction() {
-        return importAction;
+        return null;
     }
 
-    @Override
+
     public Action getOpenExportDialogAction() {
         return null;
     }
 
-    @Override
+
     public void propertyChange(PropertyChangeEvent pce) {
         log.info("DERM property change");
     }
 
-    @Override
+
     public String getUIName() {
         return DermExplorer.NAME;
     }
 
-    @Override
+
     public String getDescription() {
         return DermExplorer.DESCRIPTION;
     }
 
-    @Override
+
     public Icon getIcon() {
         return null;
     }
