@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.derm.explorer.DermExplorer">
-   <implementation class="org.weasis.derm.explorer.DermExplorer"/>
-   <property name="name" type="String" value="Derm Image Explorer"/>
-   <property name="description" type="String" value="Explore Derm Dicom data by patient, study and series"/>
-   <service>
-      <provide interface="org.weasis.core.api.explorer.DataExplorerView"/>
-   </service>
-</scr:component>
