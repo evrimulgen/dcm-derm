@@ -40,6 +40,7 @@ package in.raster.mayam.form;
 
 import com.nilo.plaf.nimrod.NimRODLookAndFeel;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
+import dcm.derm.human.viewer.BodyChooser;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegate.ImportDcmDirDelegate;
 import in.raster.mayam.delegate.InputArgumentsParser;
@@ -293,6 +294,7 @@ public class MainScreen extends javax.swing.JFrame {
         queryRetrieveButton = new javax.swing.JButton();
         viewerButton = new javax.swing.JButton();
         queueButton = new javax.swing.JButton();
+        humanButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         importMenuItem = new javax.swing.JMenuItem();
@@ -323,7 +325,7 @@ public class MainScreen extends javax.swing.JFrame {
         setTitle(bundle.getString("MainScreen.title_1")); // NOI18N
         setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/in/raster/mayam/form/images/fav_mayam.png")));
 
-        localDatabaseLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        localDatabaseLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         localDatabaseLabel.setText(bundle.getString("MainScreen.localDatabaseLabel.text_1")); // NOI18N
 
         jSplitPane1.setDividerLocation(256);
@@ -373,7 +375,7 @@ public class MainScreen extends javax.swing.JFrame {
         thumbnailScroll.setViewportView(thumbnailDisplay);
 
         seriesLabel.setBackground(new java.awt.Color(0, 0, 0));
-        seriesLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        seriesLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         seriesLabel.setForeground(new java.awt.Color(255, 138, 0));
         seriesLabel.setText(bundle.getString("MainScreen.seriesLabel.text_1")); // NOI18N
         seriesLabel.setOpaque(true);
@@ -407,7 +409,7 @@ public class MainScreen extends javax.swing.JFrame {
             .add(contentAreaLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(contentAreaLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1254, Short.MAX_VALUE)
+                    .add(jSplitPane1)
                     .add(localDatabaseLabel))
                 .addContainerGap())
         );
@@ -421,7 +423,7 @@ public class MainScreen extends javax.swing.JFrame {
 
         headerPanel.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(13, 13, 13)));
 
-        importButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        importButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/import.png"))); // NOI18N
         importButton.setText(bundle.getString("MainScreen.importButton.text_1")); // NOI18N
         importButton.setBorderPainted(false);
@@ -435,7 +437,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        exportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        exportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/export_study.png"))); // NOI18N
         exportButton.setText(bundle.getString("MainScreen.exportButton.text_1")); // NOI18N
         exportButton.setBorderPainted(false);
@@ -450,7 +452,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        cdImportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        cdImportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         cdImportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/cd_import.png"))); // NOI18N
         cdImportButton.setText(bundle.getString("MainScreen.cdImportButton.text_1")); // NOI18N
         cdImportButton.setBorderPainted(false);
@@ -465,7 +467,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        deleteButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        deleteButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/delete_study.png"))); // NOI18N
         deleteButton.setText(bundle.getString("MainScreen.deleteButton.text_1")); // NOI18N
         deleteButton.setBorderPainted(false);
@@ -480,7 +482,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        metaDataButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        metaDataButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         metaDataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/metadata_mainpage.png"))); // NOI18N
         metaDataButton.setText(bundle.getString("MainScreen.metaDataButton.text_1")); // NOI18N
         metaDataButton.setBorderPainted(false);
@@ -495,7 +497,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        sendButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        sendButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         sendButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/send.png"))); // NOI18N
         sendButton.setText(bundle.getString("MainScreen.sendButton.text_1")); // NOI18N
         sendButton.setBorderPainted(false);
@@ -510,7 +512,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        queryRetrieveButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        queryRetrieveButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         queryRetrieveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/query.png"))); // NOI18N
         queryRetrieveButton.setText(bundle.getString("MainScreen.queryRetrieveButton.text_1")); // NOI18N
         queryRetrieveButton.setBorderPainted(false);
@@ -525,7 +527,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        viewerButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        viewerButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         viewerButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/viewer.png"))); // NOI18N
         viewerButton.setText(bundle.getString("MainScreen.viewerButton.text_1")); // NOI18N
         viewerButton.setBorderPainted(false);
@@ -540,7 +542,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        queueButton.setFont(new java.awt.Font("Lucida Grande", 1, 12));
+        queueButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         queueButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/queue.png"))); // NOI18N
         queueButton.setText(bundle.getString("MainScreen.queueButton.text_1")); // NOI18N
         queueButton.setBorderPainted(false);
@@ -553,6 +555,25 @@ public class MainScreen extends javax.swing.JFrame {
         queueButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 queueButtonActionPerformed(evt);
+            }
+        });
+
+        humanButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
+        humanButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body2.png"))); // NOI18N
+        humanButton.setText(bundle.getString("MainScreen.humanButton.text")); // NOI18N
+        humanButton.setBorderPainted(false);
+        humanButton.setContentAreaFilled(false);
+        humanButton.setFocusPainted(false);
+        humanButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        humanButton.setIconTextGap(11);
+        humanButton.setMaximumSize(new java.awt.Dimension(69, 59));
+        humanButton.setMinimumSize(new java.awt.Dimension(69, 59));
+        humanButton.setPreferredSize(new java.awt.Dimension(52, 50));
+        humanButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body1.png"))); // NOI18N
+        humanButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        humanButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                humanButtonActionPerformed(evt);
             }
         });
 
@@ -579,7 +600,9 @@ public class MainScreen extends javax.swing.JFrame {
                 .add(viewerButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 77, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(queueButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 72, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(558, 558, 558))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(humanButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         headerPanelLayout.linkSize(new java.awt.Component[] {cdImportButton, deleteButton, exportButton, importButton, metaDataButton, queryRetrieveButton, queueButton, sendButton, viewerButton}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
@@ -589,16 +612,20 @@ public class MainScreen extends javax.swing.JFrame {
             .add(headerPanelLayout.createSequentialGroup()
                 .add(5, 5, 5)
                 .add(headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(queueButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(viewerButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(queryRetrieveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(sendButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(metaDataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(deleteButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cdImportButton)
-                    .add(exportButton)
-                    .add(importButton))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(humanButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(headerPanelLayout.createSequentialGroup()
+                        .add(headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(queueButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(viewerButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(queryRetrieveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(sendButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(metaDataButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(deleteButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(cdImportButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(exportButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(importButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         headerPanelLayout.linkSize(new java.awt.Component[] {cdImportButton, deleteButton, exportButton, importButton, metaDataButton, queryRetrieveButton, queueButton, sendButton, viewerButton}, org.jdesktop.layout.GroupLayout.VERTICAL);
@@ -607,7 +634,7 @@ public class MainScreen extends javax.swing.JFrame {
         container.setLayout(containerLayout);
         containerLayout.setHorizontalGroup(
             containerLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(headerPanel, 0, 1274, Short.MAX_VALUE)
+            .add(headerPanel, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .add(contentArea, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         containerLayout.setVerticalGroup(
@@ -1023,6 +1050,12 @@ public class MainScreen extends javax.swing.JFrame {
         queryRetrieve.setVisible(true);
     }//GEN-LAST:event_QRMenuItem1ActionPerformed
 
+    private void humanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_humanButtonActionPerformed
+        BodyChooser bChooser = new BodyChooser(this, true);
+        bChooser.setLocationRelativeTo(this);
+        bChooser.setVisible(true);
+    }//GEN-LAST:event_humanButtonActionPerformed
+
     private void setNimrodTheme() {
         try {
             UIManager.setLookAndFeel(new NimRODLookAndFeel());
@@ -1203,6 +1236,7 @@ public class MainScreen extends javax.swing.JFrame {
     private javax.swing.JMenu fileMenu;
     private javax.swing.JPanel headerPanel;
     private javax.swing.JMenu helpMenu;
+    private javax.swing.JButton humanButton;
     private javax.swing.JButton importButton;
     private javax.swing.JMenuItem importMenuItem;
     private javax.swing.JSeparator jSeparator2;
