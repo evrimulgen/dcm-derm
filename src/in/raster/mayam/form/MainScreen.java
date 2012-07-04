@@ -559,7 +559,7 @@ public class MainScreen extends javax.swing.JFrame {
         });
 
         humanButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        humanButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body2.png"))); // NOI18N
+        humanButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body1.png"))); // NOI18N
         humanButton.setText(bundle.getString("MainScreen.humanButton.text")); // NOI18N
         humanButton.setBorderPainted(false);
         humanButton.setContentAreaFilled(false);
@@ -569,7 +569,7 @@ public class MainScreen extends javax.swing.JFrame {
         humanButton.setMaximumSize(new java.awt.Dimension(69, 59));
         humanButton.setMinimumSize(new java.awt.Dimension(69, 59));
         humanButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        humanButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body1.png"))); // NOI18N
+        humanButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body2.png"))); // NOI18N
         humanButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         humanButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
