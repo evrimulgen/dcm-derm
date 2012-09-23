@@ -6,6 +6,7 @@ package dcm.derm.human.viewer;
 
 import in.raster.mayam.context.ApplicationContext;
 
+
 /**
  *
  * @author Mariano
@@ -123,15 +124,27 @@ public class BodyChooser extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void maleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maleButtonActionPerformed
-        HumanViewer hViewer = new HumanViewer("M");
+        BodyManager.getInstance().reset();
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                BodyJFrame frame = new BodyJFrame(BodyJFrame.male);
+                BodyManager.getInstance().addObserver(frame);
+                frame.setVisible(true);
+            }
+        });
         this.setVisible(false);
-        hViewer.setVisible(true);
     }//GEN-LAST:event_maleButtonActionPerformed
 
     private void femaleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_femaleButtonActionPerformed
-        HumanViewer hViewer = new HumanViewer("F");
+        BodyManager.getInstance().reset();
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                BodyJFrame frame = new BodyJFrame(BodyJFrame.female);
+                BodyManager.getInstance().addObserver(frame);
+                frame.setVisible(true);
+            }
+        });
         this.setVisible(false);
-        hViewer.setVisible(true);
     }//GEN-LAST:event_femaleButtonActionPerformed
 
     /**
