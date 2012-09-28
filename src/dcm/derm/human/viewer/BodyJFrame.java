@@ -27,10 +27,10 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
     
     public BodyJFrame(String gender) {
         if(male.equals(gender)) {
-            model = "man.j3o";
+            model = "/assets/Models/man.j3o";
         }
         else {
-            model = "woman.j3o";
+            model = "/assets/Models/woman.j3o";
         }
         initComponents();
         jList1.addListSelectionListener(BodyManager.getInstance());
