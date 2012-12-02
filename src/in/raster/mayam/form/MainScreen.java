@@ -1209,6 +1209,17 @@ public class MainScreen extends javax.swing.JFrame {
     public WindowingLayeredCanvas getCanvas() {
         return canvas;
     }
+    
+    public void reInitComponents(){
+        mainScreenObj.getContentPane().removeAll();
+        initComponents();
+        initQR();
+        restartReceiver();
+        showLocalDBStorage();
+        showThumbnails();
+        initNetworkQueue();
+        initSendingProgress();
+    }
 
     /**
      * @param args the command line arguments
