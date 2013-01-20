@@ -64,6 +64,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     LayoutManagerPanel layoutManagerPanel1;
     WindowingManagerPanel windowingManagerPanel1;
     ServerManager serverManager;
+    HL7ServerManager hl7ServerManager;
 
     /** Creates new form SettingsDialog */
     public SettingsDialog(java.awt.Frame parent, boolean modal) {
@@ -85,6 +86,9 @@ public class SettingsDialog extends javax.swing.JDialog {
         jPanel4.add(serverManager, "card7");
         InternationalizationForm internationalizationForm=new InternationalizationForm();
         jPanel4.add(internationalizationForm, "card8");
+        hl7ServerManager = new HL7ServerManager();
+        hl7ServerManager.addServerChangeListener(m.getHL7QueryScreen());
+        jPanel4.add(hl7ServerManager, "card9");
 
     }
 
@@ -107,12 +111,14 @@ public class SettingsDialog extends javax.swing.JDialog {
         DefaultMutableTreeNode node3 = new DefaultMutableTreeNode("Layout");
         DefaultMutableTreeNode node4 = new DefaultMutableTreeNode("Window Configuration");
         DefaultMutableTreeNode node5 = new DefaultMutableTreeNode("Preset");
-        DefaultMutableTreeNode node6 = new DefaultMutableTreeNode("Servers");
+        DefaultMutableTreeNode node6 = new DefaultMutableTreeNode("DICOM Servers");
         DefaultMutableTreeNode node7 = new DefaultMutableTreeNode("Language");
+        DefaultMutableTreeNode node8 = new DefaultMutableTreeNode("HL7 Servers");
         rootNode.add(node2);
         rootNode.add(node3);
         rootNode.add(node4);
         rootNode.add(node6);
+        rootNode.add(node8);
         rootNode.add(node5);
         rootNode.add(node7);
         return rootNode;
@@ -293,13 +299,16 @@ public class SettingsDialog extends javax.swing.JDialog {
         } else if (node.getUserObject().toString().equalsIgnoreCase("Preset")) {
             ((CardLayout) jPanel4.getLayout()).show(jPanel4, "card2");
 
-        } else if (node.getUserObject().toString().equalsIgnoreCase("Servers")) {
+        } else if (node.getUserObject().toString().equalsIgnoreCase("DICOM Servers")) {
             ((CardLayout) jPanel4.getLayout()).show(jPanel4, "card7");
 
         }
         else if (node.getUserObject().toString().equalsIgnoreCase("Language")) {
             ((CardLayout) jPanel4.getLayout()).show(jPanel4, "card8");
 
+        }
+        else if (node.getUserObject().toString().equalsIgnoreCase("HL7 Servers")) {
+            ((CardLayout) jPanel4.getLayout()).show(jPanel4, "card9");
         }
     }//GEN-LAST:event_jTree1ValueChanged
 
