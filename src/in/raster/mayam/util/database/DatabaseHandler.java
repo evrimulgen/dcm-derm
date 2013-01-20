@@ -46,6 +46,7 @@ import in.raster.mayam.model.AEModel;
 import in.raster.mayam.model.Instance;
 import in.raster.mayam.model.PresetModel;
 import in.raster.mayam.model.Series;
+import in.raster.mayam.model.ServerHL7Model;
 import in.raster.mayam.model.ServerModel;
 import in.raster.mayam.model.Study;
 import in.raster.mayam.model.StudyModel;
@@ -86,6 +87,7 @@ public class DatabaseHandler {
     private static final String seriesTable = "series";
     private static final String instanceTable = "image";
     private static final String aeTitleTable = "aetitles";
+    private static final String hl7Table = "hl7"; //mayam derm CAD
     private static final String localeTable = "locale";
     //Named Constants for username and password of Database 
     private static final String username = "mayam";
@@ -378,6 +380,11 @@ public class DatabaseHandler {
 
             sql = "create table " + localeTable + "(pk integer primary key GENERATED ALWAYS AS IDENTITY,country varchar(255),countrycode varchar(10),language varchar(255),languagecode varchar(10),localeid varchar(255),status varchar(155))";
             statement.executeUpdate(sql);
+            
+            //mayam derm CAD
+            sql = "create table " + hl7Table + "(servername varchar(255),serveraddr varchar(128),port varchar(10),subprotocol varchar(255))";
+            statement.executeUpdate(sql);
+            
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -992,7 +999,7 @@ public class DatabaseHandler {
         }
         return serverList;
     }
-
+    
     public int[] getRowColumnForModality(String modality) {
         int rowColumn[] = new int[2];
         try {
@@ -1910,6 +1917,7 @@ public class DatabaseHandler {
             statement.execute("drop table preset");
             statement.execute("drop table layout");
             statement.execute("drop table modality");
+            statement.execute("drop table " + hl7Table); // Mayam Derm CAD
             conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -2173,4 +2181,90 @@ public class DatabaseHandler {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    
+    // Añadido Derm DICOM
+    /* ************************************************************************** */
+    public ServerHL7Model getServerHL7Detail(String serverName) {
+        ServerHL7Model hl7 = null;
+        try {
+            String sql = "select * from "+ hl7Table +" where servername='" + serverName + "'";
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                hl7 = new ServerHL7Model();
+                hl7.setServerName(rs.getString("servername"));
+                hl7.setServerAddr(rs.getString("serveraddr"));
+                hl7.setPort(rs.getInt("port"));
+                hl7.setSubProtocol(rs.getString("subprotocol"));
+            }
+            rs.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return hl7;
+    }
+        
+   /**
+     * Retorn lista de servidores HL7
+     * @return 
+     */
+    public ArrayList getServerHL7List() {
+        ArrayList serverList = new ArrayList();
+        try {
+            String sql = "select * from "+ hl7Table;
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                ServerHL7Model serverModel = new ServerHL7Model();
+                serverModel.setServerName(rs.getString("servername"));
+                serverModel.setServerAddr(rs.getString("serveraddr"));
+                serverModel.setPort(rs.getInt("port"));
+                serverModel.setSubProtocol(rs.getString("subprotocol"));
+                serverList.add(serverModel);
+            }
+            rs.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return serverList;
+    }
+    
+    /**
+     * Actualiza entradas de servidores HL7
+     * @param serverModel 
+     */
+    public void updateServerHL7ListValues(ServerHL7Model serverModel) {
+        try {
+            int n = conn.createStatement().executeUpdate("update "+hl7Table+" set servername='" + serverModel.getServerName() 
+                    + "',serveraddr='" + serverModel.getServerAddr()
+                    + "',port='" + serverModel.getPort()
+                    + "',subprotocol='" + serverModel.getSubProtocol()+"'");
+            conn.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void deleteHL7Server(ServerHL7Model serverModel) {
+        try {
+            String sql = "delete from "+hl7Table+" where servername='" + serverModel.getServerName() +"'";
+            conn.createStatement().execute(sql);
+            conn.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertHL7Server(ServerHL7Model serverModel) {
+        try {
+            boolean insertStatus = conn.createStatement().execute("insert into " +hl7Table+"(servername,serveraddr,port,subprotocol) values('" + serverModel.getServerName() + "','" 
+                    + serverModel.getServerAddr() + "','" + serverModel.getPort() + "','" + serverModel.getSubProtocol() + "')");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    /* ************************************************************************** */
+    // Fin Añadido Derm DICOM
 }
