@@ -53,7 +53,6 @@ import in.raster.mayam.delegate.StudyListUpdator;
 import in.raster.mayam.delegate.WadoRetrieveDelegate;
 import in.raster.mayam.form.dialog.About;
 import in.raster.mayam.form.dialog.ConfirmDelete;
-import in.raster.mayam.form.dialog.FileChooserDialog;
 import in.raster.mayam.form.dialog.ExportLocationChooser;
 import in.raster.mayam.form.dialog.ServerListDialog;
 import in.raster.mayam.form.dialog.SettingsDialog;
@@ -160,6 +159,10 @@ public class MainScreen extends javax.swing.JFrame {
     private void initQR() {
         queryRetrieve = new QueryRetrieve();
         queryRetrieve.setLocationRelativeTo(this);
+        createDicomFrame = new CreateDicomFrame(this);
+        createDicomFrame.setLocationRelativeTo(this);
+        hl7QueryRetrieve = new HL7QueryRetrieve(createDicomFrame);
+        hl7QueryRetrieve.setLocationRelativeTo(createDicomFrame);
     }
     /**
      * This routine used to set the app specific locale
@@ -200,7 +203,7 @@ public class MainScreen extends javax.swing.JFrame {
             System.out.println("Start Server listening on port " + receiveDelegate.getPort());
         } catch (Exception e) {
             ApplicationContext.writeLog(e.toString());
-            e.printStackTrace();
+            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
@@ -229,7 +232,7 @@ public class MainScreen extends javax.swing.JFrame {
             startReceiver();
             System.out.println("Start Server listening on port " + receiveDelegate.getPort());
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
@@ -800,9 +803,14 @@ public class MainScreen extends javax.swing.JFrame {
         importHandler();
     }//GEN-LAST:event_importButtonActionPerformed
     private void importHandler() {
-        FileChooserDialog fcd = new FileChooserDialog(this, true);
-        fcd.setLocationRelativeTo(this);
-        fcd.setVisible(true);
+        //CreateDicomFrame dd = new CreateDicomFrame(this);
+        createDicomFrame.reset();
+        //createDicomFrame.setLocationRelativeTo(this);
+        createDicomFrame.setVisible(true);
+        //Codigo original:
+        //FileChooserDialog fcd = new FileChooserDialog(this, true);
+        //fcd.setLocationRelativeTo(this);
+        //fcd.setVisible(true);
     }
     private void queryRetrieveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryRetrieveButtonActionPerformed
         queryRetrieve.setVisible(true);
@@ -935,6 +943,10 @@ public class MainScreen extends javax.swing.JFrame {
     public QueryRetrieve getQueryScreen() {
         return this.queryRetrieve;
     }
+    
+    public HL7QueryRetrieve getHL7QueryScreen() {
+        return this.hl7QueryRetrieve;
+    }
 
     /**
      * This routine is used to process the mouse event for the study list table
@@ -967,7 +979,7 @@ public class MainScreen extends javax.swing.JFrame {
                 dicomTagsViewer.setVisible(true);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
         }
     }//GEN-LAST:event_metaDataButtonActionPerformed
     private void aboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutMenuItemActionPerformed
@@ -1051,9 +1063,20 @@ public class MainScreen extends javax.swing.JFrame {
     }//GEN-LAST:event_QRMenuItem1ActionPerformed
 
     private void humanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_humanButtonActionPerformed
-        BodyChooser bChooser = new BodyChooser(this, true);
-        bChooser.setLocationRelativeTo(this);
-        bChooser.setVisible(true);
+        if (studyListTable.getSelectedRow() != -1) {
+            int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
+            String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
+            
+            // Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
+            // o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
+            
+            // Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
+            // desde BD segun SOPInstanceUID del archivo
+            
+            //BodyChooser bChooser = new BodyChooser(this, true);
+            //bChooser.setLocationRelativeTo(this);
+            //bChooser.setVisible(true);
+        }
     }//GEN-LAST:event_humanButtonActionPerformed
 
     private void setNimrodTheme() {
@@ -1102,6 +1125,8 @@ public class MainScreen extends javax.swing.JFrame {
     private void updateComponentsTreeUI() {
         SwingUtilities.updateComponentTreeUI(this);
         SwingUtilities.updateComponentTreeUI(queryRetrieve);
+        SwingUtilities.updateComponentTreeUI(hl7QueryRetrieve);
+        SwingUtilities.updateComponentTreeUI(createDicomFrame);
         if (ApplicationContext.imageViewExist()) {
             SwingUtilities.updateComponentTreeUI(ApplicationContext.imgView);
         }
@@ -1283,6 +1308,8 @@ public class MainScreen extends javax.swing.JFrame {
     private ReceiveDelegate receiveDelegate = null;
     public static ArrayList<Study> studyList = new ArrayList<Study>();
     private QueryRetrieve queryRetrieve = null;
+    private HL7QueryRetrieve hl7QueryRetrieve = null;
+    private CreateDicomFrame createDicomFrame = null;
     public static SendReceiveFrame sndRcvFrm;
     private WindowingLayeredCanvas canvas = null;
     public static MainScreen mainScreenObj;

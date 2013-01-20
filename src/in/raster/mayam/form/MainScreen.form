@@ -370,9 +370,9 @@
                           <Group type="102" alignment="0" attributes="1">
                               <Component id="seriesLabel" min="-2" pref="20" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="thumbnailScroll" pref="495" max="32767" attributes="0"/>
+                              <Component id="thumbnailScroll" pref="496" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="windowingPanelCanvas" alignment="0" pref="521" max="32767" attributes="2"/>
+                          <Component id="windowingPanelCanvas" alignment="0" pref="522" max="32767" attributes="2"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
