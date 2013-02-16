@@ -39,8 +39,12 @@
 package in.raster.mayam.form;
 
 import com.nilo.plaf.nimrod.NimRODLookAndFeel;
+import com.pixelmed.dicom.AttributeList;
+import com.pixelmed.dicom.DicomException;
+import com.pixelmed.dicom.TagFromName;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
-import dcm.derm.human.viewer.BodyChooser;
+import dcm.derm.human.viewer.BodyJFrame;
+import dcm.derm.human.viewer.BodyManager;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegate.ImportDcmDirDelegate;
 import in.raster.mayam.delegate.InputArgumentsParser;
@@ -54,22 +58,24 @@ import in.raster.mayam.delegate.WadoRetrieveDelegate;
 import in.raster.mayam.form.dialog.About;
 import in.raster.mayam.form.dialog.ConfirmDelete;
 import in.raster.mayam.form.dialog.ExportLocationChooser;
+import in.raster.mayam.form.dialog.FileChooserDialog;
 import in.raster.mayam.form.dialog.ServerListDialog;
 import in.raster.mayam.form.dialog.SettingsDialog;
-import in.raster.mayam.util.DicomTags;
-import in.raster.mayam.util.DicomTagsReader;
 import in.raster.mayam.model.AEModel;
 import in.raster.mayam.model.InputArgumentValues;
 import in.raster.mayam.model.ServerModel;
 import in.raster.mayam.model.Study;
 import in.raster.mayam.model.table.StudyListModel;
 import in.raster.mayam.model.table.renderer.CellRenderer;
+import in.raster.mayam.util.DicomTags;
+import in.raster.mayam.util.DicomTagsReader;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -78,10 +84,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -803,14 +809,12 @@ public class MainScreen extends javax.swing.JFrame {
         importHandler();
     }//GEN-LAST:event_importButtonActionPerformed
     private void importHandler() {
-        //CreateDicomFrame dd = new CreateDicomFrame(this);
-        createDicomFrame.reset();
-        //createDicomFrame.setLocationRelativeTo(this);
-        createDicomFrame.setVisible(true);
+        //createDicomFrame.reset();
+        //createDicomFrame.setVisible(true);
         //Codigo original:
-        //FileChooserDialog fcd = new FileChooserDialog(this, true);
-        //fcd.setLocationRelativeTo(this);
-        //fcd.setVisible(true);
+        FileChooserDialog fcd = new FileChooserDialog(this, true);
+        fcd.setLocationRelativeTo(this);
+        fcd.setVisible(true);
     }
     private void queryRetrieveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryRetrieveButtonActionPerformed
         queryRetrieve.setVisible(true);
@@ -1064,18 +1068,46 @@ public class MainScreen extends javax.swing.JFrame {
 
     private void humanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_humanButtonActionPerformed
         if (studyListTable.getSelectedRow() != -1) {
-            int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-            String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-            
-            // Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
-            // o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
-            
-            // Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
-            // desde BD segun SOPInstanceUID del archivo
-            
-            //BodyChooser bChooser = new BodyChooser(this, true);
-            //bChooser.setLocationRelativeTo(this);
-            //bChooser.setVisible(true);
+            try {
+//              int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
+//              String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
+                AttributeList list = new AttributeList();
+                list.read(new File(this.canvas.getFilePath()));
+                // Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
+                // o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
+                
+                //System.out.println("SOP: " + list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]);
+                //System.out.println(list.get(TagFromName.PatientSex));
+                //System.out.println("Sex: " + list.get(TagFromName.PatientSex).getOriginalStringValues()[0]);
+                final String sopInstanceUID =  list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]; 
+                final boolean exists = ApplicationContext.databaseRef.checkRecordExists(
+                    ApplicationContext.databaseRef.coordTable, ApplicationContext.databaseRef.coordTablePK,
+                       sopInstanceUID);
+                
+                // Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
+                // desde BD segun SOPInstanceUID del archivo
+                //abrir dialogo para registrar puntos. Elegir segun sexo
+                final String sex = 
+                    BodyJFrame.male; //<-para testear *** Esto es lo que va: list.get(TagFromName.PatientSex).getOriginalStringValues()[0];
+                    
+                BodyManager.getInstance().reset();
+                java.awt.EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID); //exists determina si tiene puntos previos o no 
+                        BodyManager.getInstance().addObserver(frame);
+                        frame.setVisible(true);
+                    }
+                });
+                //BodyChooser bChooser = new BodyChooser(this, true);
+                //bChooser.setVisible(true);
+                //bChooser.setVisible(true);
+                
+            } catch (IOException ex) {
+                Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (DicomException ex) {
+                Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_humanButtonActionPerformed
 
@@ -1125,7 +1157,7 @@ public class MainScreen extends javax.swing.JFrame {
     private void updateComponentsTreeUI() {
         SwingUtilities.updateComponentTreeUI(this);
         SwingUtilities.updateComponentTreeUI(queryRetrieve);
-        SwingUtilities.updateComponentTreeUI(hl7QueryRetrieve);
+        SwingUtilities.updateComponentTreeUI(hl7QueryRetrieve); //Derm CAD
         SwingUtilities.updateComponentTreeUI(createDicomFrame);
         if (ApplicationContext.imageViewExist()) {
             SwingUtilities.updateComponentTreeUI(ApplicationContext.imgView);
