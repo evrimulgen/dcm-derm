@@ -1,10 +1,13 @@
 /*
+ ***************** ESTA CLASE QUEDA OBSOLETA POR EL MOMENTO *****************
+ * 
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
 package dcm.derm.human.viewer;
 
 import in.raster.mayam.context.ApplicationContext;
+import java.awt.Frame;
 
 
 /**
@@ -16,7 +19,7 @@ public class BodyChooser extends javax.swing.JDialog {
     /**
      * Creates new form BodyChooser
      */
-    public BodyChooser(java.awt.Frame parent, boolean modal) {
+    public BodyChooser(Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
     }
@@ -127,7 +130,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(BodyJFrame.male);
+                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.male, "1");
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }
@@ -139,7 +142,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(BodyJFrame.female);
+                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.female, "1");
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }
