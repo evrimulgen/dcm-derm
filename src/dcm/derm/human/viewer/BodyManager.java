@@ -17,7 +17,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
     private static BodyManager instance = null;
     private Vector3f currentCoord = null;
     ArrayList coordList = null;
-    
+   
     private BodyManager() {
         coordList = new ArrayList();
     }
@@ -40,6 +40,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
         return currentCoord;
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent lse) {
         if (!lse.getValueIsAdjusting()) {
             JList list = (JList)lse.getSource();
@@ -54,4 +55,9 @@ public class BodyManager extends Observable implements ListSelectionListener {
         currentCoord = null;
         coordList.clear();
     }
+
+    void setCoordList(ArrayList<Vector3f> coordList) {
+        this.coordList = coordList;
+    }
+    
 } 
