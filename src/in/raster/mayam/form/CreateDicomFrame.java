@@ -6,6 +6,7 @@ package in.raster.mayam.form;
 
 import com.pixelmed.dicom.DicomException;
 import com.pixelmed.dicom.ImageToDicom;
+import com.pixelmed.dicom.UIDGenerator;
 import dcm.derm.human.viewer.BodyChooser;
 import in.raster.mayam.delegate.ImportDelegate;
 import java.io.File;
@@ -20,8 +21,6 @@ import javax.swing.JFileChooser;
  */
 public class CreateDicomFrame extends javax.swing.JFrame {
 
-    private String srcFilePath = null;
-    private MainScreen ms;
     /**
      * Creates new form NewDicomDialog
      */
@@ -64,6 +63,9 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         modality = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         patientSex = new javax.swing.JComboBox();
+        coordsButton = new javax.swing.JButton();
+
+        setPreferredSize(new java.awt.Dimension(690, 600));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -139,6 +141,13 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
         patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "M", "F" }));
 
+        coordsButton.setText("Coords");
+        coordsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                coordsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -148,7 +157,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(accesionNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
@@ -166,6 +175,8 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(patientName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(coordsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(18, 18, 18)
                                         .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(18, 18, 18)
                                         .addComponent(queryButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -236,7 +247,8 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(createButton)
                     .addComponent(cancelButton)
-                    .addComponent(queryButton))
+                    .addComponent(queryButton)
+                    .addComponent(coordsButton))
                 .addGap(15, 15, 15))
         );
 
@@ -296,9 +308,12 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                       * @param modality may be null
                       * @param sopClass may be null
                       * @exception DicomException */
-                    //TODO: agregar validacones:
+                    //TODO: agregar validaciones:
                     ImageToDicom itd = new ImageToDicom(srcFilePath,dstFilePath,
-                            "Mariano Diaz", "0010012010", "000001", "000001", "000001", null, null);
+                            patientName.getText(),"000001","000001","000001","000001",null,null);
+                    File openedFile = new File(dstFilePath); 
+                    ImportDelegate importDelegate = new ImportDelegate(openedFile, false, ms);
+                    this.setVisible(false);
                 } catch (DicomException e) {
                     Logger.getLogger(CreateDicomFrame.class.getName()).log(Level.SEVERE, null, e);
                 } catch (IOException e) {
@@ -306,8 +321,6 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                 }
             }
         }
-        File openedFile = new File(dstFilePath); 
-        ImportDelegate importDelegate = new ImportDelegate(openedFile, false, ms);
     }//GEN-LAST:event_createButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -319,6 +332,17 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         //hl7QueryRetrieve.setLocationRelativeTo(this);
         hl7QueryRetrieve.setVisible(true);
     }//GEN-LAST:event_queryButtonActionPerformed
+
+    private void coordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_coordsButtonActionPerformed
+        /*try {
+            UIDGenerator u = new UIDGenerator();
+            newSOPInstanceUID = u.getNewSOPInstanceUID("000001","000001","000001");
+            
+        } catch (DicomException ex) {
+            Logger.getLogger(CreateDicomFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }*/
+        
+    }//GEN-LAST:event_coordsButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -364,6 +388,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JTextField accesionNumber;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JButton coordsButton;
     private javax.swing.JButton createButton;
     public javax.swing.JTextField dob;
     private javax.swing.JButton imageButton;
@@ -387,7 +412,10 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     public javax.swing.JTextField studyDesc;
     public javax.swing.JTextField studyId;
     // End of variables declaration//GEN-END:variables
-
+    private String srcFilePath = null;
+    private MainScreen ms = null;
+    //private String newSOPInstanceUID = null; //Identificador unico de archivo DICOM
+    
     public void reset() {
         accesionNumber.setText("");
         dob.setText("");
@@ -397,6 +425,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         studyDate.setText("");
         studyDesc.setText("");
         studyId.setText("");
+        //newSOPInstanceUID = null;
     }
 
 }
