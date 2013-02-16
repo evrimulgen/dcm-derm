@@ -6,7 +6,10 @@ package dcm.derm.human.viewer;
 
 import com.jme3.math.Vector3f;
 import com.jme3.system.JmeCanvasContext;
+import in.raster.mayam.context.ApplicationContext;
+import in.raster.mayam.util.database.DatabaseHandler;
 import java.awt.Canvas;
+import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.DefaultListModel;
@@ -20,20 +23,24 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
     private String model = null;
     public static String male = "M";
     public static String female = "F";
+    private ArrayList<Vector3f> coordList = null;
+    private String sIUID = null;
     
     public BodyJFrame() {
         initComponents();
     }
     
-    public BodyJFrame(String gender) {
+    public BodyJFrame(boolean isNew, String gender, String sIUID) {
         if(male.equals(gender)) {
             model = "/assets/Models/man.j3o";
         }
         else {
             model = "/assets/Models/woman.j3o";
         }
+        this.sIUID = sIUID;
         initComponents();
         jList1.addListSelectionListener(BodyManager.getInstance());
+        initCoords(isNew);
     }
 
     private Canvas getJmeCanvas() {
@@ -62,6 +69,11 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
         canvas1 = getJmeCanvas();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList();
+        addButton = new javax.swing.JButton();
+        removeButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
+        acceptButton = new javax.swing.JButton();
+        removeAllButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -93,29 +105,101 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
         jList1.setPreferredSize(new java.awt.Dimension(35, 144));
         jScrollPane1.setViewportView(jList1);
 
+        addButton.setText("Add");
+        addButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addButtonActionPerformed(evt);
+            }
+        });
+
+        removeButton.setText("Remove");
+        removeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeButtonActionPerformed(evt);
+            }
+        });
+
+        cancelButton.setText("Cancel");
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelButtonActionPerformed(evt);
+            }
+        });
+
+        acceptButton.setText("Accept");
+        acceptButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                acceptButtonActionPerformed(evt);
+            }
+        });
+
+        removeAllButton.setText("Remove All");
+        removeAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeAllButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE))
+                .addGap(21, 21, 21))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(addButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(removeButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(removeAllButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(acceptButton))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
                     .addComponent(jScrollPane1))
                 .addGap(10, 10, 10))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
+        //parent.add
+    }//GEN-LAST:event_addButtonActionPerformed
+
+    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_removeButtonActionPerformed
+
+    private void removeAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAllButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_removeAllButtonActionPerformed
+
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        this.dispose();
+    }//GEN-LAST:event_cancelButtonActionPerformed
+
+    private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
+       ApplicationContext.databaseRef.updateCoords(sIUID.trim(), coordList);
+    }//GEN-LAST:event_acceptButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -152,14 +236,19 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton acceptButton;
+    private javax.swing.JButton addButton;
+    private javax.swing.JButton cancelButton;
     private java.awt.Canvas canvas1;
     private javax.swing.JList jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton removeAllButton;
+    private javax.swing.JButton removeButton;
     // End of variables declaration//GEN-END:variables
     
     private void setItem(String item) {
-        DefaultListModel listModel = null; 
+        DefaultListModel listModel; 
         if (jList1.getModel().getSize() == 0) {
             listModel = new DefaultListModel();
         }
@@ -170,8 +259,21 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
         jList1.setModel(listModel);
     }
 
+    @Override
     public void update(Observable o, Object o1) {
         Vector3f point = ((BodyManager)o).getCoord();
-        setItem(point.toString());
+        coordList.add(point);
+        setItem("Point: "+ String.valueOf(coordList.size()));
+    }
+
+    private void initCoords(boolean isNew) {
+        coordList = new ArrayList<Vector3f>();
+        if(!isNew) {
+            for (Vector3f point : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
+                coordList.add(point);
+                setItem("Point: "+ String.valueOf(coordList.size()));
+            }
+            BodyManager.getInstance().setCoordList(coordList);
+        }
     }
 }
