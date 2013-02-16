@@ -7,8 +7,8 @@ package in.raster.mayam.form;
 //import in.raster.mayam.delegate.EMRServerDelegate;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegate.HL7QueryService;
-import in.raster.mayam.model.HL7StudyModel;
 import in.raster.mayam.model.ServerHL7Model;
+import in.raster.mayam.model.StudyModel;
 import in.raster.mayam.model.table.ServerHL7TableModel;
 import in.raster.mayam.model.table.ServerTableModel;
 import in.raster.mayam.model.table.StudyListModel;
@@ -18,6 +18,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
@@ -287,7 +288,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
                         .add(jTextField3)
                         .add(patientIDText)
                         .add(org.jdesktop.layout.GroupLayout.TRAILING, patientNameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 131, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE))
+                    .add(birthDateSpinner))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -307,7 +308,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(dobLabel)
-                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE))
+                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -440,7 +441,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        serverListTable.setModel(new ServerHL7TableModel());
+        serverListTable.setModel(new ServerTableModel());
         serverListTable.setDefaultRenderer(Object.class, new CellRenderer());
         serverListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         Font ff=new Font("Lucida Grande",Font.BOLD,12);
@@ -451,11 +452,6 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
         serverlistScroll.setViewportView(serverListTable);
 
         verifyButton.setText(bundle.getString("QueryRetrieve.verifyButton.text_1")); // NOI18N
-        verifyButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                //verifyButtonActionPerformed(evt);
-            }
-        });
 
         queryButton.setText(bundle.getString("QueryRetrieve.queryButton.text_1")); // NOI18N
         queryButton.addActionListener(new java.awt.event.ActionListener() {
@@ -509,21 +505,21 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
         jScrollPane2.setViewportView(studyListTable);
 
         serverNameLabel.setBackground(new java.awt.Color(0, 0, 0));
-        serverNameLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        serverNameLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         serverNameLabel.setForeground(new java.awt.Color(255, 138, 0));
         serverNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         serverNameLabel.setText(bundle.getString("QueryRetrieve.serverNameLabel.text_1")); // NOI18N
         serverNameLabel.setOpaque(true);
 
         headerLabel.setBackground(new java.awt.Color(0, 0, 0));
-        headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         headerLabel.setForeground(new java.awt.Color(255, 138, 0));
         headerLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         headerLabel.setText(bundle.getString("QueryRetrieve.headerLabel.text_1")); // NOI18N
         headerLabel.setOpaque(true);
 
         queryFilterLabel.setBackground(new java.awt.Color(0, 0, 0));
-        queryFilterLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        queryFilterLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         queryFilterLabel.setForeground(new java.awt.Color(255, 138, 0));
         queryFilterLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         queryFilterLabel.setText(bundle.getString("QueryRetrieve.queryFilterLabel.text_1")); // NOI18N
@@ -700,7 +696,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
             for (int dataSetCount = 0; dataSetCount < qs.getDatasetVector().size(); dataSetCount++) {
                 try {
                     String[] dataSet = (String[]) qs.getDatasetVector().elementAt(dataSetCount);
-                    HL7StudyModel studyModel = new HL7StudyModel();
+                    StudyModel studyModel = new StudyModel();
                     studyModel.setPatientId("Patient ID dummy");
                     studyModel.setPatientName(dataSet[0]+" "+dataSet[1]);
                     studyModel.setStudyDate("10/10/1010");
