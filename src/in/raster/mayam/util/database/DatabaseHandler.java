@@ -39,6 +39,7 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.util.database;
 
+import com.jme3.math.Vector3f;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.facade.ApplicationFacade;
 import in.raster.mayam.form.MainScreen;
@@ -88,6 +89,8 @@ public class DatabaseHandler {
     private static final String instanceTable = "image";
     private static final String aeTitleTable = "aetitles";
     private static final String hl7Table = "hl7"; //mayam derm CAD
+    public final String coordTable = "coords"; //mayam derm CAD
+    public final String coordTablePK = "SopUID"; //mayam derm CAD
     private static final String localeTable = "locale";
     //Named Constants for username and password of Database 
     private static final String username = "mayam";
@@ -385,6 +388,9 @@ public class DatabaseHandler {
             sql = "create table " + hl7Table + "(servername varchar(255),serveraddr varchar(128),port varchar(10),subprotocol varchar(255))";
             statement.executeUpdate(sql);
             
+            //mayam derm CAD
+            sql = "create table " + coordTable + "("+coordTablePK+" varchar(255) not null, X float, Y float, Z float)";
+            statement.executeUpdate(sql);
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1918,6 +1924,7 @@ public class DatabaseHandler {
             statement.execute("drop table layout");
             statement.execute("drop table modality");
             statement.execute("drop table " + hl7Table); // Mayam Derm CAD
+            statement.execute("drop table " + coordTable); // Mayam Derm CAD
             conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1930,8 +1937,8 @@ public class DatabaseHandler {
             statement.execute("drop table " + seriesTable);
             statement.execute("drop table " + studyTable);
             statement.execute("drop table " + patientTable);
+            statement.execute("drop table " + coordTable); // Mayam Derm CAD
             conn.commit();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -2183,7 +2190,7 @@ public class DatabaseHandler {
     }
     
     
-    // Añadido Derm DICOM
+    // Agregado Derm CAD
     /* ************************************************************************** */
     public ServerHL7Model getServerHL7Detail(String serverName) {
         ServerHL7Model hl7 = null;
@@ -2265,6 +2272,54 @@ public class DatabaseHandler {
         }
     }
     
+    public void updateCoords(String sopInstanceUID, ArrayList<Vector3f> coords) { // MEJORAR ESTO!!!
+        try {
+            deleteCoords(sopInstanceUID);
+            insertCoords(sopInstanceUID, coords);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteCoords(String sopInstanceUID) throws SQLException {
+        String sql = "delete from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
+        conn.createStatement().executeUpdate(sql);
+        conn.commit();
+    }
+
+    private void insertCoords(String sopInstanceUID, ArrayList<Vector3f> coords) throws SQLException {
+        PreparedStatement stm = conn.prepareStatement("insert into " + coordTable + " values(?,?,?,?)");
+        for(Vector3f v : coords) {
+            stm.setString(1, sopInstanceUID);
+            stm.setFloat(2, v.getX());
+            stm.setFloat(3, v.getY());
+            stm.setFloat(4, v.getZ());
+            stm.executeUpdate();
+         }
+        conn.commit();
+    }
+    
+    public ArrayList<Vector3f> getCoords(String sopInstanceUID) {
+        String sql = "select X,Y,Z from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
+        ArrayList<Vector3f> list = new ArrayList<Vector3f>();
+        try {
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                Vector3f v = new Vector3f();
+                v.setX(rs.getFloat("X"));
+                v.setY(rs.getFloat("Y"));
+                v.setZ(rs.getFloat("Z"));
+                list.add(v);
+            }
+            rs.close();
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        } 
+        return list;
+    } 
+    
     /* ************************************************************************** */
-    // Fin Añadido Derm DICOM
+    // Fin Agregado Derm CAD
+
 }
