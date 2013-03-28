@@ -130,7 +130,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.male, "1");
+                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.male, "1", null);
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }
@@ -142,7 +142,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.female, "1");
+                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.female, "1", null);
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }

@@ -40,6 +40,7 @@
 package in.raster.mayam.util.database;
 
 import com.jme3.math.Vector3f;
+import dcm.derm.human.viewer.CoordBean;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.facade.ApplicationFacade;
 import in.raster.mayam.form.MainScreen;
@@ -389,7 +390,7 @@ public class DatabaseHandler {
             statement.executeUpdate(sql);
             
             //mayam derm CAD
-            sql = "create table " + coordTable + "("+coordTablePK+" varchar(255) not null, X float, Y float, Z float)";
+            sql = "create table " + coordTable + "("+coordTablePK+" varchar(255) not null, X float, Y float, Z float, FN integer)";
             statement.executeUpdate(sql);
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -1873,6 +1874,7 @@ public class DatabaseHandler {
             statement.execute("delete from " + seriesTable);
             statement.execute("delete from " + studyTable);
             statement.execute("delete from " + patientTable);
+            statement.execute("delete from " + coordTable); // Mayam CAD
             conn.commit();
         } catch (SQLException e) {
             StringWriter str = new StringWriter();
@@ -2272,7 +2274,7 @@ public class DatabaseHandler {
         }
     }
     
-    public void updateCoords(String sopInstanceUID, ArrayList<Vector3f> coords) { // MEJORAR ESTO!!!
+    public void updateCoords(String sopInstanceUID, ArrayList<CoordBean> coords) { // MEJORAR ESTO!!!
         try {
             deleteCoords(sopInstanceUID);
             insertCoords(sopInstanceUID, coords);
@@ -2287,29 +2289,34 @@ public class DatabaseHandler {
         conn.commit();
     }
 
-    private void insertCoords(String sopInstanceUID, ArrayList<Vector3f> coords) throws SQLException {
-        PreparedStatement stm = conn.prepareStatement("insert into " + coordTable + " values(?,?,?,?)");
-        for(Vector3f v : coords) {
+    private void insertCoords(String sopInstanceUID, ArrayList<CoordBean> coords) throws SQLException {
+        PreparedStatement stm = conn.prepareStatement("insert into " + coordTable + " values(?,?,?,?,?)");
+        for(CoordBean cb : coords) {
             stm.setString(1, sopInstanceUID);
-            stm.setFloat(2, v.getX());
-            stm.setFloat(3, v.getY());
-            stm.setFloat(4, v.getZ());
+            stm.setFloat(2, cb.getPoint().getX());
+            stm.setFloat(3, cb.getPoint().getY());
+            stm.setFloat(4, cb.getPoint().getZ());
+            stm.setInt(5, cb.getFrameNuber());
             stm.executeUpdate();
          }
         conn.commit();
     }
     
-    public ArrayList<Vector3f> getCoords(String sopInstanceUID) {
-        String sql = "select X,Y,Z from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
-        ArrayList<Vector3f> list = new ArrayList<Vector3f>();
+    public ArrayList<CoordBean> getCoords(String sopInstanceUID) { //FN es frame number
+        String sql = "select X,Y,Z,FN from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
+        ArrayList<CoordBean> list = new ArrayList<CoordBean>();
         try {
             ResultSet rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
+                CoordBean cb = new CoordBean();
                 Vector3f v = new Vector3f();
                 v.setX(rs.getFloat("X"));
                 v.setY(rs.getFloat("Y"));
                 v.setZ(rs.getFloat("Z"));
-                list.add(v);
+                cb.setPoint(v);
+                cb.setSOPId(sopInstanceUID);
+                cb.setFrameNuber(rs.getInt("FN"));
+                list.add(cb);
             }
             rs.close();
         }

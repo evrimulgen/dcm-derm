@@ -15,11 +15,12 @@ import javax.swing.event.ListSelectionListener;
 public class BodyManager extends Observable implements ListSelectionListener {
     
     private static BodyManager instance = null;
-    private Vector3f currentCoord = null;
-    ArrayList coordList = null;
+    private CoordBean currentCoord = null;
+    ArrayList<CoordBean> coordList = null;
    
     private BodyManager() {
-        coordList = new ArrayList();
+        coordList = new ArrayList<CoordBean>();
+        currentCoord = new CoordBean();
     }
     
     public static BodyManager getInstance() {
@@ -30,14 +31,16 @@ public class BodyManager extends Observable implements ListSelectionListener {
     }
     
     public void setCoord(Vector3f coord) {
-        currentCoord = coord;
-        coordList.add(coord);
+        currentCoord.setPoint(coord);
+        CoordBean cb = new CoordBean();
+        cb.setPoint(coord);
+        coordList.add(cb);
         setChanged();
         notifyObservers();
     }
     
     public Vector3f getCoord() {
-        return currentCoord;
+        return currentCoord.getPoint();
     }
 
     @Override
@@ -46,18 +49,18 @@ public class BodyManager extends Observable implements ListSelectionListener {
             JList list = (JList)lse.getSource();
             int i = list.getSelectedIndex();
             if(i > -1) {
-                currentCoord = (Vector3f) coordList.get(i);
+                currentCoord = (CoordBean) coordList.get(i);
             }
         }
     }
     
     public void reset() {
-        currentCoord = null;
+        currentCoord.setPoint(null);
         coordList.clear();
     }
 
-    void setCoordList(ArrayList<Vector3f> coordList) {
-        this.coordList = coordList;
+    void setCoordList(ArrayList<CoordBean> coordList) {
+        this.coordList = (ArrayList<CoordBean>) coordList.clone();
     }
     
 } 

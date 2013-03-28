@@ -6,31 +6,36 @@ package dcm.derm.human.viewer;
 
 import com.jme3.math.Vector3f;
 import com.jme3.system.JmeCanvasContext;
+import com.pixelmed.display.SourceImage;
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.util.database.DatabaseHandler;
 import java.awt.Canvas;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.DefaultListModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  *
  * @author mariano
  */
-public class BodyJFrame extends javax.swing.JFrame implements Observer {
+public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSelectionListener {
 
     private String model = null;
     public static String male = "M";
     public static String female = "F";
-    private ArrayList<Vector3f> coordList = null;
+    private ArrayList<CoordBean> coordList = null;
     private String sIUID = null;
+    private SourceImage srcImg = null;
+    private Integer selectedFrameNumber = null;
     
     public BodyJFrame() {
         initComponents();
     }
     
-    public BodyJFrame(boolean isNew, String gender, String sIUID) {
+    public BodyJFrame(boolean isNew, String gender, String sIUID, SourceImage srcImg) {
         if(male.equals(gender)) {
             model = "/assets/Models/man.j3o";
         }
@@ -38,8 +43,10 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
             model = "/assets/Models/woman.j3o";
         }
         this.sIUID = sIUID;
+        this.srcImg = srcImg;
         initComponents();
         jList1.addListSelectionListener(BodyManager.getInstance());
+        jList1.addListSelectionListener(this);
         initCoords(isNew);
     }
 
@@ -74,6 +81,8 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
         cancelButton = new javax.swing.JButton();
         acceptButton = new javax.swing.JButton();
         removeAllButton = new javax.swing.JButton();
+        thumbPanel = new javax.swing.JPanel();
+        frLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -140,23 +149,40 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
             }
         });
 
+        javax.swing.GroupLayout thumbPanelLayout = new javax.swing.GroupLayout(thumbPanel);
+        thumbPanel.setLayout(thumbPanelLayout);
+        thumbPanelLayout.setHorizontalGroup(
+            thumbPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 106, Short.MAX_VALUE)
+        );
+        thumbPanelLayout.setVerticalGroup(
+            thumbPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
+        frLabel.setText("Frame");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(52, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE))
-                .addGap(21, 21, 21))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(frLabel)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)))
+                    .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -171,6 +197,10 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
                         .addComponent(removeAllButton)
                         .addGap(18, 18, 18)
                         .addComponent(cancelButton)
+                        .addGap(48, 48, 48)
+                        .addComponent(frLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(acceptButton))
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
@@ -199,6 +229,7 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
 
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
        ApplicationContext.databaseRef.updateCoords(sIUID.trim(), coordList);
+       this.dispose();
     }//GEN-LAST:event_acceptButtonActionPerformed
 
     /**
@@ -240,11 +271,13 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
     private javax.swing.JButton addButton;
     private javax.swing.JButton cancelButton;
     private java.awt.Canvas canvas1;
+    private javax.swing.JLabel frLabel;
     private javax.swing.JList jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton removeAllButton;
     private javax.swing.JButton removeButton;
+    private javax.swing.JPanel thumbPanel;
     // End of variables declaration//GEN-END:variables
     
     private void setItem(String item) {
@@ -262,18 +295,49 @@ public class BodyJFrame extends javax.swing.JFrame implements Observer {
     @Override
     public void update(Observable o, Object o1) {
         Vector3f point = ((BodyManager)o).getCoord();
-        coordList.add(point);
-        setItem("Point: "+ String.valueOf(coordList.size()));
+        displayImgSelector();
+        if (selectedFrameNumber != null) { //si el usuario cancela el ImgSelector, esta variable es nula
+            CoordBean cb = new CoordBean();
+            cb.setFrameNuber(selectedFrameNumber);
+            cb.setPoint(point);
+            cb.setSOPId(sIUID);
+            coordList.add(cb);
+            setItem("Point: "+ String.valueOf(coordList.size()));
+        }
     }
 
     private void initCoords(boolean isNew) {
-        coordList = new ArrayList<Vector3f>();
+        coordList = new ArrayList<CoordBean>();
         if(!isNew) {
-            for (Vector3f point : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
-                coordList.add(point);
+            for (CoordBean bean : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
+                coordList.add(bean);
                 setItem("Point: "+ String.valueOf(coordList.size()));
             }
             BodyManager.getInstance().setCoordList(coordList);
+        }
+    }
+
+    //Muestra un seleccionador de imagenes del DICOM (una sola o multiframe)
+    private void displayImgSelector() {
+        BodyImgSelector imgSelector = new BodyImgSelector(srcImg,this,true); 
+        imgSelector.setVisible(true);
+    }
+    
+    protected void setSelectedFrameNumber(Integer fn) {
+        this.selectedFrameNumber = fn;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent lse) {
+        if (!lse.getValueIsAdjusting()) {
+            javax.swing.JList list = (javax.swing.JList)lse.getSource();
+            int i = list.getSelectedIndex();
+            if(i > -1) {
+                CoordBean cb = (CoordBean) coordList.get(i);
+                BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNuber());
+                thumbPanel.getGraphics().drawImage(bi,0,0,thumbPanel.getWidth(),thumbPanel.getHeight(),null);
+                frLabel.setText("Frame #"+(cb.getFrameNuber()+1));
+            }
         }
     }
 }
