@@ -42,6 +42,7 @@ import com.nilo.plaf.nimrod.NimRODLookAndFeel;
 import com.pixelmed.dicom.AttributeList;
 import com.pixelmed.dicom.DicomException;
 import com.pixelmed.dicom.TagFromName;
+import com.pixelmed.display.SourceImage;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
 import dcm.derm.human.viewer.BodyJFrame;
 import dcm.derm.human.viewer.BodyManager;
@@ -809,13 +810,27 @@ public class MainScreen extends javax.swing.JFrame {
         importHandler();
     }//GEN-LAST:event_importButtonActionPerformed
     private void importHandler() {
-        //createDicomFrame.reset();
-        //createDicomFrame.setVisible(true);
-        //Codigo original:
-        FileChooserDialog fcd = new FileChooserDialog(this, true);
-        fcd.setLocationRelativeTo(this);
-        fcd.setVisible(true);
+        Object[] options = {"From new DICOM file","Existing DICOM file","Cancel"};
+        int n = JOptionPane.showOptionDialog(this,
+            "Where would you like to import the file from?", "Import from file",
+        JOptionPane.YES_NO_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[2]);
+        switch(n) {
+            case 0: createDicomFrame.reset();
+                    createDicomFrame.setVisible(true);
+                    break;
+            case 1: //Codigo original:
+                    FileChooserDialog fcd = new FileChooserDialog(this, true);
+                    fcd.setLocationRelativeTo(this);
+                    fcd.setVisible(true);
+                    break;
+            case 2: break;    
+        } 
     }
+    
     private void queryRetrieveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryRetrieveButtonActionPerformed
         queryRetrieve.setVisible(true);
     }//GEN-LAST:event_queryRetrieveButtonActionPerformed
@@ -1073,8 +1088,21 @@ public class MainScreen extends javax.swing.JFrame {
 //              String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
                 AttributeList list = new AttributeList();
                 list.read(new File(this.canvas.getFilePath()));
-                // Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
-                // o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
+                
+                final SourceImage srcImg = new SourceImage(list);
+                /*java.awt.image.BufferedImage bi = img.getBufferedImage(3);
+                javax.swing.JFrame frame = new javax.swing.JFrame();
+                frame.getContentPane().setLayout(new java.awt.FlowLayout());
+                frame.getContentPane().add(new javax.swing.JLabel(new javax.swing.ImageIcon(bi)));
+                frame.pack();
+                frame.setVisible(true);
+                System.out.println("**** Nro de buf images: "+img.getNumberOfBufferedImages());
+                System.out.println("**** Nro de frames: "+img.getNumberOfFrames());*/
+               
+                
+                /** Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
+                 * o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
+                 */
                 
                 //System.out.println("SOP: " + list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]);
                 //System.out.println(list.get(TagFromName.PatientSex));
@@ -1084,25 +1112,41 @@ public class MainScreen extends javax.swing.JFrame {
                     ApplicationContext.databaseRef.coordTable, ApplicationContext.databaseRef.coordTablePK,
                        sopInstanceUID);
                 
-                // Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
-                // desde BD segun SOPInstanceUID del archivo
-                //abrir dialogo para registrar puntos. Elegir segun sexo
-                final String sex = 
-                    BodyJFrame.male; //<-para testear *** Esto es lo que va: list.get(TagFromName.PatientSex).getOriginalStringValues()[0];
-                    
+                /** Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
+                 * desde BD segun SOPInstanceUID del archivo
+                 * abrir dialogo para registrar puntos. 
+                 * Elegir segun sexo: F Female
+                 *                    M Male
+                 *                    O Other
+                 *                    U Unknown
+                 *                    A Ambiguous
+                 *                    N Not applicable
+                 * Si no es F ni M abre selector de genero
+                 */
+                String[] sValues = list.get(TagFromName.PatientSex).getOriginalStringValues();
+                final String sex; 
+                if (sValues != null && (BodyJFrame.male.equals(sValues[0])
+                        || BodyJFrame.female.equals(sValues[0]))) {
+                    sex = sValues[0];
+                }
+                else {
+                    sex = showSexChooser();
+                }
+                
+                if(sex == null) { 
+                    return; //si se cancela el selector de genero
+                }
+                
                 BodyManager.getInstance().reset();
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID); //exists determina si tiene puntos previos o no 
+                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
+                        BodyManager.getInstance().deleteObservers();
                         BodyManager.getInstance().addObserver(frame);
                         frame.setVisible(true);
                     }
                 });
-                //BodyChooser bChooser = new BodyChooser(this, true);
-                //bChooser.setVisible(true);
-                //bChooser.setVisible(true);
-                
             } catch (IOException ex) {
                 Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
             } catch (DicomException ex) {
@@ -1355,5 +1399,25 @@ public class MainScreen extends javax.swing.JFrame {
             mainScreenObj = new MainScreen();
         }        
         return mainScreenObj;
+    }
+
+    private String showSexChooser() {
+        String sex = null;
+        Object[] options = {"Male","Female","Cancel"};
+        int n = JOptionPane.showOptionDialog(this,
+            "Please select the Patient's Sex", "Patient sex selection",
+        JOptionPane.YES_NO_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[2]);
+        switch(n) {
+            case 0: sex = BodyJFrame.male;
+                    break;
+            case 1: sex = BodyJFrame.female;
+                    break;
+            case 2: break;    
+        }
+        return sex;
     }
 }
