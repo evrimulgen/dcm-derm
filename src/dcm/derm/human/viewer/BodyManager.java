@@ -15,12 +15,12 @@ import javax.swing.event.ListSelectionListener;
 public class BodyManager extends Observable implements ListSelectionListener {
     
     private static BodyManager instance = null;
-    private CoordBean currentCoord = null;
+    private Vector3f currentPoint = null;
     ArrayList<CoordBean> coordList = null;
    
     private BodyManager() {
         coordList = new ArrayList<CoordBean>();
-        currentCoord = new CoordBean();
+        currentPoint = new Vector3f();
     }
     
     public static BodyManager getInstance() {
@@ -31,7 +31,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
     }
     
     public void setCoord(Vector3f coord) {
-        currentCoord.setPoint(coord);
+        currentPoint.set(coord);
         CoordBean cb = new CoordBean();
         cb.setPoint(coord);
         coordList.add(cb);
@@ -40,7 +40,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
     }
     
     public Vector3f getCoord() {
-        return currentCoord.getPoint();
+        return currentPoint;
     }
 
     @Override
@@ -49,18 +49,30 @@ public class BodyManager extends Observable implements ListSelectionListener {
             JList list = (JList)lse.getSource();
             int i = list.getSelectedIndex();
             if(i > -1) {
-                currentCoord = (CoordBean) coordList.get(i);
+                CoordBean cb = (CoordBean)coordList.get(i);
+                if(cb != null) {
+                    if(currentPoint == null) {
+                        currentPoint = new Vector3f();
+                    }
+                    currentPoint.set(cb.getPoint());
+                }
             }
         }
     }
     
     public void reset() {
-        currentCoord.setPoint(null);
+        currentPoint = null;
         coordList.clear();
     }
 
     void setCoordList(ArrayList<CoordBean> coordList) {
         this.coordList = (ArrayList<CoordBean>) coordList.clone();
+    }
+    
+    public void removeLastCoord() {
+        if (this.coordList.size() > 0) {
+            this.coordList.remove(this.coordList.size()-1);
+        }
     }
     
 } 
