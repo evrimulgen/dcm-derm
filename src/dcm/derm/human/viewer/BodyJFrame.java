@@ -304,6 +304,10 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             coordList.add(cb);
             setItem("Point: "+ String.valueOf(coordList.size()));
         }
+        else { //Si selectedFrameNumber es null, significa que se cancelo el selector de frames, y en ese caso
+            // se debe eliminar el ultimo punto registrado en el BodyManager.
+            BodyManager.getInstance().removeLastCoord();
+        }
     }
 
     private void initCoords(boolean isNew) {
