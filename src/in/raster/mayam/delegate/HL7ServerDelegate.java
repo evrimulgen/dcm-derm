@@ -67,10 +67,14 @@ public class HL7ServerDelegate implements Application {
         
         //DUMMY;
         queryResults = new Vector();
-        queryResults.add(new String[]{
-            response.getQUERY_RESPONSE().getPID().getPatientName().getGivenName().getValue(),
-            response.getQUERY_RESPONSE().getPID().getPatientName().getFamilyName().getValue()});
         
+        queryResults.add(new String[]{
+            response.getQUERY_RESPONSE().getPID().getPid5_PatientName().getPn2_GivenName().getValue(),
+            response.getQUERY_RESPONSE().getPID().getPid5_PatientName().getPn1_FamilyName().getValue(),
+            response.getQUERY_RESPONSE().getPID().getPid7_DateOfBirth().getTimeOfAnEvent().getValue(),
+            response.getQUERY_RESPONSE().getPID().getPid2_PatientIDExternalID().getIDNumber().getValue(),
+            response.getQUERY_RESPONSE().getPID().getPid8_Sex().getValue()
+        });
         // Now we need to generate a message to return. This will generally be an ACK message.
 //        MSH msh = (MSH)in.get("MSH");
 //        ACK retVal;
