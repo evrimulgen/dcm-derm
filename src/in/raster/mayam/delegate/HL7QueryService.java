@@ -110,8 +110,12 @@ public class HL7QueryService {
         qrdSegment.getQrd3_QueryPriority().setValue("I"); // The query has to be dealt with immediately (I) by the receiving application. 
         qrdSegment.getQrd4_QueryID().setValue("Q1001");
         qrdSegment.getQrd7_QuantityLimitedRequest().getQuantity().setValue("50");
-        qrdSegment.insertQrd8_WhoSubjectFilter(0).setValue(queryParam.getPatientId());
-        qrdSegment.insertQrd8_WhoSubjectFilter(1).setValue(queryParam.getPatientName());
+        
+        qrdSegment.insertWhoSubjectFilter(0).setValue(queryParam.getPatientName());
+        qrdSegment.insertWhoSubjectFilter(1).setValue(queryParam.getPatientId());
+        qrdSegment.insertWhoSubjectFilter(2).setValue(queryParam.getBirthDate());
+        //qrdSegment.insertWhoSubjectFilter(3).setValue("3");
+
         qrdSegment.insertQrd9_WhatSubjectFilter(0).setValue("DEM");
 
         // Now, let's encode the message and look at the output
