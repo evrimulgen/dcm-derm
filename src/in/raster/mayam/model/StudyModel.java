@@ -60,6 +60,7 @@ public class StudyModel {
     private String studyUID;
     private String[] modality;
     private String studyLevelInstances;
+    private String patientSex; //Mayam DERM CAD
 
     public StudyModel() {
     }
@@ -84,8 +85,17 @@ public class StudyModel {
         dob = dataSet.getString(Tags.PatientBirthDate) != null ? dataSet.getString(Tags.PatientBirthDate) : "";
         accessionNo = dataSet.getString(Tag.AccessionNumber) != null ? dataSet.getString(Tag.AccessionNumber) : "";
         studyLevelInstances = dataSet.getString(Tag.NumberOfStudyRelatedInstances) != null ? dataSet.getString(Tag.NumberOfStudyRelatedInstances) : "";
+        patientSex = dataSet.getString(Tag.PatientSex) != null ? dataSet.getString(Tag.PatientSex) : ""; //Mayam DERM CAD
     }
 
+    public String getPatientSex() {
+        return patientSex;
+    }
+    
+    public void setPatientSex(String patientSex) {
+        this.patientSex = patientSex;
+    }
+    
     public String getAccessionNo() {
         return accessionNo;
     }
