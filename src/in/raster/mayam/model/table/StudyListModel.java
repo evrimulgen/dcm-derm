@@ -104,6 +104,8 @@ public class StudyListModel extends AbstractTableModel {
                 return row.getStudyLevelInstances();
             case 8:
                 return row.getStudyUID();
+            case 9:
+                return row.getPatientSex();
         }
         return "";
     }
