@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.5" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <NonVisualComponents>
@@ -156,7 +156,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" max="-2" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Component id="todayRadio" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="anydateRadio" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -164,7 +164,7 @@
                               <Component id="lastweekRadio" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="lastmonthRadio" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="betweenRadio" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Group type="102" alignment="0" max="-2" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                       <Component id="toSpinner" alignment="1" pref="119" max="32767" attributes="1"/>
@@ -315,7 +315,7 @@
                                   <Component id="patientIDText" alignment="0" max="32767" attributes="1"/>
                                   <Component id="patientNameText" alignment="1" min="-2" pref="131" max="-2" attributes="1"/>
                               </Group>
-                              <Component id="birthDateSpinner" pref="131" max="32767" attributes="1"/>
+                              <Component id="birthDateSpinner" max="32767" attributes="1"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -341,7 +341,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="dobLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="birthDateSpinner" alignment="3" pref="22" max="32767" attributes="1"/>
+                              <Component id="birthDateSpinner" alignment="3" pref="0" max="32767" attributes="1"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>

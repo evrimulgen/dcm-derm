@@ -337,7 +337,7 @@ public class QueryRetrieve extends javax.swing.JFrame implements ServerChangeLis
                         .add(jTextField3)
                         .add(patientIDText)
                         .add(org.jdesktop.layout.GroupLayout.TRAILING, patientNameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 131, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE))
+                    .add(birthDateSpinner))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -357,7 +357,7 @@ public class QueryRetrieve extends javax.swing.JFrame implements ServerChangeLis
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(dobLabel)
-                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE))
+                    .add(birthDateSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -559,21 +559,21 @@ public class QueryRetrieve extends javax.swing.JFrame implements ServerChangeLis
         jScrollPane2.setViewportView(studyListTable);
 
         serverNameLabel.setBackground(new java.awt.Color(0, 0, 0));
-        serverNameLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        serverNameLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         serverNameLabel.setForeground(new java.awt.Color(255, 138, 0));
         serverNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         serverNameLabel.setText(bundle.getString("QueryRetrieve.serverNameLabel.text_1")); // NOI18N
         serverNameLabel.setOpaque(true);
 
         headerLabel.setBackground(new java.awt.Color(0, 0, 0));
-        headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         headerLabel.setForeground(new java.awt.Color(255, 138, 0));
         headerLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         headerLabel.setText(bundle.getString("QueryRetrieve.headerLabel.text_1")); // NOI18N
         headerLabel.setOpaque(true);
 
         queryFilterLabel.setBackground(new java.awt.Color(0, 0, 0));
-        queryFilterLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14));
+        queryFilterLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         queryFilterLabel.setForeground(new java.awt.Color(255, 138, 0));
         queryFilterLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         queryFilterLabel.setText(bundle.getString("QueryRetrieve.queryFilterLabel.text_1")); // NOI18N
