@@ -55,6 +55,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.dcm4che.util.DcmURL;
@@ -90,6 +91,8 @@ public class ApplicationContext {
     public static String applicationName="Mayam";
 
     public static Locale currentLocale=null;
+    
+    public static ResourceBundle resBundle = null;
     
     //For Upgrade
     public static boolean isUpgrade = false;
@@ -176,6 +179,7 @@ public class ApplicationContext {
     {
         //openOrCreateDB();
         String appLocale[]=databaseRef.getActiveLanguageAndCountry();     
-        currentLocale=new Locale(appLocale[0],appLocale[1]);       
+        currentLocale=new Locale(appLocale[0],appLocale[1]);
+        resBundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle", currentLocale); // NOI18N
     }
 }
