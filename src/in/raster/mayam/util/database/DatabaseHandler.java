@@ -547,9 +547,10 @@ public class DatabaseHandler {
     }
 
     private void insertDefaultLocales() {
-        try {
-            String sql1 = "insert into " + localeTable + "(countrycode,country,languagecode,language,localeid,status) values('GB','United Kingdom','en','English','en_GB','active')";
+        try { //Mayam DERM
+            String sql1 = "insert into " + localeTable + "(countrycode,country,languagecode,language,localeid,status) values('AR','Argentina','es','español','es_AR','active')";
             conn.createStatement().execute(sql1);
+            addNewLocale("en_GB");
             addNewLocale("es_ES");
             addNewLocale("ca_ES");
             addNewLocale("it_IT");
