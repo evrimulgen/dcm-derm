@@ -5,7 +5,8 @@
 package in.raster.mayam.form;
 
 import com.pixelmed.dicom.DicomException;
-import com.pixelmed.dicom.ImageToDicom;
+import in.raster.mayam.ImageToDicom;
+import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegate.ImportDelegate;
 import java.io.File;
 import java.io.IOException;
@@ -37,10 +38,9 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLayeredPane1 = new javax.swing.JLayeredPane();
         jPanel1 = new javax.swing.JPanel();
         imageButton = new javax.swing.JButton();
-        createButton = new javax.swing.JButton();
-        cancelButton = new javax.swing.JButton();
         studyDesc = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -48,105 +48,119 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         patientId = new javax.swing.JTextField();
-        studyDate = new javax.swing.JTextField();
+        modality = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         studyId = new javax.swing.JTextField();
         imgPathText = new javax.swing.JTextField();
-        queryButton = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         dob = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         accesionNumber = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        modality = new javax.swing.JTextField();
+        studyDate = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         patientSex = new javax.swing.JComboBox();
-        coordsButton = new javax.swing.JButton();
+        jLabel10 = new javax.swing.JLabel();
+        seriesNumber = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        InstanceNumber = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
+        phyName = new javax.swing.JTextField();
+        cancelButton = new javax.swing.JButton();
+        createButton = new javax.swing.JButton();
+        queryButton = new javax.swing.JButton();
 
-        setPreferredSize(new java.awt.Dimension(690, 600));
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(860, 422));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        imageButton.setText("Image");
-        imageButton.setEnabled(false);
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
+        imageButton.setText(bundle.getString("CreateDicomFrame.text_1")); // NOI18N
         imageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 imageButtonActionPerformed(evt);
             }
         });
 
-        createButton.setText("Create");
-        createButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createButtonActionPerformed(evt);
-            }
-        });
-
-        cancelButton.setText("Cancel");
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
-            }
-        });
-
         studyDesc.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         studyDesc.setEnabled(false);
 
-        jLabel1.setText("Study Description");
+        jLabel1.setText(bundle.getString("CreateDicomFrame.text_10")); // NOI18N
 
-        jLabel2.setText("Patient Name");
+        jLabel2.setText(bundle.getString("CreateDicomFrame.text_2")); // NOI18N
 
         patientName.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         patientName.setEnabled(false);
 
-        jLabel3.setText("Patient Id");
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel3.setText(bundle.getString("CreateDicomFrame.text_3")); // NOI18N
 
-        jLabel4.setText("Study Id");
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel4.setText(bundle.getString("CreateDicomFrame.text_7")); // NOI18N
 
         patientId.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         patientId.setEnabled(false);
 
-        studyDate.setDisabledTextColor(new java.awt.Color(227, 224, 224));
-        studyDate.setEnabled(false);
+        modality.setDisabledTextColor(new java.awt.Color(227, 224, 224));
+        modality.setEnabled(false);
 
-        jLabel5.setText("Study Date");
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel5.setText(bundle.getString("CreateDicomFrame.text_9")); // NOI18N
 
         studyId.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         studyId.setEnabled(false);
 
         imgPathText.setEditable(false);
 
-        queryButton.setText("HL7 Query");
-        queryButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queryButtonActionPerformed(evt);
-            }
-        });
-
-        jLabel6.setText("Date of Birth");
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel6.setText(bundle.getString("CreateDicomFrame.text_4")); // NOI18N
+        jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
         dob.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         dob.setEnabled(false);
 
-        jLabel7.setText("Accesion Number");
+        jLabel7.setText(bundle.getString("CreateDicomFrame.text_13")); // NOI18N
 
         accesionNumber.setDisabledTextColor(new java.awt.Color(227, 224, 224));
         accesionNumber.setEnabled(false);
 
-        jLabel8.setText("Modality");
+        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel8.setText(bundle.getString("CreateDicomFrame.text_8")); // NOI18N
 
-        modality.setDisabledTextColor(new java.awt.Color(227, 224, 224));
-        modality.setEnabled(false);
+        studyDate.setDisabledTextColor(new java.awt.Color(227, 224, 224));
+        studyDate.setEnabled(false);
 
-        jLabel9.setText("Sex");
+        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel9.setText(bundle.getString("CreateDicomFrame.text_5")); // NOI18N
 
-        patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "M", "F" }));
+        patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Male", "Female", "Unknown" }));
 
-        coordsButton.setText("Coords");
-        coordsButton.setEnabled(false);
-        coordsButton.addActionListener(new java.awt.event.ActionListener() {
+        jLabel10.setText(bundle.getString("CreateDicomFrame.text_11")); // NOI18N
+
+        jLabel11.setText(bundle.getString("CreateDicomFrame.text_12")); // NOI18N
+
+        jLabel12.setText(bundle.getString("CreateDicomFrame.text_6")); // NOI18N
+
+        cancelButton.setText(bundle.getString("CreateDicomFrame.text_16")); // NOI18N
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                coordsButtonActionPerformed(evt);
+                cancelButtonActionPerformed(evt);
+            }
+        });
+
+        createButton.setText(bundle.getString("CreateDicomFrame.text_15")); // NOI18N
+        createButton.setEnabled(false);
+        createButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createButtonActionPerformed(evt);
+            }
+        });
+
+        queryButton.setText(bundle.getString("CreateDicomFrame.text_14")); // NOI18N
+        queryButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                queryButtonActionPerformed(evt);
             }
         });
 
@@ -155,100 +169,121 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(27, 27, 27)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel10, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(accesionNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(imageButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(patientName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(queryButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(seriesNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(coordsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(imgPathText, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(patientId, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(studyDate, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(studyId, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(studyDesc, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(modality, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel11)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(InstanceNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(56, 56, 56)
+                                        .addComponent(jLabel7)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(accesionNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(queryButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel9)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 134, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(37, 37, 37)))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(studyId, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(29, 29, 29)
+                                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(patientId, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(31, 31, 31)
+                                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(24, 24, 24))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(patientSex, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap())
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(patientName, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
+                                    .addComponent(imgPathText)
+                                    .addComponent(studyDesc))
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(patientSex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(phyName, javax.swing.GroupLayout.PREFERRED_SIZE, 626, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(25, 25, 25)
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(imageButton)
                     .addComponent(imgPathText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(21, 21, 21)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(patientName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dob)
+                    .addComponent(patientId)
                     .addComponent(jLabel3)
-                    .addComponent(patientId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(patientSex)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9)
-                    .addComponent(patientSex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(accesionNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7))
+                    .addComponent(phyName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel12))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(studyId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(studyDesc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(27, 27, 27)
+                    .addComponent(jLabel10)
+                    .addComponent(seriesNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(InstanceNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11)
+                    .addComponent(accesionNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addGap(28, 28, 28)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(createButton)
                     .addComponent(cancelButton)
-                    .addComponent(queryButton)
-                    .addComponent(coordsButton)
-                    .addComponent(createButton))
+                    .addComponent(queryButton))
                 .addContainerGap())
         );
 
@@ -258,34 +293,19 @@ public class CreateDicomFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void imageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imageButtonActionPerformed
-        JFileChooser jfc = new JFileChooser();
-        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
-        jfc.setMultiSelectionEnabled(false);
-        int returnVal = jfc.showOpenDialog(this);
-        if(returnVal == JFileChooser.APPROVE_OPTION) {
-            if(jfc.getSelectedFile() != null) {
-                imgPathText.setText(jfc.getSelectedFile().getAbsolutePath());
-                srcFilePath = jfc.getSelectedFile().getAbsolutePath();
-                System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
-            }
-        }
-    }//GEN-LAST:event_imageButtonActionPerformed
 
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         String dstFilePath = null;
@@ -298,19 +318,11 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                 System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
                 try {
                     dstFilePath = jfc.getSelectedFile().getAbsolutePath();
-                     /* @param	inputFile
-                      * @param outputFile
-                      * @param patientName
-                      * @param patientID
-                      * @param studyID
-                      * @param seriesNumber
-                      * @param instanceNumber
-                      * @param modality may be null
-                      * @param sopClass may be null
-                      * @exception DicomException */
-                    //TODO: agregar validaciones:
-                    ImageToDicom itd = new ImageToDicom(srcFilePath,dstFilePath,
-                            patientName.getText(),"000001","000001","000001","000001",null,null);
+                    ImageToDicom itd = new ImageToDicom(srcFilePath, dstFilePath,
+                            patientName.getText(), patientId.getText(), studyId.getText(), 
+                            dob.getText(), patientSex.getToolTipText(), accesionNumber.getText(),
+                            modality.getText(), studyDesc.getText(), "1", 
+                            "1", studyDate.getText(), null);
                     File openedFile = new File(dstFilePath); 
                     ImportDelegate importDelegate = new ImportDelegate(openedFile, false, ms);
                     this.setVisible(false);
@@ -333,15 +345,20 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         hl7QueryRetrieve.setVisible(true);
     }//GEN-LAST:event_queryButtonActionPerformed
 
-    private void coordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_coordsButtonActionPerformed
-        /*try {
-            UIDGenerator u = new UIDGenerator();
-            newSOPInstanceUID = u.getNewSOPInstanceUID("000001","000001","000001");
-            
-        } catch (DicomException ex) {
-            Logger.getLogger(CreateDicomFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
-    }//GEN-LAST:event_coordsButtonActionPerformed
+    private void imageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imageButtonActionPerformed
+        JFileChooser jfc = new JFileChooser();
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
+        jfc.setMultiSelectionEnabled(false);
+        int returnVal = jfc.showOpenDialog(this);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+            if(jfc.getSelectedFile() != null) {
+                imgPathText.setText(jfc.getSelectedFile().getAbsolutePath());
+                srcFilePath = jfc.getSelectedFile().getAbsolutePath();
+                System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
+            }
+        }
+    }//GEN-LAST:event_imageButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -385,14 +402,17 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField InstanceNumber;
     public javax.swing.JTextField accesionNumber;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JButton coordsButton;
     private javax.swing.JButton createButton;
     public javax.swing.JTextField dob;
     private javax.swing.JButton imageButton;
     private javax.swing.JTextField imgPathText;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -401,12 +421,15 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JLayeredPane jLayeredPane1;
     private javax.swing.JPanel jPanel1;
     public javax.swing.JTextField modality;
     public javax.swing.JTextField patientId;
     public javax.swing.JTextField patientName;
-    private javax.swing.JComboBox patientSex;
+    public javax.swing.JComboBox patientSex;
+    private javax.swing.JTextField phyName;
     private javax.swing.JButton queryButton;
+    private javax.swing.JTextField seriesNumber;
     public javax.swing.JTextField studyDate;
     public javax.swing.JTextField studyDesc;
     public javax.swing.JTextField studyId;
@@ -418,10 +441,10 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     public void reset() {
         accesionNumber.setText("");
         dob.setText("");
-        modality.setText("");
+        studyDate.setText("");
         patientId.setText("");
         patientName.setText("");
-        studyDate.setText("");
+        modality.setText("");
         studyDesc.setText("");
         studyId.setText("");
         //newSOPInstanceUID = null;
