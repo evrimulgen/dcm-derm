@@ -31,6 +31,9 @@ public class BodyManager extends Observable implements ListSelectionListener {
     }
     
     public void setCoord(Vector3f coord) {
+        if(currentPoint == null) {
+            currentPoint = new Vector3f();
+        }
         currentPoint.set(coord);
         CoordBean cb = new CoordBean();
         cb.setPoint(coord);
