@@ -1,6 +1,7 @@
 package dcm.derm.human.viewer;
 
 import com.pixelmed.display.SourceImage;
+import in.raster.mayam.context.ApplicationContext;
 import java.awt.Component;
 import java.awt.Image;
 import javax.swing.DefaultListCellRenderer;
@@ -23,7 +24,7 @@ public class BodyImgSelector extends javax.swing.JDialog {
      * Creates new form BodyImgSelector
      */
     public BodyImgSelector(SourceImage srcImg, java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+        super(parent, ApplicationContext.resBundle.getString("BodyImgSelector.title"), modal);
         initComponents();
         this.srcImg = srcImg;
         this.parent = parent;
@@ -49,14 +50,15 @@ public class BodyImgSelector extends javax.swing.JDialog {
 
         jScrollPane1.setViewportView(jList1);
 
-        acceptButton.setText("Accept");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
+        acceptButton.setText(bundle.getString("AcceptButton")); // NOI18N
         acceptButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 acceptButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("CancelButton")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
