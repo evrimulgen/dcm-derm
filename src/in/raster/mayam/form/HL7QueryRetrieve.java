@@ -516,7 +516,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
         headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
         headerLabel.setForeground(new java.awt.Color(255, 138, 0));
         headerLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        headerLabel.setText(bundle.getString("QueryRetrieve.headerLabel.text_1")); // NOI18N
+        headerLabel.setText(bundle.getString("HL7QueryRetrieve.headerLabel.text_1")); // NOI18N
         headerLabel.setOpaque(true);
 
         queryFilterLabel.setBackground(new java.awt.Color(0, 0, 0));
@@ -799,9 +799,9 @@ public class HL7QueryRetrieve extends javax.swing.JFrame implements ServerChange
         parent.patientName.setText(studyListModel.getValueAt(index, 1));
         parent.dob.setText(studyListModel.getValueAt(index, 2));
         parent.accesionNumber.setText(studyListModel.getValueAt(index, 3));
-        parent.studyDate.setText(studyListModel.getValueAt(index, 4));
+        parent.modality.setText(studyListModel.getValueAt(index, 4));
         parent.studyDesc.setText(studyListModel.getValueAt(index, 5));
-        parent.modality.setText(studyListModel.getValueAt(index, 6));
+        parent.studyDate.setText(studyListModel.getValueAt(index, 6));
         parent.studyId.setText(studyListModel.getValueAt(index, 8));
         parent.patientSex.setSelectedItem(studyListModel.getValueAt(index, 9));
         this.setVisible(false);

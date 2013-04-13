@@ -740,7 +740,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="QueryRetrieve.headerLabel.text_1" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="HL7QueryRetrieve.headerLabel.text_1" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
