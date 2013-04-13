@@ -93,6 +93,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+
 /**
  *
  * @author  BabuHussain
@@ -406,8 +407,8 @@ public class MainScreen extends javax.swing.JFrame {
             .add(studyAndSeriesDisplayPanelLayout.createSequentialGroup()
                 .add(seriesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(thumbnailScroll, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 495, Short.MAX_VALUE))
-            .add(windowingPanelCanvas, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)
+                .add(thumbnailScroll, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 496, Short.MAX_VALUE))
+            .add(windowingPanelCanvas, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
         );
 
         jSplitPane1.setRightComponent(studyAndSeriesDisplayPanel);
@@ -810,9 +811,12 @@ public class MainScreen extends javax.swing.JFrame {
         importHandler();
     }//GEN-LAST:event_importButtonActionPerformed
     private void importHandler() {
-        Object[] options = {"From new DICOM file","Existing DICOM file","Cancel"};
+        Object[] options = {ApplicationContext.resBundle.getString("MainScreen.importHandler.text_1"),
+            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_2"),
+            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_3")};
         int n = JOptionPane.showOptionDialog(this,
-            "Where would you like to import the file from?", "Import from file",
+            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_4"), 
+            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_5"),
         JOptionPane.YES_NO_CANCEL_OPTION,
         JOptionPane.QUESTION_MESSAGE,
         null,
@@ -1403,9 +1407,10 @@ public class MainScreen extends javax.swing.JFrame {
 
     private String showSexChooser() {
         String sex = null;
-        Object[] options = {"Male","Female","Cancel"};
+        Object[] options = {ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_1"), 
+            ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_2"), ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_3")};
         int n = JOptionPane.showOptionDialog(this,
-            "Please select the Patient's Sex", "Patient sex selection",
+            ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_4"), ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_5"),
         JOptionPane.YES_NO_CANCEL_OPTION,
         JOptionPane.QUESTION_MESSAGE,
         null,
