@@ -38,6 +38,7 @@
 * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.model.table;
 
+import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.model.Series;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
@@ -50,7 +51,13 @@ import javax.swing.table.AbstractTableModel;
  */
 public class SeriesListModel extends AbstractTableModel {
 
-    String columnName[] = {"Series Description", "Series#", "Modality", "Instance Count", "Institution Name"};
+    String columnName[] = {
+        ApplicationContext.resBundle.getString("SeriesListModel.text_1"),
+        ApplicationContext.resBundle.getString("SeriesListModel.text_2"),
+        ApplicationContext.resBundle.getString("SeriesListModel.text_3"),
+        ApplicationContext.resBundle.getString("SeriesListModel.text_4"),
+        ApplicationContext.resBundle.getString("SeriesListModel.text_5")};
+
     Class columnType[] = {String.class, String.class, String.class, String.class, String.class};
     Vector seriesList;
 

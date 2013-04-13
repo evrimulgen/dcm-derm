@@ -55,7 +55,11 @@ import org.dcm4che2.data.TransferSyntax;
 public class ServerTableModel extends AbstractTableModel {
 
     private boolean editable = true;
-    String columnName[] = {"Description", "AE Title", "Host Name", "Port", "Retrieve Type"};
+    String columnName[] = {ApplicationContext.resBundle.getString("ServerTableModel.text_1"),
+    ApplicationContext.resBundle.getString("ServerTableModel.text_2"),
+    ApplicationContext.resBundle.getString("ServerTableModel.text_3"),
+    ApplicationContext.resBundle.getString("ServerTableModel.text_4"),
+    ApplicationContext.resBundle.getString("ServerTableModel.text_5")};
     Class columnType[] = {String.class, String.class, String.class, String.class, String.class};
     ArrayList serverList;
     ServerChangeListener listener = null;

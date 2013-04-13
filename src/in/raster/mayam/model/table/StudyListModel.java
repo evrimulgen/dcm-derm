@@ -52,7 +52,15 @@ import javax.swing.table.AbstractTableModel;
  */
 public class StudyListModel extends AbstractTableModel {
 
-    String columnName[] = {"Patient ID", "Patient Name", "Date of Birth", "Accession Number", "Study Date", "Study Description", "Modality", "Instance Count"};
+    String columnName[] = {ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_1"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_2"), 
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_3"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_4"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_5"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_6"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_7"),
+            ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_8")};
+    
     Class columnType[] = {String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class};
     Vector studyList;
 
@@ -64,10 +72,12 @@ public class StudyListModel extends AbstractTableModel {
         super.fireTableDataChanged();
     }
 
+    @Override
     public int getColumnCount() {
         return columnName.length;
     }
 
+    @Override
     public int getRowCount() {
         if (studyList != null) {
             return studyList.size();
@@ -110,20 +120,20 @@ public class StudyListModel extends AbstractTableModel {
         return "";
     }
 
+    @Override
     public String getColumnName(int column) {
         try{
-            java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
             switch(column){
                 case 0:
-                    return bundle.getString("studyListTable.PatientID.text");
+                    return ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_1");
                 case 1:
-                    return bundle.getString("studyListTable.PatientName.text");
+                    return ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_2");
                 case 2:
-                    return bundle.getString("studyListTable.Dob.text");
+                    return ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_3");
                 case 3:
-                    return bundle.getString("studyListTable.AccessionNumber.text");
+                    return ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_4");
                 case 6:
-                    return bundle.getString("studyListTable.Modality.text");
+                    return ApplicationContext.resBundle.getString("MainScreen.studyListModel.text_7");
             }
         } catch(MissingResourceException exception){
             return columnName[column];

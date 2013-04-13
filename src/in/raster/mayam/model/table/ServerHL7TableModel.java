@@ -12,13 +12,15 @@ import javax.swing.table.AbstractTableModel;
 
 
 /**
- * PASAR TODO ESTO A ESTANDAR HL7
  * @author mariano
  */
 public class ServerHL7TableModel extends AbstractTableModel {
 
     private boolean editable = true;
-    String columnName[] = {"Server Name", "Server Address", "Port", "Subprotocol"};
+    String columnName[] = {ApplicationContext.resBundle.getString("MainScreen.serverHL7TableModel.text_1"),
+        ApplicationContext.resBundle.getString("MainScreen.serverHL7TableModel.text_2"),
+        ApplicationContext.resBundle.getString("MainScreen.serverHL7TableModel.text_3"),
+        ApplicationContext.resBundle.getString("MainScreen.serverHL7TableModel.text_4")};
     Class columnType[] = {String.class, String.class, String.class, String.class};
     ArrayList serverList;
     ServerChangeListener listener = null;
