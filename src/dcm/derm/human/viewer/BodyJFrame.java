@@ -115,34 +115,36 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         jScrollPane1.setViewportView(jList1);
 
         addButton.setText("Add");
+        addButton.setEnabled(false);
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addButtonActionPerformed(evt);
             }
         });
 
-        removeButton.setText("Remove");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
+        removeButton.setText(bundle.getString("BodyJFrame.removeButton.text")); // NOI18N
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("CancelButton")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        acceptButton.setText("Accept");
+        acceptButton.setText(bundle.getString("AcceptButton")); // NOI18N
         acceptButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 acceptButtonActionPerformed(evt);
             }
         });
 
-        removeAllButton.setText("Remove All");
+        removeAllButton.setText(bundle.getString("BodyJFrame.removeAllButton.text")); // NOI18N
         removeAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeAllButtonActionPerformed(evt);
@@ -159,8 +161,6 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             thumbPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 100, Short.MAX_VALUE)
         );
-
-        frLabel.setText("Frame");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -302,7 +302,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             cb.setPoint(point);
             cb.setSOPId(sIUID);
             coordList.add(cb);
-            setItem("Point: "+ String.valueOf(coordList.size()));
+            setItem(ApplicationContext.resBundle.getString("BodyJFrame.point.text")+ String.valueOf(coordList.size()));
         }
         else { //Si selectedFrameNumber es null, significa que se cancelo el selector de frames, y en ese caso
             // se debe eliminar el ultimo punto registrado en el BodyManager.
@@ -315,7 +315,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         if(!isNew) {
             for (CoordBean bean : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
                 coordList.add(bean);
-                setItem("Point: "+ String.valueOf(coordList.size()));
+                setItem(ApplicationContext.resBundle.getString("BodyJFrame.point.text")+ String.valueOf(coordList.size()));
             }
             BodyManager.getInstance().setCoordList(coordList);
         }
@@ -340,7 +340,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
                 CoordBean cb = (CoordBean) coordList.get(i);
                 BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNuber());
                 thumbPanel.getGraphics().drawImage(bi,0,0,thumbPanel.getWidth(),thumbPanel.getHeight(),null);
-                frLabel.setText("Frame #"+(cb.getFrameNuber()+1));
+                frLabel.setText(ApplicationContext.resBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNuber()+1));
             }
         }
     }
