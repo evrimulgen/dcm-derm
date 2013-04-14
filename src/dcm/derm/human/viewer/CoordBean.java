@@ -35,4 +35,28 @@ public class CoordBean {
     public void setFrameNuber(Integer frameNuber) {
         this.frameNuber = frameNuber;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 23 * hash + (this.point != null ? this.point.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CoordBean other = (CoordBean) obj;
+        if (this.point != other.point && (this.point == null || !this.point.equals(other.point))) {
+            return false;
+        }
+        return true;
+    }
+
+  
 }
