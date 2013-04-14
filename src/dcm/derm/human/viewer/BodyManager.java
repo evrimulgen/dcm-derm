@@ -16,7 +16,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
     
     private static BodyManager instance = null;
     private Vector3f currentPoint = null;
-    ArrayList<CoordBean> coordList = null;
+    private ArrayList<CoordBean> coordList = null;
    
     private BodyManager() {
         coordList = new ArrayList<CoordBean>();
@@ -43,7 +43,12 @@ public class BodyManager extends Observable implements ListSelectionListener {
     }
     
     public Vector3f getCoord() {
-        return currentPoint;
+        if(currentPoint != null) {
+            return currentPoint.clone();
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -68,11 +73,16 @@ public class BodyManager extends Observable implements ListSelectionListener {
         coordList.clear();
     }
 
-    void setCoordList(ArrayList<CoordBean> coordList) {
+    public void setCoordList(ArrayList<CoordBean> coordList) {
         this.coordList = (ArrayList<CoordBean>) coordList.clone();
     }
     
+    public ArrayList<CoordBean> getCoordList() {
+        return coordList;
+    }
+    
     public void removeLastCoord() {
+        currentPoint = null;
         if (this.coordList.size() > 0) {
             this.coordList.remove(this.coordList.size()-1);
         }
