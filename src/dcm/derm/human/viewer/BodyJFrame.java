@@ -9,6 +9,7 @@ import com.jme3.system.JmeCanvasContext;
 import com.pixelmed.display.SourceImage;
 import in.raster.mayam.context.ApplicationContext;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Observable;
@@ -26,7 +27,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     private String model = null;
     public static String male = "M";
     public static String female = "F";
-    private ArrayList<CoordBean> coordList = null;
+    //private ArrayList<CoordBean> coordList = null;
     private String sIUID = null;
     private SourceImage srcImg = null;
     private Integer selectedFrameNumber = null;
@@ -81,7 +82,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         cancelButton = new javax.swing.JButton();
         acceptButton = new javax.swing.JButton();
         removeAllButton = new javax.swing.JButton();
-        thumbPanel = new javax.swing.JPanel();
+        thumbPanel = new FramePreview();
         frLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -151,11 +152,14 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             }
         });
 
+        thumbPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        thumbPanel.setPreferredSize(new java.awt.Dimension(112, 104));
+
         javax.swing.GroupLayout thumbPanelLayout = new javax.swing.GroupLayout(thumbPanel);
         thumbPanel.setLayout(thumbPanelLayout);
         thumbPanelLayout.setHorizontalGroup(
             thumbPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 106, Short.MAX_VALUE)
+            .addGap(0, 120, Short.MAX_VALUE)
         );
         thumbPanelLayout.setVerticalGroup(
             thumbPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -167,22 +171,24 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(52, Short.MAX_VALUE)
+                .addContainerGap(40, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(frLabel)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)))
-                    .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(frLabel)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -216,11 +222,16 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        // TODO add your handling code here:
+        int i = jList1.getSelectedIndex();
+        if(i > -1) {
+            BodyManager.getInstance().getCoordList().remove(i);
+            ((DefaultListModel) jList1.getModel()).removeElementAt(i);
+        }
     }//GEN-LAST:event_removeButtonActionPerformed
 
     private void removeAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAllButtonActionPerformed
-        // TODO add your handling code here:
+        BodyManager.getInstance().reset();
+        ((DefaultListModel) jList1.getModel()).removeAllElements();
     }//GEN-LAST:event_removeAllButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -228,7 +239,8 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
-       ApplicationContext.databaseRef.updateCoords(sIUID.trim(), coordList);
+       ApplicationContext.databaseRef.updateCoords(sIUID.trim(),
+               BodyManager.getInstance().getCoordList()/*coordList*/);
        this.dispose();
     }//GEN-LAST:event_acceptButtonActionPerformed
 
@@ -297,12 +309,16 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         Vector3f point = ((BodyManager)o).getCoord();
         displayImgSelector();
         if (selectedFrameNumber != null) { //si el usuario cancela el ImgSelector, esta variable es nula
-            CoordBean cb = new CoordBean();
-            cb.setFrameNuber(selectedFrameNumber);
-            cb.setPoint(point);
-            cb.setSOPId(sIUID);
-            coordList.add(cb);
-            setItem(ApplicationContext.resBundle.getString("BodyJFrame.point.text")+ String.valueOf(coordList.size()));
+            //CoordBean cb = new CoordBean();
+            //cb.setFrameNuber(selectedFrameNumber);
+            //cb.setPoint(point);
+            //cb.setSOPId(sIUID);
+            BodyManager.getInstance().getCoordList().get(
+                    BodyManager.getInstance().getCoordList().size()-1).setFrameNuber(selectedFrameNumber);
+            BodyManager.getInstance().getCoordList().get(
+                    BodyManager.getInstance().getCoordList().size()-1).setSOPId(sIUID);
+            setItem(ApplicationContext.resBundle.getString("BodyJFrame.point.text")+
+                    String.valueOf(BodyManager.getInstance().getCoordList().size()));
         }
         else { //Si selectedFrameNumber es null, significa que se cancelo el selector de frames, y en ese caso
             // se debe eliminar el ultimo punto registrado en el BodyManager.
@@ -311,7 +327,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }
 
     private void initCoords(boolean isNew) {
-        coordList = new ArrayList<CoordBean>();
+        ArrayList<CoordBean> coordList = new ArrayList<CoordBean>();
         if(!isNew) {
             for (CoordBean bean : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
                 coordList.add(bean);
@@ -337,10 +353,10 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             javax.swing.JList list = (javax.swing.JList)lse.getSource();
             int i = list.getSelectedIndex();
             if(i > -1) {
-                CoordBean cb = (CoordBean) coordList.get(i);
+                CoordBean cb = (CoordBean) BodyManager.getInstance().getCoordList().get(i);
                 BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNuber());
-                thumbPanel.getGraphics().drawImage(bi,0,0,thumbPanel.getWidth(),thumbPanel.getHeight(),null);
                 frLabel.setText(ApplicationContext.resBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNuber()+1));
+                ((FramePreview)thumbPanel).setImage(bi);
             }
         }
     }
