@@ -99,7 +99,7 @@ public class BodyApp extends SimpleApplication {
             shootables.collideWith(ray, results);
             if (results.size() > 0) {
                 CollisionResult closest = results.getClosestCollision();
-                attachMark(closest.getContactPoint());
+                // attachMark(closest.getContactPoint());
                 BodyManager.getInstance().setCoord(closest.getContactPoint()); //agrega item en jList
             } else {
                 rootNode.detachChild(mark);
@@ -128,6 +128,11 @@ public class BodyApp extends SimpleApplication {
         if (v != null && !v.equals(mark.getLocalTranslation())) {
             //System.out.println("update attach");
             attachMark(v);
+        }
+        else {
+             if (rootNode.getChild(mark.getName()) != null) {
+                 rootNode.attachChild(mark);
+             }
         }
     }
 }
