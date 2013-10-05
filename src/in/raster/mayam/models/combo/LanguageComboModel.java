@@ -37,37 +37,55 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-package in.raster.mayam.form;
+package in.raster.mayam.models.combo;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 
 /**
  *
- * @author Devishree
- * @version 2.0
+ * @author BabuHussain
+ * @version 0.9
+ *
  */
-public class Thumbnail extends JLabel {
+public class LanguageComboModel extends AbstractListModel implements ComboBoxModel {
 
-    ImageIcon defaultIcon = new ImageIcon(getClass().getResource("/in/raster/mayam/form/images/blank.jpg"));
+    private String locale[];
+    private String selected = null;
 
-    public Thumbnail(String iuid, BufferedImage image) {
-        Color color = new Color(0, 0, 0);
-        setBackground(color);
-        setDoubleBuffered(false);
-        setOpaque(false);
-        setPreferredSize(new Dimension(75, 75));
-        setName(iuid);
-        setFont(new java.awt.Font("Times", 0, 10));
-        setHorizontalAlignment(SwingConstants.CENTER);
-        if (image != null) {
-            setIcon(new ImageIcon(image));
+    public LanguageComboModel() {
+    }
+
+    public LanguageComboModel(String[] locale) {
+        this.locale = locale;
+    }
+
+    public void setLocale(String localeList[]) {
+        locale = localeList;
+    }
+
+    @Override
+    public int getSize() {
+        if (locale != null) {
+            return locale.length;
         } else {
-            setIcon(defaultIcon);
+            return 0;
         }
+
+    }
+
+    @Override
+    public Object getElementAt(int i) {
+        return locale[i];
+    }
+
+    @Override
+    public void setSelectedItem(Object o) {
+        selected = (String) o;
+    }
+
+    @Override
+    public Object getSelectedItem() {
+        return selected;
     }
 }

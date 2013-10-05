@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -44,7 +45,7 @@ import java.util.Date;
 
 /**
  *
- * @author  BabuHussain
+ * @author BabuHussain
  * @version 0.5
  *
  */
@@ -67,16 +68,31 @@ public class TextOverlayParam {
     private String totalInstance = "";
     private int currentInstance = 1;
     private String zoomLevel = "";
-
-    //added variables for MAYAM-61
-    private String instanceNumber="";
-    private String studyDescription="";
-    private String seriesDescription="";
+    private String studyDescription = "";
+    private String seriesDescription = "";
     SimpleDateFormat sourceDateFormat = new SimpleDateFormat("yyyyMMdd");
     SimpleDateFormat destinationDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-    private String framePosition = "";
+    private String viewSize = "";
+    private String imageSize = "";
+    private boolean isMultiframe;
 
     public TextOverlayParam() {
+    }
+
+    public TextOverlayParam(String patientName, String patientId, String sex, String studyDate, String studyDescription, String seriesDescription, String bodyPartExamined, String institutionName, String windowLevel, String windowWidth, int currentInstance, String totalInstance, boolean isMultiframe) {
+        this.patientName = patientName;
+        this.patientID = patientId;
+        this.sex = sex;
+        this.studyDate = studyDate;
+        this.studyDescription = studyDescription;
+        this.seriesDescription = seriesDescription;
+        this.bodyPartExamined = bodyPartExamined;
+        this.institutionName = institutionName;
+        this.windowLevel = windowLevel;
+        this.windowWidth = windowWidth;
+        this.totalInstance = totalInstance;
+        this.currentInstance = currentInstance;
+        this.isMultiframe = isMultiframe;
     }
 
     public String getBodyPartExamined() {
@@ -232,22 +248,6 @@ public class TextOverlayParam {
         this.zoomLevel = zoomLevel;
     }
 
-    public String getFramePosition() {
-        return framePosition;
-    }
-
-    public void setFramePosition(String framePosition) {
-        this.framePosition = framePosition;
-    }
-
-    public String getInstanceNumber() {
-        return instanceNumber;
-    }
-
-    public void setInstanceNumber(String instanceNumber) {
-        this.instanceNumber = instanceNumber;
-    }
-
     public String getSeriesDescription() {
         return seriesDescription;
     }
@@ -264,4 +264,27 @@ public class TextOverlayParam {
         this.studyDescription = studyDescription;
     }
 
+    public String getImageSize() {
+        return imageSize;
+    }
+
+    public void setImageSize(String imageSize) {
+        this.imageSize = imageSize;
+    }
+
+    public String getViewSize() {
+        return viewSize;
+    }
+
+    public void setViewSize(String viewSize) {
+        this.viewSize = viewSize;
+    }
+
+    public boolean isMultiframe() {
+        return isMultiframe;
+    }
+
+    public void setIsMultiframe(boolean isMultiframe) {
+        this.isMultiframe = isMultiframe;
+    }
 }

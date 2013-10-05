@@ -37,37 +37,50 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-package in.raster.mayam.form;
+package in.raster.mayam.models.combo;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 
 /**
  *
- * @author Devishree
- * @version 2.0
+ * @author  BabuHussain
+ * @version 0.5
+ *
  */
-public class Thumbnail extends JLabel {
+public class TransferSyntaxModel extends AbstractListModel implements ComboBoxModel {
 
-    ImageIcon defaultIcon = new ImageIcon(getClass().getResource("/in/raster/mayam/form/images/blank.jpg"));
+    private String[] transferSyntaxArray;
+    private String selection = null;
 
-    public Thumbnail(String iuid, BufferedImage image) {
-        Color color = new Color(0, 0, 0);
-        setBackground(color);
-        setDoubleBuffered(false);
-        setOpaque(false);
-        setPreferredSize(new Dimension(75, 75));
-        setName(iuid);
-        setFont(new java.awt.Font("Times", 0, 10));
-        setHorizontalAlignment(SwingConstants.CENTER);
-        if (image != null) {
-            setIcon(new ImageIcon(image));
-        } else {
-            setIcon(defaultIcon);
+    public TransferSyntaxModel(String[] transferSyntaxArray) {
+        this.transferSyntaxArray = transferSyntaxArray;
+        selection = transferSyntaxArray[0];
+    }
+
+    public void setTrasferSyntaxArray(String[] transferSyntaxArray) {
+        this.transferSyntaxArray = transferSyntaxArray;
+    }
+
+    @Override
+    public int getSize() {
+        return this.transferSyntaxArray.length;
+    }
+
+    @Override
+    public Object getElementAt(int index) {
+        return transferSyntaxArray[index];
+    }
+
+    @Override
+    public void setSelectedItem(Object anItem) {
+        if (!anItem.toString().equalsIgnoreCase("")) {
+            selection = anItem.toString();
         }
+    }
+
+    @Override
+    public String getSelectedItem() {
+        return selection;
     }
 }
