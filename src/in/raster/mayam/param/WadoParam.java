@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -42,8 +43,8 @@ import org.dcm4che2.data.TransferSyntax;
 
 /**
  *
- * @author  BabuHussain
- * @version 0.7
+ * @author BabuHussain
+ * @version 0.5
  *
  */
 public class WadoParam {
@@ -58,15 +59,27 @@ public class WadoParam {
     private String retrieveTrasferSyntax;
 
     public WadoParam() {
-    }   
+    }
+
     public String getWadoUrl() {
         String queryString = "";
-        queryString = getProtocol()+appendHostName();
-        queryString += remotePort != 0 ? ":" + remotePort : "8080";
-        queryString += "/wado?requestType=WADO&studyUID="+appendStudy();
-        queryString += "&seriesUID="+appendSeries();
-        queryString += "&objectUID="+appendObject();
-        queryString += "&contentType=application/dicom"+appendTransferSyntax();
+        queryString = getProtocol() + appendHostName();
+        queryString += remotePort != 0 ? ":" + remotePort : ":8080";
+        queryString += "/wado?requestType=WADO&studyUID=" + appendStudy();
+        queryString += "&seriesUID=" + appendSeries();
+        queryString += "&objectUID=" + appendObject();
+        queryString += "&contentType=application/dicom" + appendTransferSyntax();
+        return queryString;
+    }
+
+    public String getWadoUrlJpg() {
+        String queryString = "";
+        queryString = getProtocol() + appendHostName();
+        queryString += remotePort != 0 ? ":" + remotePort : ":8080";
+        queryString += "/wado?requestType=WADO&studyUID=" + appendStudy();
+        queryString += "&seriesUID=" + appendSeries();
+        queryString += "&objectUID=" + appendObject();
+        queryString += "&rows=" + 75;
         return queryString;
     }
 
@@ -108,14 +121,14 @@ public class WadoParam {
     }
 
     private String appendTransferSyntax() {
-        String transferSyntax="&transferSyntax=";
+        String transferSyntax = "&transferSyntax=";
         if (retrieveTrasferSyntax != null && !retrieveTrasferSyntax.equalsIgnoreCase("")) {
             if (retrieveTrasferSyntax.equalsIgnoreCase("Explicit VR Little Endian")) {
-                transferSyntax+= TransferSyntax.ExplicitVRLittleEndian.uid();
-                return  transferSyntax;
+                transferSyntax += TransferSyntax.ExplicitVRLittleEndian.uid();
+                return transferSyntax;
             } else if (retrieveTrasferSyntax.equalsIgnoreCase("Implicit VR Little Endian")) {
-                transferSyntax+= TransferSyntax.ImplicitVRLittleEndian.uid();
-                return  transferSyntax;
+                transferSyntax += TransferSyntax.ImplicitVRLittleEndian.uid();
+                return transferSyntax;
             }
         }
         return "";
