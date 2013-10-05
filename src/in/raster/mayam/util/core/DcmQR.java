@@ -38,55 +38,19 @@
 package in.raster.mayam.util.core;
 
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.NetworkQueueUpdateDelegate;
-import in.raster.mayam.form.MainScreen;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import in.raster.mayam.delegates.InfoUpdateDelegate;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executor;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.UID;
-import org.dcm4che2.data.UIDDictionary;
-import org.dcm4che2.data.VR;
+import org.apache.commons.cli.*;
+import org.dcm4che.dict.Tags;
+import org.dcm4che2.data.*;
 import org.dcm4che2.io.DicomOutputStream;
-import org.dcm4che2.net.Association;
-import org.dcm4che2.net.CommandUtils;
-import org.dcm4che2.net.ConfigurationException;
-import org.dcm4che2.net.Device;
-import org.dcm4che2.net.DicomServiceException;
-import org.dcm4che2.net.DimseRSP;
-import org.dcm4che2.net.DimseRSPHandler;
-import org.dcm4che2.net.ExtQueryTransferCapability;
-import org.dcm4che2.net.ExtRetrieveTransferCapability;
-import org.dcm4che2.net.NetworkApplicationEntity;
-import org.dcm4che2.net.NetworkConnection;
-import org.dcm4che2.net.NewThreadExecutor;
-import org.dcm4che2.net.NoPresentationContextException;
-import org.dcm4che2.net.PDVInputStream;
-import org.dcm4che2.net.Status;
-import org.dcm4che2.net.TransferCapability;
-import org.dcm4che2.net.UserIdentity;
+import org.dcm4che2.net.*;
 import org.dcm4che2.net.service.DicomService;
 import org.dcm4che2.net.service.StorageService;
 import org.slf4j.Logger;
@@ -94,7 +58,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author gunter zeilinger(gunterze@gmail.com)
- * @version $Revision: 11856 $ $Date: 2009-06-23 13:52:07 +0200 (Tue, 23 Jun 2009) $
+ * @version $Revision: 14908 $ $Date: 2011-02-16 14:57:03 +0100 (Wed, 16 Feb
+ * 2011) $
  * @since Jan, 2006
  */
 public class DcmQR {
@@ -127,7 +92,6 @@ public class DcmQR {
     private static String[] NO_SSL2 = {"TLSv1", "SSLv3"};
     private static String[] NO_SSL3 = {"TLSv1", "SSLv2Hello"};
     private static char[] SECRET = {'s', 'e', 'c', 'r', 'e', 't'};
-    private static int cgetServiceCount=0;
 
     public static enum QueryRetrieveLevel {
 
@@ -369,10 +333,11 @@ public class DcmQR {
     private final NetworkConnection conn = new NetworkConnection();
     private Association assoc;
     private int priority = 0;
+    private boolean cfind;
     private boolean cget;
     private String moveDest;
     private File storeDest;
-    private File devnull;
+    private boolean devnull;
     private int fileBufferSize = 256;
     private boolean evalRetrieveAET = false;
     private QueryRetrieveLevel qrlevel = QueryRetrieveLevel.STUDY;
@@ -393,18 +358,14 @@ public class DcmQR {
     private char[] keyPassword;
     private String trustStoreURL = "resource:tls/mesa_certs.jks";
     private char[] trustStorePassword = SECRET;
-    private File destination;
+    InfoUpdateDelegate infoUpdateDelegate = new InfoUpdateDelegate();
 
     public DcmQR(String name) {
-        cgetServiceCount++;
         device = new Device(name);
         executor = new NewThreadExecutor(name);
         remoteAE.setInstalled(true);
         remoteAE.setAssociationAcceptor(true);
         remoteAE.setNetworkConnection(new NetworkConnection[]{remoteConn});
-        String[] s = ApplicationContext.databaseRef.getListenerDetails();
-        this.setDestination(s[2]);
-        this.setStoreDestination(s[2]);
 
         device.setNetworkApplicationEntity(ae);
         device.setNetworkConnection(conn);
@@ -649,6 +610,9 @@ public class DcmQR {
                 "retrieve instances of matching entities by C-MOVE to specified destination.");
         opts.addOption(OptionBuilder.create("cmove"));
 
+        opts.addOption("nocfind", false,
+                "retrieve instances without previous query - unique keys must be specified by -q options");
+
         opts.addOption("cget", false, "retrieve instances of matching entities by C-GET.");
 
         OptionBuilder.withArgName("cuid[:ts]");
@@ -820,19 +784,19 @@ public class DcmQR {
                 + "exclusive with -S and -I, perform study level query "
                 + "by default.");
         OptionBuilder.withLongOpt("patient");
-        opts.addOption(OptionBuilder.create("P"));
+        qrlevel.addOption(OptionBuilder.create("P"));
 
         OptionBuilder.withDescription("perform series level query, multiple "
                 + "exclusive with -P and -I, perform study level query "
                 + "by default.");
         OptionBuilder.withLongOpt("series");
-        opts.addOption(OptionBuilder.create("S"));
+        qrlevel.addOption(OptionBuilder.create("S"));
 
         OptionBuilder.withDescription("perform instance level query, multiple "
                 + "exclusive with -P and -S, perform study level query "
                 + "by default.");
         OptionBuilder.withLongOpt("image");
-        opts.addOption(OptionBuilder.create("I"));
+        qrlevel.addOption(OptionBuilder.create("I"));
 
         OptionBuilder.withArgName("cuid");
         OptionBuilder.hasArgs();
@@ -859,6 +823,9 @@ public class DcmQR {
         OptionBuilder.withDescription("specify additional return key. attr can "
                 + "be specified by name or tag value (in hex).");
         opts.addOption(OptionBuilder.create("r"));
+
+        opts.addOption("nodefret", false,
+                "only inlcude return keys specified by -r into the request.");
 
         OptionBuilder.withArgName("num");
         OptionBuilder.hasArg();
@@ -902,8 +869,20 @@ public class DcmQR {
         try {
             cl = new GnuParser().parse(opts, args);
         } catch (ParseException e) {
+            exit("dcmqr: " + e.getMessage());
             throw new RuntimeException("unreachable");
-        }       
+        }
+        if (cl.hasOption('V')) {
+            Package p = DcmQR.class.getPackage();
+            System.out.println("dcmqr v" + p.getImplementationVersion());
+            System.exit(0);
+        }
+        if (cl.hasOption('h') || cl.getArgList().size() != 1) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(USAGE, DESCRIPTION, opts, EXAMPLE);
+            System.exit(0);
+        }
+
         return cl;
     }
 
@@ -1025,15 +1004,37 @@ public class DcmQR {
         }
         if (cl.hasOption("highprior")) {
             dcmqr.setPriority(CommandUtils.HIGH);
-        }      
-        /*--------------------------Added by Babu Hussain----------------------------*/
-        CUID[] cuidValues = CUID.values();
-        String[] tsuids = DEF_TS;
-        for (int i = 0; i < cuidValues.length; i++) {
-            String cuid = cuidValues[i].uid;
-            dcmqr.addStoreTransferCapability(cuid, tsuids);
         }
-        /*---------------------------------------------------------------------------*/
+        if (cl.hasOption("cstore")) {
+            String[] storeTCs = cl.getOptionValues("cstore");
+            for (String storeTC : storeTCs) {
+                String cuid;
+                String[] tsuids;
+                int colon = storeTC.indexOf(':');
+                if (colon == -1) {
+                    cuid = storeTC;
+                    tsuids = DEF_TS;
+                } else {
+                    cuid = storeTC.substring(0, colon);
+                    String ts = storeTC.substring(colon + 1);
+                    try {
+                        tsuids = TS.valueOf(ts).uids;
+                    } catch (IllegalArgumentException e) {
+                        tsuids = ts.split(",");
+                    }
+                }
+                try {
+                    cuid = CUID.valueOf(cuid).uid;
+                } catch (IllegalArgumentException e) {
+                    // assume cuid already contains UID
+                }
+                dcmqr.addStoreTransferCapability(cuid, tsuids);
+            }
+            if (cl.hasOption("cstoredest")) {
+                dcmqr.setStoreDestination(cl.getOptionValue("cstoredest"));
+            }
+        }
+        dcmqr.setCFind(!cl.hasOption("nocfind"));
         dcmqr.setCGet(cl.hasOption("cget"));
         if (cl.hasOption("cmove")) {
             dcmqr.setMoveDest(cl.getOptionValue("cmove"));
@@ -1041,15 +1042,10 @@ public class DcmQR {
         if (cl.hasOption("evalRetrieveAET")) {
             dcmqr.setEvalRetrieveAET(true);
         }
-        if (cl.hasOption("P")) {
-            dcmqr.setQueryLevel(QueryRetrieveLevel.PATIENT);
-        } else if (cl.hasOption("S")) {
-            dcmqr.setQueryLevel(QueryRetrieveLevel.SERIES);
-        } else if (cl.hasOption("I")) {
-            dcmqr.setQueryLevel(QueryRetrieveLevel.IMAGE);
-        } else {
-            dcmqr.setQueryLevel(QueryRetrieveLevel.STUDY);
-        }
+        dcmqr.setQueryLevel(cl.hasOption("P") ? QueryRetrieveLevel.PATIENT
+                : cl.hasOption("S") ? QueryRetrieveLevel.SERIES
+                : cl.hasOption("I") ? QueryRetrieveLevel.IMAGE
+                : QueryRetrieveLevel.STUDY);
         if (cl.hasOption("noextneg")) {
             dcmqr.setNoExtNegotiation(true);
         }
@@ -1082,16 +1078,19 @@ public class DcmQR {
                 dcmqr.addPrivate(cuids[i]);
             }
         }
-        if (cl.hasOption("q")) {
-            String[] matchingKeys = cl.getOptionValues("q");
-            for (int i = 1; i < matchingKeys.length; i++, i++) {
-                dcmqr.addMatchingKey(Tag.toTagPath(matchingKeys[i - 1]), matchingKeys[i]);
-            }
+        if (!cl.hasOption("nodefret")) {
+            dcmqr.addDefReturnKeys();
         }
         if (cl.hasOption("r")) {
             String[] returnKeys = cl.getOptionValues("r");
             for (int i = 0; i < returnKeys.length; i++) {
                 dcmqr.addReturnKey(Tag.toTagPath(returnKeys[i]));
+            }
+        }
+        if (cl.hasOption("q")) {
+            String[] matchingKeys = cl.getOptionValues("q");
+            for (int i = 1; i < matchingKeys.length; i++, i++) {
+                dcmqr.addMatchingKey(Tag.toTagPath(matchingKeys[i - 1]), matchingKeys[i]);
             }
         }
 
@@ -1113,6 +1112,8 @@ public class DcmQR {
                 dcmqr.setTls3DES_EDE_CBC();
             } else if ("AES".equalsIgnoreCase(cipher)) {
                 dcmqr.setTlsAES_128_CBC();
+            } else {
+                exit("Invalid parameter for option -tls: " + cipher);
             }
             if (cl.hasOption("tls1")) {
                 dcmqr.setTlsProtocol(TLS1);
@@ -1149,7 +1150,8 @@ public class DcmQR {
                 dcmqr.initTLS();
             } catch (Exception e) {
                 System.err.println("ERROR: Failed to initialize TLS context:"
-                        + e.getMessage());                
+                        + e.getMessage());
+                System.exit(2);
             }
             long t2 = System.currentTimeMillis();
             LOG.info("Initialize TLS context in {} s", Float.valueOf((t2 - t1) / 1000f));
@@ -1158,23 +1160,31 @@ public class DcmQR {
             dcmqr.start();
         } catch (Exception e) {
             System.err.println("ERROR: Failed to start server for receiving "
-                    + "requested objects:" + e.getMessage());           
+                    + "requested objects:" + e.getMessage());
+//            System.exit(2);
         }
         try {
             long t1 = System.currentTimeMillis();
             try {
                 dcmqr.open();
             } catch (Exception e) {
-                LOG.error("Failed to establish association:", e);               
+                LOG.error("Failed to establish association:", e);
+                System.exit(2);
             }
             long t2 = System.currentTimeMillis();
             LOG.info("Connected to {} in {} s", remoteAE, Float.valueOf((t2 - t1) / 1000f));
 
             for (;;) {
-                List<DicomObject> result = dcmqr.query();
-                long t3 = System.currentTimeMillis();
-                LOG.info("Received {} matching entries in {} s", Integer.valueOf(result.size()),
-                        Float.valueOf((t3 - t2) / 1000f));
+                List<DicomObject> result;
+                if (dcmqr.isCFind()) {
+                    result = dcmqr.query();
+                    long t3 = System.currentTimeMillis();
+                    LOG.info("Received {} matching entries in {} s", Integer.valueOf(result.size()),
+                            Float.valueOf((t3 - t2) / 1000f));
+                    t2 = t3;
+                } else {
+                    result = Collections.singletonList(dcmqr.getKeys());
+                }
                 if (dcmqr.isCMove() || dcmqr.isCGet()) {
                     if (dcmqr.isCMove()) {
                         dcmqr.move(result);
@@ -1187,7 +1197,7 @@ public class DcmQR {
                                 Integer.valueOf(dcmqr.getTotalRetrieved()),
                                 Integer.valueOf(dcmqr.getWarning()),
                                 Integer.valueOf(dcmqr.getFailed()),
-                                Float.valueOf((t4 - t3) / 1000f)});
+                                Float.valueOf((t4 - t2) / 1000f)});
                 }
                 if (repeat == 0 || closeAssoc) {
                     try {
@@ -1271,6 +1281,12 @@ public class DcmQR {
         keys.putNull(tagPath, null);
     }
 
+    public void addDefReturnKeys() {
+        for (int tag : qrlevel.getReturnKeys()) {
+            keys.putNull(tag, null);
+        }
+    }
+
     public void configureTransferCapability(boolean ivrle) {
         String[] findcuids = qrlevel.getFindClassUids();
         String[] movecuids = moveDest != null ? qrlevel.getMoveClassUids()
@@ -1313,39 +1329,38 @@ public class DcmQR {
             @Override
             protected void onCStoreRQ(Association as, int pcid, DicomObject rq,
                     PDVInputStream dataStream, String tsuid, DicomObject rsp)
-                    throws IOException, DicomServiceException {                
+                    throws IOException, DicomServiceException {
                 if (storeDest == null) {
                     super.onCStoreRQ(as, pcid, rq, dataStream, tsuid, rsp);
                 } else {
                     File file = null;
+                    String suid;
                     try {
                         String cuid = rq.getString(Tag.AffectedSOPClassUID);
                         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
                         DicomObject data = dataStream.readDataset();
-                        String suid = data.getString(Tag.StudyInstanceUID);
+                        suid = data.getString(Tag.StudyInstanceUID);
+                        String serUid = data.getString(Tags.SeriesInstanceUID);
                         Calendar today = Calendar.getInstance();
-                        File struturedDestination = new File(destination.getAbsolutePath() + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + suid);
+                        File struturedDestination = new File(ApplicationContext.listenerDetails[2] + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + suid + File.separator + serUid);
                         String child[] = struturedDestination.list();
                         if (child == null) {
                             struturedDestination.mkdirs();
                         }
-                        file = devnull != null ? struturedDestination : new File(struturedDestination, iuid);
+                        file = new File(struturedDestination, iuid);
                         BasicDicomObject fmi = new BasicDicomObject();
                         fmi.initFileMetaInformation(cuid, iuid, tsuid);
-//                        File file = devnull ? storeDest : new File(storeDest, iuid);
                         FileOutputStream fos = new FileOutputStream(file);
                         BufferedOutputStream bos = new BufferedOutputStream(fos,
                                 fileBufferSize);
                         DicomOutputStream dos = new DicomOutputStream(bos);
                         dos.writeFileMetaInformation(fmi);
-//                      dataStream.copyTo(dos);
                         dos.writeDataset(data, tsuid);
+                        infoUpdateDelegate.updateFileDetails(file);
                         dos.close();
                     } catch (IOException e) {
                         throw new DicomServiceException(rq, Status.ProcessingFailure, e.getMessage());
                     }
-                    NetworkQueueUpdateDelegate networkQueueUpdateDelegate = new NetworkQueueUpdateDelegate();
-                    networkQueueUpdateDelegate.updateReceiveTable(file, as.getCallingAET());
                 }
             }
         };
@@ -1380,13 +1395,18 @@ public class DcmQR {
     public void setQueryLevel(QueryRetrieveLevel qrlevel) {
         this.qrlevel = qrlevel;
         keys.putString(Tag.QueryRetrieveLevel, VR.CS, qrlevel.getCode());
-        for (int tag : qrlevel.getReturnKeys()) {
-            keys.putNull(tag, null);
-        }
     }
 
     public final void addPrivate(String cuid) {
         privateFind.add(cuid);
+    }
+
+    public void setCFind(boolean cfind) {
+        this.cfind = cfind;
+    }
+
+    public boolean isCFind() {
+        return cfind;
     }
 
     public void setCGet(boolean cget) {
@@ -1419,6 +1439,7 @@ public class DcmQR {
         } catch (NumberFormatException e) {
             // parameter is not a valid integer; fall through to exit
         }
+        exit(errPrompt);
         throw new RuntimeException();
     }
 
@@ -1432,29 +1453,34 @@ public class DcmQR {
         return s2;
     }
 
-    public void start() throws IOException {     
-        ApplicationContext.mainScreen.stopReceiver();        
-        if (cgetServiceCount==1 && conn.isListening()) {
+    private static void exit(String msg) {
+        System.err.println(msg);
+        System.err.println("Try 'dcmqr -h' for more information.");
+        System.exit(1);
+    }
+
+    public void start() throws IOException {
+        if (conn.isListening() && !ApplicationContext.serverStarted) {
+            ApplicationContext.serverStarted = true;
             conn.bind(executor);
+            System.out.println("Start Server listening on port " + conn.getPort());
         }
     }
 
-    public void stop() {    
+    public void stop() {
         if (conn.isListening()) {
+            ApplicationContext.serverStarted = false;
             conn.unbind();
-        }
-        try {
-            cgetServiceCount--;
-            if(cgetServiceCount==0)
-            ApplicationContext.mainScreen.startReceiver();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
     public void open() throws IOException, ConfigurationException,
             InterruptedException {
         assoc = ae.connect(remoteAE, executor);
+    }
+
+    public DicomObject getKeys() {
+        return keys;
     }
 
     public List<DicomObject> query() throws IOException, InterruptedException {
@@ -1721,6 +1747,7 @@ public class DcmQR {
             warning += cmd.getInt(Tag.NumberOfWarningSuboperations);
             failed += cmd.getInt(Tag.NumberOfFailedSuboperations);
         }
+
     }
 
     public TransferCapability selectTransferCapability(String[] cuid) {
@@ -1751,17 +1778,9 @@ public class DcmQR {
 
     public void setStoreDestination(String filePath) {
         this.storeDest = new File(filePath);
-        if ("/dev/null".equals(filePath)) {
-            devnull = destination;
-        }
-    }
-
-    public void setDestination(String filePath) {
-        destination = new File(filePath);
-        if ("/dev/null".equals(filePath)) {
-            devnull = destination;
-        } else {
-            devnull = null;
+        this.devnull = "/dev/null".equals(filePath);
+        if (!devnull) {
+            storeDest.mkdir();
         }
     }
 

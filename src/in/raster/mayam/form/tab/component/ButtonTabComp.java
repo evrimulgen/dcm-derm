@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -39,15 +40,16 @@
 package in.raster.mayam.form.tab.component;
 
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.AnnotationDelegate;
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicButtonUI;
+import in.raster.mayam.form.ImagePreviewPanel;
+import in.raster.mayam.form.LayeredCanvas;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 /**
  *
- * @author  BabuHussain
+ * @author BabuHussain
  * @version 0.5
  *
  */
@@ -59,7 +61,7 @@ public class ButtonTabComp extends JPanel {
         this.pane = pane;
         setOpaque(false);
         JLabel label = new JLabel() {
-
+            @Override
             public String getText() {
                 int i = pane.indexOfTabComponent(ButtonTabComp.this);
                 if (i != -1) {
@@ -68,6 +70,7 @@ public class ButtonTabComp extends JPanel {
                 return null;
             }
         };
+
         label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         add(label);
         //add more space between the label and the button
@@ -78,6 +81,10 @@ public class ButtonTabComp extends JPanel {
         add(button);
         //add more space to the top of the component now it is -1 for mac computer
         setBorder(BorderFactory.createEmptyBorder(-1, 0, 0, 0));
+    }
+
+    public Component getTabbedComponent() {
+        return pane;
     }
 
     private class TabButton extends JButton implements ActionListener {
@@ -102,29 +109,48 @@ public class ButtonTabComp extends JPanel {
             addActionListener(this);
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int i = pane.indexOfTabComponent(ButtonTabComp.this);
             int x = i;
             if (i != -1) {
-                if (i >= 1) {
-                    x++;
+                JPanel panel = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getComponentAt(i)).getRightComponent());
+                for (int j = 0; j < panel.getComponentCount(); j++) {
+                    JPanel seriesLevelPanel = (JPanel) panel.getComponent(j);
+                    for (int k = 0; k < seriesLevelPanel.getComponentCount(); k++) {
+                        if (seriesLevelPanel.getComponent(k) instanceof LayeredCanvas) {
+                            LayeredCanvas tempCanvas = (LayeredCanvas) seriesLevelPanel.getComponent(k);
+                            try {
+                                tempCanvas.imgpanel.storeAnnotation();
+                                tempCanvas.imgpanel.storeMultiframeAnnotation();
+                            } catch (NullPointerException ex) {
+                                //Null pointer exception occurs when there is no image panel
+                            }
+                        }
+                    }
                 }
-                AnnotationDelegate annotationDelegate = new AnnotationDelegate();
-                annotationDelegate.storeAnnotationHook(x);
-                annotationDelegate.saveAnnotation(x);
+
+                for (int j = 0; j < ApplicationContext.imgView.selectedSeriesDisplays.size(); j++) {
+                    if (ApplicationContext.imgView.selectedSeriesDisplays.get(j).getStudyUid().equals(((LayeredCanvas) ((JPanel) ((JPanel) ((JSplitPane) pane.getComponentAt(i)).getRightComponent()).getComponent(0)).getComponent(0)).imgpanel.getStudyUID())) {
+                        ApplicationContext.imgView.writeToFile(ApplicationContext.imgView.selectedSeriesDisplays.get(j));
+                        ApplicationContext.imgView.selectedSeriesDisplays.remove(j);
+                    }
+                }
+
                 pane.remove(i);
                 if (i == 0 && pane.getComponentCount() == 1) {
-                    ApplicationContext.imgView.annotationAlreadyStored = true;
                     ApplicationContext.imgView.dispose();
                 }
             }
         }
         //we don't want to update UI for this button
 
+        @Override
         public void updateUI() {
         }
 
         //paint the cross
+        @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
@@ -144,7 +170,7 @@ public class ButtonTabComp extends JPanel {
         }
     }
     private final static MouseListener buttonMouseListener = new MouseAdapter() {
-
+        @Override
         public void mouseEntered(MouseEvent e) {
             Component component = e.getComponent();
             if (component instanceof AbstractButton) {
@@ -153,6 +179,7 @@ public class ButtonTabComp extends JPanel {
             }
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
             Component component = e.getComponent();
             if (component instanceof AbstractButton) {

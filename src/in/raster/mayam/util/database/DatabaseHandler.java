@@ -39,93 +39,61 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.util.database;
 
-import com.jme3.math.Vector3f;
-import dcm.derm.human.viewer.CoordBean;
 import in.raster.mayam.context.ApplicationContext;
+import in.raster.mayam.delegates.LocalCineTimer;
 import in.raster.mayam.facade.ApplicationFacade;
-import in.raster.mayam.form.MainScreen;
-import in.raster.mayam.model.AEModel;
-import in.raster.mayam.model.Instance;
-import in.raster.mayam.model.PresetModel;
-import in.raster.mayam.model.Series;
-import in.raster.mayam.model.ServerHL7Model;
-import in.raster.mayam.model.ServerModel;
-import in.raster.mayam.model.Study;
-import in.raster.mayam.model.StudyModel;
+import in.raster.mayam.models.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.derby.jdbc.EmbeddedSimpleDataSource;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
-import java.util.Vector;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import org.apache.derby.jdbc.EmbeddedSimpleDataSource;
 import org.dcm4che.dict.Tags;
+import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
 /**
  *
- * @author  BabuHussain
- * @version 0.5
- *
+ * @author Devishree
+ * @version 2.0
  */
 public class DatabaseHandler {
-
     //Named Constants for Database,driver,protocol
-    private static final String driver = "org.apache.derby.jdbc.EmbeddedDriver";
-    private static final String protocol = "jdbc:derby:";
-    private static final String databasename = "mayamdb";
-    // Named Constants for Table name
-    private static final String patientTable = "patient";
-    private static final String studyTable = "study";
-    private static final String seriesTable = "series";
-    private static final String instanceTable = "image";
-    private static final String aeTitleTable = "aetitles";
-    private static final String hl7Table = "hl7"; //mayam derm CAD
-    public final String coordTable = "coords"; //mayam derm CAD
-    public final String coordTablePK = "SopUID"; //mayam derm CAD
-    private static final String localeTable = "locale";
+
+    private static final String driver = "org.apache.derby.jdbc.EmbeddedDriver", protocol = "jdbc:derby:", databasename = "mayamdb";
     //Named Constants for username and password of Database 
-    private static final String username = "mayam";
-    private static final String password = "mayam";
+    private static final String username = "mayam", password = "mayam";
     //Database Connection creator and executor variables 
     private Connection conn;
     private Statement statement;
-    //Datasouce declaration
-    private EmbeddedSimpleDataSource ds;
     //Boolean variables 
     private boolean dbExists = false;
-    //Data formater
-    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private String DicomServersHeaderDisplayName = "Dicom Servers";
+    //Datasouce declaration
+    private EmbeddedSimpleDataSource ds;
+    //Other variables
+    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"), timeFormat = new SimpleDateFormat("kk:mm:ss");
 
-    private DatabaseHandler() {
+    public static DatabaseHandler getInstance() {
+        return new DatabaseHandler();
     }
 
-    /**it checks whether database available in local folder or not.
-     */
     public boolean checkDBexists(String tem) {
-
-        File temp = new File(tem);
-        boolean dbexists = false;
-        for (int l = 0; l < temp.listFiles().length; l++) {
-            if (temp.listFiles()[l].getName().equalsIgnoreCase(
-                    databasename)) {
-                dbexists = true;
+        File[] listFiles = new File(tem).listFiles();
+        for (int l = 0; l < listFiles.length; l++) {
+            if (listFiles[l].getName().equalsIgnoreCase(databasename)) {
+                return true;
             }
         }
-        return dbexists;
+        return false;
     }
 
-    /** It initializes the Java Derby Databse.It creates the database if it is not available. */
     public void openOrCreateDB() {
         try {
             System.setProperty("derby.system.home", ApplicationContext.getAppDirectory());
@@ -150,17 +118,17 @@ public class DatabaseHandler {
             }
             openConnection();
             statement = conn.createStatement();
-            if (!dbExists) {                
+            if (!dbExists) {
                 createTables();
+                insertDefaultLisenerDetails();
                 insertModalities();
-                insertDefaultListenerDetail();
-                insertDefaultLayoutDetail();
                 insertDefaultPresets();
                 insertDefaultThemes();
-                insertDefaultPropertiesDetail();
+                insertButton(new ButtonsModel("All", "", "", "", false, false));
                 insertDefaultLocales();
+                insertMiscellaneous();
+                conn.commit();
             }
-            //parseLocalePropertiesFile();
             conn.setAutoCommit(false);
         } catch (SQLException e) {
             StringWriter str = new StringWriter();
@@ -172,8 +140,7 @@ public class DatabaseHandler {
         this.dbExists = checkDBexists(ApplicationContext.getAppDirectory());
         try {
             if (!dbExists) {
-                conn = DriverManager.getConnection(protocol + ApplicationContext.getAppDirectory()+File.separator+databasename + ";create=true",
-                        username, password);
+                conn = DriverManager.getConnection(protocol + ApplicationContext.getAppDirectory() + File.separator + databasename + ";create=true", username, password);
             } else {
                 conn = DriverManager.getConnection(protocol + databasename + ";create=false", username, password);
             }
@@ -186,389 +153,107 @@ public class DatabaseHandler {
         }
     }
 
-    /**
-     * It closes the local java derby database connection.
-     */
-    public void closeDrivers() {
+    private void createTables() {
         try {
-            statement.close();
-            conn.commit();
-            conn.close();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-        }
-
-    }
-
-    public void rebuild() {
-        deleteRows();
-        deleteDir(new File(getListenerDetails()[2]));
-        ApplicationContext.mainScreen.restartReceiver();
-    }
-
-    public void createAndInsertDefaults() {
-        createTables();
-        insertModalities();
-        insertDefaultListenerDetail();
-        insertDefaultLayoutDetail();
-        insertDefaultPresets();
-        insertDefaultLocales();
-    }
-
-    /**
-     * Deletes all files and subdirectories under "dir".
-     * @param dir Directory to be deleted
-     * @return boolean Returns "true" if all deletions were successful.
-     *                 If a deletion fails, the method stops attempting to
-     *                 delete and returns "false".
-     */
-    private static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-        // The directory is now empty so now it can be smoked
-        return dir.delete();
-    }
-
-    /**
-     * It commits the database.
-     */
-    public void doCommit() {
-        try {
-            conn.commit();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-        }
-    }
-
-    public void insertAE(String serverName, String host, String location, String aeTitle, int port, int headerPort, int imagePort) {
-        try {
-            conn.createStatement().execute("insert into" + "ae values('" + serverName + "','" + host + "','" + location + "','" + aeTitle + "'," + port + "," + headerPort + "," + imagePort + ")");
-            conn.commit();
+            statement.executeUpdate("create table patient (PatientId varchar(255) NOT NULL CONSTRAINT PatientId_pk PRIMARY KEY," + "PatientName varchar(255)," + "PatientBirthDate varchar(30)," + "PatientSex varchar(10))");
+            statement.executeUpdate("create table study (StudyInstanceUID varchar(255) NOT NULL CONSTRAINT StudyInstanceUID_pk PRIMARY KEY," + "StudyDate varchar(30)," + "StudyTime varchar(30)," + "AccessionNo varchar(50)," + "RefferingPhysicianName varchar(255)," + "StudyDescription varchar(80)," + "ModalitiesInStudy varchar(10)," + "NoOfSeries integer," + "NoOfInstances integer," + "RecdImgCnt integer," + "SendImgCnt integer," + "RetrieveAET varchar(50)," + "StudyType varchar(75)," + "DownloadStatus boolean," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId))");
+            statement.executeUpdate("create table series (SeriesInstanceUID varchar(255) NOT NULL CONSTRAINT SeriesInstanceUID_pk PRIMARY KEY," + "SeriesNo varchar(50)," + "SeriesDate varchar(30)," + "SeriesTime varchar(30)," + "Modality varchar(10)," + "SeriesDescription varchar(100)," + "BodyPartExamined varchar(100)," + "InstitutionName varchar(255)," + "NoOfSeriesRelatedInstances integer," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255),foreign key(StudyInstanceUID) references Study(StudyInstanceUID))");
+            statement.executeUpdate("create table image (SopUID varchar(255) NOT NULL CONSTRAINT SopUID_pk PRIMARY KEY," + "InstanceNo integer," + "multiframe boolean," + "totalframe varchar(50)," + "SendStatus varchar(50)," + "ForwardDateTime varchar(30)," + "ReceivedDateTime varchar(30)," + "ReceiveStatus varchar(50)," + "FileStoreUrl varchar(1000)," + "SliceLocation integer," + "EncapsulatedDocument varchar(50)," + "ThumbnailStatus boolean," + "FrameOfReferenceUID varchar(128)," + "ImagePosition varchar(64)," + "ImageOrientation varchar(128)," + "ImageType varchar(30)," + "PixelSpacing varchar(64)," + "SliceThickness varchar(16)," + "NoOfRows integer," + "NoOfColumns integer," + "ReferencedSopUid varchar(128)," + "PatientId varchar(255),foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255),foreign key(StudyInstanceUID) references Study(StudyInstanceUID)," + "SeriesInstanceUID varchar(255),foreign key(SeriesInstanceUID) references Series(SeriesInstanceUID))");
+            statement.executeUpdate("create table listener (pk integer primary key GENERATED ALWAYS AS IDENTITY,aetitle varchar(255),port varchar(255),storagelocation varchar(255))");
+            statement.executeUpdate("create table servers(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255) NOT NULL UNIQUE,aetitle varchar(255),hostname varchar(255),port integer,retrievetype varchar(100),showpreviews boolean,wadocontext varchar(100),wadoport integer,wadoprotocol varchar(100),retrievets varchar(255))");
+            statement.executeUpdate("create table theme(pk integer primary key GENERATED ALWAYS AS IDENTITY,name varchar(255),status boolean)");
+            statement.executeUpdate("create table buttons(pk integer primary key GENERATED ALWAYS AS IDENTITY,buttonno integer,description varchar(255),modality varchar(255),datecriteria varchar(255),timecriteria varchar(255),iscustomdate boolean,iscustomtime boolean)");
+            statement.executeUpdate("create table modality(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255),shortname varchar(255),status boolean)");
+            statement.executeUpdate("create table presets(pk integer primary key GENERATED ALWAYS AS IDENTITY,presetname varchar(255),windowwidth numeric,windowlevel numeric,modality_fk integer,foreign key(modality_fk) references modality(pk))");
+            statement.executeUpdate("create table locale (pk integer primary key GENERATED ALWAYS AS IDENTITY,countrycode varchar(10),country varchar(255),languagecode varchar(10),language varchar(255),localeid varchar(255),status boolean)");
+            statement.executeUpdate("create table miscellaneous(Loopback boolean)");
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void insertListenerDetail(String aeTitle, int port, String storageLocation) {
+    public boolean checkRecordExists(String tablename, String fieldname, String compareWith) {
         try {
-            ResultSet rs = conn.createStatement().executeQuery("select pk from listener");
+            ResultSet rs = conn.createStatement().executeQuery("select count(" + fieldname + ") from " + tablename + " where " + fieldname + " = '" + compareWith.trim() + "'");
             rs.next();
-            int pk = rs.getInt("pk");
-            int n = conn.createStatement().executeUpdate("update listener set aetitle='" + aeTitle + "',port=" + port + " where pk=" + pk);
-            rs.close();
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void updatePropertiesDetail(String value) {
-        try {
-            ResultSet rs = conn.createStatement().executeQuery("select pk,value from properties where property='multiframeassepseries'");
-            rs.next();
-            String status = rs.getString("value");
-            int n = conn.createStatement().executeUpdate("update properties set value='" + value + "' where property='multiframeassepseries'");
-            rs.close();
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void insertDefaultPropertiesDetail() {
-        try {
-            conn.createStatement().execute("insert into properties(property,value) values('multiframeassepseries','true')");
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
-    public boolean getMultiframeStatus() {
-        boolean status = true;
-        try {
-            ResultSet rs = conn.createStatement().executeQuery("select pk,value from properties where property='multiframeassepseries'");
-            rs.next();
-            String value = rs.getString("value");
-            if (value.equalsIgnoreCase("true")) {
-                status = true;
-            } else {
-                status = false;
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return status;
-    }
-
-    public String[] getListenerDetails() {
-        ResultSet rs = null;
-        String detail[] = new String[3];
-        try {
-            rs = conn.createStatement().executeQuery("select * from listener");
-            while (rs.next()) {
-                detail[0] = rs.getString("aetitle");
-                detail[1] = Integer.toString(rs.getInt("port"));
-                detail[2] = rs.getString("storagelocation");
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return detail;
-    }
-
-    // checks the existence of the file
-    public boolean TableExists(String TableName) throws SQLException {
-        String[] types = {"TABLE"};
-        ResultSet rset = conn.getMetaData().getTables(null, null, "%", types);
-        while (rset.next()) {
-            if (rset.getString("TABLE_NAME").equalsIgnoreCase(TableName)) {
+            if (rs.getInt(1) > 0) {
                 return true;
             }
+        } catch (SQLException e) {
+        } catch (NullPointerException npe) {
         }
         return false;
-
     }
 
-    public void createTables() {
+    //insertions
+    private void insertDefaultLisenerDetails() throws SQLException {
+        conn.createStatement().execute("insert into listener(aetitle,port,storagelocation) values('MAYAM','1025','" + ApplicationContext.getAppDirectory() + File.separator + "archieve')");
+    }
+
+    private void insertModalities() throws SQLException {
+        String modality[] = {"CT", "MR", "XA", "CR", "SC", "NM", "RF", "DX", "US", "PX", "OT", "DR", "SR", "MG", "RG"};
+        for (int i = 0; i < modality.length; i++) {
+            conn.createStatement().execute("insert into modality(logicalname,shortname,status) values('Dummy','" + modality[i] + "',true)");
+        }
+    }
+
+    private void insertDefaultPresets() throws SQLException {
+        ResultSet rs = conn.createStatement().executeQuery("select pk from modality where shortname='CT'");
+        rs.next();
+        int pk = rs.getInt("pk");
+        rs.close();
+        conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('CT Abdomen',40,350," + pk + ")");
+        conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('CT Lung',1500,-600," + pk + ")");
+        conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('CT Brain',80,40," + pk + ")");
+        conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('CT Bone',2500,480," + pk + ")");
+        conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('CT Head/Neck',350,90," + pk + ")");
+    }
+
+    private void insertDefaultThemes() throws SQLException {
+        conn.createStatement().execute("insert into theme(name,status)values('Nimrod',true)");
+        conn.createStatement().execute("insert into theme(name,status)values('Motif',false)");
+        conn.createStatement().execute("insert into theme(name,status)values('System',false)");
+    }
+
+    public void insertServer(ServerModel serverModel) {
         try {
-            String sql = "";
-            //creating patient table if it is not exist already
-            sql = "create table " + patientTable + " (PatientId varchar(255) NOT NULL CONSTRAINT PatientId_Pk PRIMARY KEY ," + "PatientName varchar(255)," + "PatientBirthDate varchar(30)," + "PatientSex varchar(10))";
-            statement.executeUpdate(sql);
-
-            //creating study table if it is not exist already
-            sql = "create table " + studyTable + "(StudyInstanceUID varchar(255)  NOT NULL CONSTRAINT StudyInstanceUID_pk PRIMARY KEY ," + "StudyDate varchar(30), " + "AccessionNo varchar(50), " + "ReferringPhysicianName varchar(255), " + "StudyDescription  varchar(80), " + "ModalityInStudy varchar(10), " + "NoOfSeries integer," + "NoOfInstances integer," + "RecdImgCnt Integer," + "SendImgCnt integer," + "RetrieveAET varchar(50)," + "StudyType varchar(75)," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId))";
-            statement.executeUpdate(sql);
-
-            //creating series table if it is not exist already
-            sql = "create table " + seriesTable + " (SeriesInstanceUID varchar(255) NOT NULL CONSTRAINT SeriesInstanceUID_pk PRIMARY KEY ," + "SeriesNo varchar(50)," + "Modality varchar(10)," + "SeriesDescription varchar(100)," + "BodyPartExamined varchar(100)," + "InstitutionName varchar(255)," + "NoOfSeriesRelatedInstances integer," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255), foreign key (StudyInstanceUID) references Study(StudyInstanceUID))";
-            statement.executeUpdate(sql);
-
-            //creating is instance table if it is not exist already
-            sql = "create table " + instanceTable + " (SopUID varchar(255) NOT NULL CONSTRAINT SopUID_pk PRIMARY KEY ," + "InstanceNo integer," + "multiframe varchar(50)," + "totalframe varchar(50)," + "SendStatus varchar(50)," + "ForwardDateTime varchar(30)," + "ReceivedDateTime varchar(30)," + "ReceiveStatus varchar(50)," + "FileStoreUrl varchar(750)," + "SliceLocation integer," + "EncapsulatedDocument varchar(50)," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255), foreign key (StudyInstanceUID) references Study(StudyInstanceUID)," + "SeriesInstanceUID varchar(255), foreign key (SeriesInstanceUID) references Series(SeriesInstanceUID))";
-            statement.executeUpdate(sql);
-
-            sql = "create table ae(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255),hostname varchar(255),aetitle varchar(255),port integer,retrievetype varchar(100),wadocontext varchar(100),wadoport integer,wadoprotocol varchar(100),retrievets varchar(255))";
-            statement.executeUpdate(sql);
-
-            sql = "create table modality(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255),shortname varchar(255))";
-            statement.executeUpdate(sql);
-
-            sql = "create table layout(pk integer primary key GENERATED ALWAYS AS IDENTITY,rowcount smallint,columncount smallint,modality_fk integer,foreign key(modality_fk) references modality(pk))";
-            statement.executeUpdate(sql);
-
-            sql = "create table preset(pk integer primary key GENERATED ALWAYS AS IDENTITY,presetname varchar(255),windowwidth numeric,windowlevel numeric,modality_fk integer,foreign key(modality_fk) references modality(pk))";
-            statement.executeUpdate(sql);
-
-            sql = "create table listener(pk integer primary key GENERATED ALWAYS AS IDENTITY,aetitle varchar(255),port integer,storagelocation varchar(255))";
-            statement.executeUpdate(sql);
-
-            sql = "create table theme(pk integer primary key GENERATED ALWAYS AS IDENTITY,name varchar(255),status varchar(255))";
-            statement.executeUpdate(sql);
-
-            sql = "create table properties (pk integer primary key GENERATED ALWAYS AS IDENTITY,property varchar(255),value varchar(255))";
-            statement.executeUpdate(sql);
-
-            sql = "create table " + localeTable + "(pk integer primary key GENERATED ALWAYS AS IDENTITY,country varchar(255),countrycode varchar(10),language varchar(255),languagecode varchar(10),localeid varchar(255),status varchar(155))";
-            statement.executeUpdate(sql);
-            
-            //mayam derm CAD
-            sql = "create table " + hl7Table + "(servername varchar(255),serveraddr varchar(128),port varchar(10),subprotocol varchar(255))";
-            statement.executeUpdate(sql);
-            
-            //mayam derm CAD
-            sql = "create table " + coordTable + "("+coordTablePK+" varchar(255) not null, X float, Y float, Z float, FN integer)";
-            statement.executeUpdate(sql);
+            conn.createStatement().execute("insert into servers(logicalname,aetitle,hostname,port,retrievetype,showpreviews,wadocontext,wadoport,wadoprotocol,retrievets) values('" + serverModel.getDescription() + "','" + serverModel.getAeTitle() + "','" + serverModel.getHostName() + "'," + serverModel.getPort() + ",'" + serverModel.getRetrieveType() + "'," + serverModel.isPreviewEnabled() + ",'" + serverModel.getWadoURL() + "'," + serverModel.getWadoPort() + ",'" + serverModel.getWadoProtocol() + "','" + serverModel.getRetrieveTransferSyntax() + "')");
+            conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    /**
-     * This routine is used to list studies of local db
-     * @return
-     */
-    public Vector listAllStudiesOfDB() {
-        ResultSet rs = null;
-        Vector studyList = new Vector();
+    public void insertButton(ButtonsModel buttonsModel) {
         try {
-            String sql = "Select * from study";
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                StudyModel st = new StudyModel();
-                st.setStudyDate(rs.getString("StudyDate"));
-                st.setAccessionNo(rs.getString("AccessionNo").equalsIgnoreCase("null") ? "" : rs.getString("AccessionNo"));
-                st.setPatientId(rs.getString("PatientId"));
-                st.setStudyDescription(rs.getString("StudyDescription").equalsIgnoreCase("null") ? "" : rs.getString("StudyDescription"));
-                st.setStudyUID(rs.getString("StudyInstanceUID"));
-                st.setModalitiesInStudy(rs.getString("ModalityInStudy"));
-                st.setStudyLevelInstances("" + getStudyLevelInstance(st.getStudyUID()));
-
-                String sql2 = "select PatientName,PatientBirthDate from patient where PatientId='" + rs.getString("PatientId") + "'";
-                ResultSet rs1 = conn.createStatement().executeQuery(sql2);
-                rs1.next();
-
-                st.setPatientName(rs1.getString("PatientName"));
-                st.setDob(rs1.getString("PatientBirthDate"));
-                st.setModalitiesInStudy(getModalitiesOfStudy(st.getStudyUID()));
-                studyList.addElement(st);      
-                rs1.close();
-            }
-            rs.close();
-                
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return studyList;
-    }
-
-    public String getModalitiesOfStudy(String siuid) {
-        String modalities = "";
-        ResultSet rs = null;
-        try {
-            String sql = "Select * from series where StudyInstanceUID='" + siuid + "'";
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                if (!modalities.contains(rs.getString("Modality"))) {
-                    if (modalities.equalsIgnoreCase("")) {
-                        modalities += rs.getString("Modality");
-                    } else {
-                        modalities += "/" + rs.getString("Modality");
-                    }
-                }
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }        
-        return modalities;
-    }
-
-    public Vector listAllSeriesOfStudy(String siuid) {
-        ResultSet rs = null;
-        Vector seriesList = new Vector();
-        try {
-            String sql = "Select * from series where StudyInstanceUID='" + siuid + "'";
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                Series series = new Series();
-                series.setSeriesDesc(rs.getString("SeriesDescription"));
-                series.setBodyPartExamined(rs.getString("BodyPartExamined"));
-                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
-                series.setModality(rs.getString("Modality"));
-                series.setSeriesNumber(rs.getString("SeriesNo"));
-                series.setStudyInstanceUID(rs.getString("StudyInstanceUID"));
-                series.setInstitutionName(rs.getString("InstitutionName"));
-                series.setSeriesRelatedInstance(this.getSeriesLevelInstance(siuid, series.getSeriesInstanceUID()));
-                seriesList.addElement(series);
-                
-                rs.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return seriesList;
-    }
-    public ArrayList<Series> listAllSeriesOfStudy(String siuid,String modality) {
-        ResultSet rs = null;
-        ArrayList<Series> seriesList = new ArrayList<Series>();
-        try {
-            String sql = "Select * from series where StudyInstanceUID='" + siuid + "' and Modality='" + modality + "'";
-            //System.out.println(sql);
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                Series series = new Series();
-                series.setSeriesDesc(rs.getString("SeriesDescription"));
-                series.setBodyPartExamined(rs.getString("BodyPartExamined"));
-                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
-                series.setModality(rs.getString("Modality"));
-                series.setSeriesNumber(rs.getString("SeriesNo"));
-                series.setStudyInstanceUID(rs.getString("StudyInstanceUID"));
-                series.setInstitutionName(rs.getString("InstitutionName"));
-                series.setSeriesRelatedInstance(this.getSeriesLevelInstance(siuid, series.getSeriesInstanceUID()));
-                seriesList.add(series);
-                
-                rs.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return seriesList;
-    }
-
-    public void insertModalities() {
-        String modality[] = {"CT", "MR", "XA", "CR", "SC", "NM", "RF", "DX", "US", "PX", "OT", "DR", "SR", "MG", "RG"};
-        for (int i = 0; i < modality.length; i++) {
-            try {
-                conn.createStatement().execute("insert into modality(logicalname,shortname) values('Dummy','" + modality[i] + "')");
-                conn.commit();
-            } catch (SQLException ex) {
-                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
-    private void insertDefaultPresets() {
-        try {
-            String sql = "select pk from modality where shortname='CT'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            rs.next();
-            String sql1 = "insert into preset(presetname,windowwidth,windowlevel,modality_fk)values('CT Abdomen',40,350," + rs.getString("pk") + ")";
-            String sql2 = "insert into preset(presetname,windowwidth,windowlevel,modality_fk)values('CT Lung',1500,-600," + rs.getString("pk") + ")";
-            String sql3 = "insert into preset(presetname,windowwidth,windowlevel,modality_fk)values('CT Brain',80,40," + rs.getString("pk") + ")";
-            String sql4 = "insert into preset(presetname,windowwidth,windowlevel,modality_fk)values('CT Bone',2500,480," + rs.getString("pk") + ")";
-            String sql5 = "insert into preset(presetname,windowwidth,windowlevel,modality_fk)values('CT Head/Neck',350,90," + rs.getString("pk") + ")";
-
-            conn.createStatement().execute(sql1);
-            conn.createStatement().execute(sql2);
-            conn.createStatement().execute(sql3);
-            conn.createStatement().execute(sql4);
-            conn.createStatement().execute(sql5);
-            
-            rs.close();
+            ResultSet noInfo = conn.createStatement().executeQuery("select max(buttonno) from buttons");
+            noInfo.next();
+            conn.createStatement().execute("insert into buttons(buttonno,description,modality,datecriteria,timecriteria,iscustomdate,iscustomtime) values(" + (noInfo.getInt(1) + 1) + ",'" + buttonsModel.getButtonlable() + "','" + buttonsModel.getModality() + "','" + buttonsModel.getStudyDate() + "','" + buttonsModel.getStudyTime() + "','" + buttonsModel.isCustomDate() + "','" + buttonsModel.isCustomTime() + "')");
+            noInfo.close();
             conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void insertDefaultLocales() {
-        try { //Mayam DERM
-            String sql1 = "insert into " + localeTable + "(countrycode,country,languagecode,language,localeid,status) values('AR','Argentina','es','español','es_AR','active')";
-            conn.createStatement().execute(sql1);
-            addNewLocale("en_GB");
-            addNewLocale("es_ES");
-            addNewLocale("ca_ES");
-            addNewLocale("it_IT");
-            addNewLocale("ja_JP");
-            addNewLocale("pt_BR");
-            addNewLocale("eu_ES");
-            addNewLocale("ta_IN");
-            addNewLocale("cs_CZ");
-            addNewLocale("el_GR");
-            addNewLocale("de_DE");
-            addNewLocale("sr_RS");
+    public void insertPreset(PresetModel presetModel, String modality) {
+        try {
+            ResultSet modalityInfo = conn.createStatement().executeQuery("select pk from modality where shortname='" + modality + "'");
+            modalityInfo.next();
+            conn.createStatement().execute("insert into presets(presetname,windowwidth,windowlevel,modality_fk)values('" + presetModel.getPresetName() + "'," + presetModel.getWindowWidth() + "," + presetModel.getWindowLevel() + "," + modalityInfo.getInt("pk") + ")");
+            modalityInfo.close();
             conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void addNewLocale(String localeid) {
+    public void insertDefaultLocales() throws SQLException {
+        conn.createStatement().execute("insert into locale (countrycode,country,languagecode,language,localeid,status) values('GB','United Kingdom','en','English','en_GB',true)");
+        addNewLocale("ta_IN");
+    }
+
+    private void addNewLocale(String localeid) throws SQLException {
         String languagecode = "", countrycode = "";
         String languageAndCountry[] = localeid.split("_");
         if (languageAndCountry.length >= 2) {
@@ -577,483 +262,599 @@ public class DatabaseHandler {
         }
         Locale locale = new Locale(languagecode, countrycode);
         String language = locale.getDisplayLanguage();
-        String country = locale.getDisplayCountry();      
-
+        String country = locale.getDisplayCountry();
         insertLocale(language, country, languagecode, countrycode, localeid);
-
     }
 
-    public void parseLocalePropertiesFile() {
-        try {
-            File file = new File(this.getClass().getResource("/in/raster/mayam/form/i18n").toURI());
-            System.out.println("file name" + file.getAbsolutePath());
-            FilenameFilter filenameFilter = new FilenameFilter() {
+    private void insertLocale(String language, String country, String languagecode, String countrycode, String localeid) throws SQLException {
+        conn.createStatement().execute("insert into locale(countrycode,country,languagecode,language,localeid,status) values('" + countrycode + "','" + country + "','" + languagecode + "','" + language + "','" + localeid + "',false)");
+    }
 
-                public boolean accept(File dir, String name) {
-                    if (name.endsWith(".properties")) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            };
-            String localeFileNameList[] = file.list(filenameFilter);
-            for (int i = 0; i < localeFileNameList.length; i++) {
-                String tmp = localeFileNameList[i].replace("Bundle_", "");
-                String localeid = tmp.replace(".properties", "");
-                if (!localeid.equalsIgnoreCase("") && !isLocaleIDPresent(localeid)) {
-                    addNewLocale(localeid);
-                }
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+    private void insertMiscellaneous() throws SQLException {
+        conn.createStatement().execute("insert into miscellaneous(Loopback) values(true)");
+    }
+
+    public void writeDatasetInfo(DicomObject dataset, boolean isLink, String filePath) {
+        try {
+            insertPatientInfo(dataset);
+            insertStudyInfo(dataset, isLink);
+            insertSeriesInfo(dataset, isLink);
+            insertImageInfo(dataset, filePath);
+        } catch (Exception e) {
+            System.out.println("Exception : " + e.getMessage());
         }
     }
 
-    private boolean isLocaleIDPresent(String localeid) {
-        boolean result = false;
-        try {
-            String sql = "select count(*) from locale where localeid='" + localeid + "'";
-            ResultSet rscount = conn.createStatement().executeQuery(sql);
-            rscount.next();
-            int count = rscount.getInt(1);
-            if (count > 0) {
-                result = true;
+    private void insertPatientInfo(DicomObject dataset) {
+        if (!(checkRecordExists("patient", "PatientId", dataset.getString(Tags.PatientID)))) {
+            String date = "";
+            if (dataset.getString(Tags.PatientBirthDate) != null && dataset.getString(Tags.PatientBirthDate).length() > 0) {
+                date = (dataset.getDate(Tags.PatientBirthDate) != null) ? dateFormat.format(dataset.getDate(Tags.PatientBirthDate)) : "";
             }
-            rscount.close();
+            try {
+                PreparedStatement insertStmt = conn.prepareStatement("insert into patient values(?,?,?,?)");
+                insertStmt.setString(1, dataset.getString(Tags.PatientID));
+                insertStmt.setString(2, dataset.getString(Tags.PatientName));
+                insertStmt.setString(3, date);
+                insertStmt.setString(4, dataset.getString(Tags.PatientSex));
+                insertStmt.execute();
+                conn.commit();
+            } catch (SQLException ex) {
+                System.out.println("Exception in inserting patient info : " + ex.getMessage());
+            }
+        }
+    }
 
+    private void insertStudyInfo(DicomObject dataset, boolean saveAsLink) {
+        if (!(checkRecordExists("study", "StudyInstanceUID", dataset.getString(Tags.StudyInstanceUID)))) {
+            try {
+                String date = (dataset.getDate(Tags.StudyDate) != null && dataset.getString(Tags.StudyDate).length() > 0) ? dateFormat.format(dataset.getDate(Tags.StudyDate)) : "";
+                String time = (dataset.getDate(Tags.StudyTime) != null && dataset.getString(Tags.StudyTime).length() > 0) ? timeFormat.format(dataset.getDate(Tags.StudyTime)) : "";
+                String accessionNo = (dataset.getString(Tags.AccessionNumber) != null && dataset.getString(Tags.AccessionNumber).length() > 0) ? dataset.getString(Tags.AccessionNumber) : "";
+                String refName = (dataset.getString(Tags.ReferringPhysicianName) != null && dataset.getString(Tags.ReferringPhysicianName).length() > 0) ? dataset.getString(Tags.ReferringPhysicianName) : "";
+                String retAe = (dataset.getString(Tags.RetrieveAET) != null && dataset.getString(Tags.RetrieveAET).length() > 0) ? dataset.getString(Tags.RetrieveAET) : "";
+                String studyDesc = (dataset.getString(Tags.StudyDescription) != null && dataset.getString(Tags.StudyDescription).length() > 0) ? dataset.getString(Tags.StudyDescription) : "";
+                String studyType = saveAsLink ? "link" : "local";
+                conn.createStatement().execute("insert into study values('" + dataset.getString(Tags.StudyInstanceUID) + "','" + date + "','" + time + "','" + accessionNo + "','" + refName + "','" + studyDesc.replace('/', ' ') + "','" + dataset.getString(Tags.Modality) + "'," + 0 + "," + 0 + "," + 0 + "," + 0 + ",'" + retAe + "','" + studyType + "'," + "false,'" + dataset.getString(Tags.PatientID) + "')");
+                conn.commit();
+            } catch (SQLException ex) {
+                System.out.println("Exception in inserting study info");
+            }
+            if (!saveAsLink) {
+                if (ApplicationContext.studiesInProgress == null) {
+                    ApplicationContext.studiesInProgress = new ArrayList<String>();
+                }
+                ApplicationContext.studiesInProgress.add(dataset.getString(Tags.StudyInstanceUID));
+            }
+        }
+    }
+
+    private void insertSeriesInfo(final DicomObject dataset, final boolean link) {
+        if (!(checkRecordExists("series", "SeriesInstanceUID", dataset.getString(Tags.SeriesInstanceUID)))) {
+            String date = (dataset.getString(Tags.SeriesDate) != null && dataset.getString(Tags.SeriesDate).length() > 0) ? dateFormat.format(dataset.getDate(Tags.SeriesDate)) : "";
+            String time = (dataset.getString(Tags.SeriesTime) != null && dataset.getString(Tags.SeriesTime).length() > 0) ? timeFormat.format(dataset.getDate(Tags.SeriesTime)) : "";
+            int numSeries = (dataset.getString(Tags.NumberOfSeriesRelatedInstances) != null && dataset.getString(Tags.NumberOfSeriesRelatedInstances).length() > 0) ? dataset.getInt(Tags.NumberOfSeriesRelatedInstances) : 0;
+            String institution = (dataset.getString(Tags.InstitutionName) != null && dataset.getString(Tags.InstitutionName).length() > 0) ? dataset.getString(Tags.InstitutionName) : "";
+            String seriesNo = (dataset.getString(Tags.SeriesNumber) != null && dataset.getString(Tags.SeriesNumber).length() > 0) ? dataset.getString(Tags.SeriesNumber) : "";
+            String modality = (dataset.getString(Tags.Modality) != null && dataset.getString(Tags.Modality).length() > 0) ? dataset.getString(Tags.Modality) : "";
+            String seriesDesc = (dataset.getString(Tags.SeriesDescription) != null && dataset.getString(Tags.SeriesDescription).length() > 0) ? dataset.getString(Tags.SeriesDescription) : "";
+            String bodyPartExamined = (dataset.getString(Tags.BodyPartExamined) != null && dataset.getString(Tags.BodyPartExamined).length() > 0) ? dataset.getString(Tags.BodyPartExamined) : "";
+            try {
+                conn.createStatement().execute("insert into series values('" + dataset.getString(Tags.SeriesInstanceUID) + "','" + seriesNo + "','" + date + "','" + time + "','" + modality + "','" + seriesDesc + "','" + bodyPartExamined + "','" + institution + "'," + numSeries + ",'" + dataset.getString(Tags.PatientID) + "','" + dataset.getString(Tags.StudyInstanceUID) + "')");
+                conn.commit();
+            } catch (SQLException ex) {
+                System.out.println("Exception in inserting series info");
+            }
+            if (ApplicationContext.isLocal && !ApplicationContext.isJnlp) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ApplicationContext.mainScreenObj.refreshLocalDB();
+                        if (!link) {
+                            for (int i = 0; i < ApplicationContext.studiesInProgress.size(); i++) {
+                                ApplicationContext.lastInstanceCount += getTotalInstances(ApplicationContext.studiesInProgress.get(i));
+
+                            }
+                            ApplicationContext.cineTimer = new LocalCineTimer();
+                            try {
+                                ApplicationContext.timer.scheduleAtFixedRate(ApplicationContext.cineTimer, 0, 5000);
+                            } catch (IllegalStateException ise) {
+                                ApplicationContext.timer = new Timer();
+                                ApplicationContext.timer.scheduleAtFixedRate(ApplicationContext.cineTimer, 0, 5000);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private void insertImageInfo(DicomObject dataset, String filePath) {
+        try {
+            if (!(checkRecordExists("image", "SopUID", dataset.getString(Tags.SOPInstanceUID)))) {
+                //Calendar today = Calendar.getInstance();
+                //String structuredDest = ApplicationContext.getAppDirectory() + File.separator + "archieve" + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + dataset.getString(Tags.StudyInstanceUID) + File.separator + dataset.getString(Tags.SeriesInstanceUID) + File.separator + dataset.getString(Tags.SOPInstanceUID);
+                boolean multiframe = false;
+                int totalFrame = 0;
+                boolean encapsulatedPDF = false;
+
+                if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+                    encapsulatedPDF = true;
+                }
+                if (dataset.getString(Tags.NumberOfFrames) != null && Integer.parseInt(dataset.getString(Tags.NumberOfFrames)) > 1) {
+                    multiframe = true;
+                    totalFrame = dataset.getInt(Tags.NumberOfFrames);
+                }
+                String frameOfRefUid = dataset.getString(Tags.FrameOfReferenceUID) != null ? dataset.getString(Tags.FrameOfReferenceUID) : "";
+                String imgPos = dataset.getBytes(Tags.ImagePosition) != null ? new String(dataset.getBytes(Tags.ImagePosition)) : "";
+                String imgOrientation = dataset.getBytes(Tags.ImageOrientation) != null ? new String(dataset.getBytes(Tags.ImageOrientation)) : "null";
+                String pixelSpacing = dataset.getBytes(Tags.PixelSpacing) != null ? new String(dataset.getBytes(Tags.PixelSpacing)) : "";
+                int row = dataset.getInt(Tags.Rows) != 0 ? dataset.getInt(Tags.Rows) : 1;
+                int columns = dataset.getInt(Tags.Columns) != 0 ? dataset.getInt(Tags.Columns) : 1;
+                String referSopInsUid = "", image_type = "";
+                String sliceThickness = dataset.getBytes(Tags.SliceThickness) != null ? new String(dataset.getBytes(Tags.SliceThickness)) : "";
+                //To get the Referenced SOP Instance UID
+                DicomElement refImageSeq = dataset.get(Tag.ReferencedImageSequence);
+                DicomElement refSOPInsUID = null;
+                if (refImageSeq != null) {
+                    if (refImageSeq.hasItems()) {
+                        DicomObject dcmObj1 = refImageSeq.getDicomObject();
+                        refSOPInsUID = dcmObj1.get(Tag.ReferencedSOPInstanceUID);
+                        referSopInsUid = refSOPInsUID != null ? new String(refSOPInsUID.getBytes()) : "";
+                    }
+                }
+                //To get the Image Type (LOCALIZER / AXIAL / OTHER)
+                image_type = new String(dataset.getBytes(Tags.ImageType));
+                String[] imageTypes = image_type.split("\\\\");
+                if (imageTypes.length >= 3) {
+                    image_type = imageTypes[2];
+                }
+                String[] imagePosition = dataset.getStrings(Tags.ImagePosition);
+                String sliceLoc = imagePosition != null && imagePosition[2] != null ? imagePosition[2] : "0";
+                try {
+                    conn.createStatement().execute("insert into image values('" + dataset.getString(Tags.SOPInstanceUID) + "'," + dataset.getInt(Tags.InstanceNumber) + ",'" + multiframe + "','" + totalFrame + "','" + "partial" + "','" + " " + "','" + " " + "','" + "partial" + "','" + filePath + "'," + sliceLoc + ",'" + encapsulatedPDF + "',false,'" + frameOfRefUid + "','" + imgPos + "','" + imgOrientation + "','" + image_type + "','" + pixelSpacing + "','" + sliceThickness + "'," + row + "," + columns + ",'" + referSopInsUid + "','" + dataset.getString(Tags.PatientID) + "','" + dataset.getString(Tags.StudyInstanceUID) + "','" + dataset.getString(Tags.SeriesInstanceUID) + "')");
+                    conn.commit();
+                    addInstanceCount(dataset.getString(Tags.StudyInstanceUID), dataset.getString(Tags.SeriesInstanceUID));
+                } catch (SQLException ex) {
+                    System.out.println("Exception in inserting image info " + ex.getMessage());
+                }
+            }
+        } catch (Exception e) {
+        }
+    }
+
+    //Accessing Data  
+    public String[] getListenerDetails() {
+        String detail[] = new String[3];
+        try {
+            ResultSet listenerInfo = conn.createStatement().executeQuery("select * from listener");
+            while (listenerInfo.next()) {
+                detail[0] = listenerInfo.getString("aetitle");
+                detail[1] = listenerInfo.getString("port");
+                detail[2] = listenerInfo.getString("storagelocation");
+            }
+            listenerInfo.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return result;
+        return detail;
     }
 
-    private void insertLocale(String language, String country, String languagecode, String countrycode, String localeid) {
+    public ArrayList<ServerModel> getServerList() {
+        ArrayList<ServerModel> serverList = new ArrayList<ServerModel>();
         try {
-            String sql1 = "insert into " + localeTable + "(countrycode,country,languagecode,language,localeid,status) values('" + countrycode + "','" + country + "','" + languagecode + "','" + language + "','" + localeid + "','idle')";
-            conn.createStatement().execute(sql1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void updateDefaultLocale(String localeName) {
-        try {
-            String str = "select localeid from " + localeTable + " where status='active'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            rs.next();
-            int n = conn.createStatement().executeUpdate("update " + localeTable + " set status='idle' where localeid='" + rs.getString("localeid") + "'");
-            int m = conn.createStatement().executeUpdate("update " + localeTable + " set status='active' where localeid='" + localeName + "'");
-            rs.close();
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String[] getActiveLanguageAndCountry() {
-        String returnval[] = null;
-        try {
-            String sql = "Select * from locale where status='active'";
-            ResultSet resultSet = conn.createStatement().executeQuery(sql);
-            while (resultSet.next()) {
-                String countrycode = resultSet.getString("countrycode");
-                String languagecode = resultSet.getString("languagecode");
-                String localeid = resultSet.getString("localeid");
-                String country = resultSet.getString("country");
-                String language = resultSet.getString("language");
-
-                returnval = new String[5];
-                returnval[0] = languagecode;
-                returnval[1] = countrycode;
-                returnval[2] = country;
-                returnval[3] = language;
-                returnval[4] = localeid;
+            ResultSet serverInfo = conn.createStatement().executeQuery("select * from servers");
+            while (serverInfo.next()) {
+                serverList.add(new ServerModel(serverInfo.getInt("pk"), serverInfo.getString("logicalname"), serverInfo.getString("aetitle"), serverInfo.getString("hostname"), serverInfo.getInt("port"), serverInfo.getString("retrievetype"), serverInfo.getString("wadocontext"), serverInfo.getInt("wadoport"), serverInfo.getString("wadoprotocol"), serverInfo.getString("retrievets"), serverInfo.getBoolean("showpreviews")));
             }
-            resultSet.close();
-        }//catch(SQLSyntaxErrorException se){
-//            upgradeDataBase();
-//            System.out.println("SQLSyntaxException :\n"+se);
-//        }
-        catch (SQLException e) {
-            e.printStackTrace();
+            serverInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        return returnval;
+        return serverList;
     }
-    private void upgradeDataBase(){
-        try{
-            backUpDatabase(conn);
-            File temp = new File(ApplicationContext.getAppDirectory());
-            for (int l = 0; l < temp.listFiles().length; l++) {
-                if (!temp.listFiles()[l].getName().equalsIgnoreCase(databasename)) {
-                }
-        }
-        }catch(SQLException se){
-        }
-    }
-    private void backUpDatabase(Connection conn)throws SQLException{
-        String backupdirectory =ApplicationContext.getAppDirectory()+dateFormat.format(Calendar.getInstance().getTime());
-        CallableStatement cs = conn.prepareCall("CALL SYSCS_UTIL.SYSCS_BACKUP_DATABASE(?)"); 
-        cs.setString(1, backupdirectory);
-        cs.execute(); 
-        cs.close();
-    }
-    public String[] getCountryListForLocale() {
-        String returnval[] = null;
+
+    public ArrayList<String> getAllServerNames() {
+        ArrayList<String> serverNames = new ArrayList<String>();
         try {
-            String sql = "Select distinct country from locale ";
-            String sql1 = "select count(distinct country) from locale";
-            ResultSet rscount = conn.createStatement().executeQuery(sql1);
-            ResultSet resultSet = conn.createStatement().executeQuery(sql);
-            rscount.next();
-            int count = rscount.getInt(1);
-            returnval = new String[count];
-            int index = 0;
-            while (resultSet.next()) {
-                String country = resultSet.getString("country");
-                returnval[index] = country;
-                index++;
+            ResultSet serverInfo = conn.createStatement().executeQuery("select logicalname from servers");
+            while (serverInfo.next()) {
+                serverNames.add(serverInfo.getString("logicalname"));
             }
-            rscount.close();
-            resultSet.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            serverInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        return returnval;
+        return serverNames;
     }
 
-    public String[] getLanguageListForSelectedCountry(String country) {
-        String returnval[] = null;
+    public String getRetrieveType(String serverName) {
         try {
-            String sql = "Select distinct language from locale where country='" + country + "'";
-            String sql1 = "select count(distinct language) from locale where country='" + country + "'";
-            ResultSet rscount = conn.createStatement().executeQuery(sql1);
-            ResultSet resultSet = conn.createStatement().executeQuery(sql);
-            rscount.next();
-            int count = rscount.getInt(1);
-            returnval = new String[count];
-            int index = 0;
-            while (resultSet.next()) {
-                String language = resultSet.getString("language");
-                returnval[index] = language;
-                index++;
+            ResultSet serverNameInfo = conn.createStatement().executeQuery("select retrievetype from servers where logicalname='" + serverName + "'");
+            serverNameInfo.next();
+            return serverNameInfo.getString("retrievetype");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public boolean isPreviewsEnabled(String serverName) {
+        try {
+            ResultSet serverInfo = conn.createStatement().executeQuery("select showpreviews from servers where logicalname='" + serverName + "'");
+            serverInfo.next();
+            return serverInfo.getBoolean("showpreviews");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public boolean isDownloadPending() {
+        try {
+            ResultSet pendingInfo = conn.createStatement().executeQuery("select StudyInstanceUID from study where DownloadStatus=false");
+            if (pendingInfo.next()) {
+                return true;
             }
-            rscount.close();
-            resultSet.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        return returnval;
+        return false;
     }
 
-    public String[] getLocaleIDForSelectedCountryAndlanguage(String country, String language) {
-        String returnval[] = null;
+    public ServerModel getServerDetails(String serverName) {
         try {
-            String sql = "Select localeid from locale where country= '" + country + "' and language='" + language + "'";
-            String sql1 = "Select count(localeid) from locale where country= '" + country + "' and language='" + language + "'";
-            ResultSet rscount = conn.createStatement().executeQuery(sql1);
-            ResultSet resultSet = conn.createStatement().executeQuery(sql);
-            rscount.next();
-            int count = rscount.getInt(1);
-            returnval = new String[count];
-            int index = 0;
-            while (resultSet.next()) {
-                String localeID = resultSet.getString("localeid");
-                returnval[index] = localeID;
-                index++;
+            ResultSet serverInfo = conn.createStatement().executeQuery("select * from servers where logicalname='" + serverName + "'");
+            while (serverInfo.next()) {
+                return new ServerModel(serverInfo.getString("logicalname"), serverInfo.getString("aetitle"), serverInfo.getString("hostname"), serverInfo.getInt("port"), serverInfo.getString("retrievetype"), serverInfo.getString("wadocontext"), serverInfo.getInt("wadoport"), serverInfo.getString("wadoprotocol"), serverInfo.getString("retrievets"));
             }
-            rscount.close();
-            resultSet.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        return returnval;
+        return null;
     }
 
-    private void insertDefaultThemes() {
+    public ArrayList<ButtonsModel> getAllQueryButtons() {
+        ArrayList<ButtonsModel> buttons = new ArrayList<ButtonsModel>();
         try {
-            String sql1 = "insert into theme(name,status)values('Nimrod','active')";
-            String sql2 = "insert into theme(name,status)values('Motif','idle')";
-            String sql3 = "insert into theme(name,status)values('System','idle')";
-
-            conn.createStatement().execute(sql1);
-            conn.createStatement().execute(sql2);
-            conn.createStatement().execute(sql3);
-
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-
+            ResultSet buttonsInfo = conn.createStatement().executeQuery("select * from buttons order by buttonno");
+            while (buttonsInfo.next()) {
+                buttons.add(new ButtonsModel(buttonsInfo.getString("description"), buttonsInfo.getString("modality"), buttonsInfo.getString("datecriteria"), buttonsInfo.getString("timecriteria"), buttonsInfo.getBoolean("iscustomdate"), buttonsInfo.getBoolean("iscustomtime")));
+            }
+            buttonsInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return buttons;
     }
 
-    public void updateThemeStatus(String themeName) {
+    public ArrayList<String> getAllButtonNames() {
+        ArrayList<String> buttonNames = new ArrayList<String>();
         try {
-            String str = "select name from theme where status='active'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            rs.next();
-            int n = conn.createStatement().executeUpdate("update theme set status='idle' where name='" + rs.getString("name") + "'");
-            int m = conn.createStatement().executeUpdate("update theme set status='active' where name='" + themeName + "'");
-            rs.close();
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
+            ResultSet buttonsInfo = conn.createStatement().executeQuery("select description from buttons order by buttonno");
+            while (buttonsInfo.next()) {
+                buttonNames.add(buttonsInfo.getString("description"));
+            }
+            buttonsInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return buttonNames;
+    }
+
+    public ButtonsModel getButtonDetails(String description) {
+        try {
+            ResultSet buttonInfo = conn.createStatement().executeQuery("select * from buttons where description='" + description + "'");
+            buttonInfo.next();
+            return new ButtonsModel(buttonInfo.getString("description"), buttonInfo.getString("modality"), buttonInfo.getString("datecriteria"), buttonInfo.getString("timecriteria"), buttonInfo.getBoolean("iscustomdate"), buttonInfo.getBoolean("iscustomtime"));
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     public String getActiveTheme() {
-        String activeTheme = "";
         try {
-            String str = "select name from theme where status='active'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            rs.next();
-            activeTheme = rs.getString("name");
-            rs.close();
+            ResultSet activeThemeInfo = conn.createStatement().executeQuery("select name from theme where status=true");
+            activeThemeInfo.next();
+            return activeThemeInfo.getString("name");
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return activeTheme;
+        return null;
     }
 
-    public String[] getModalities() {
-        String[] modalities = null;
+    public ArrayList<String> getThemes() {
+        ArrayList<String> themeNames = new ArrayList<String>();
         try {
-            String sql2 = "Select shortname from modality";
-            String sql1 = "select count(*) from modality";
-            int count;
-            int index = 0;
-            ResultSet rs1 = conn.createStatement().executeQuery(sql1);
-            rs1.next();
-            count = rs1.getInt(1);
-            modalities = new String[count];
-            ResultSet rs2 = conn.createStatement().executeQuery(sql2);
-            while (rs2.next()) {
-                modalities[index] = rs2.getString("shortname");
-                index++;
+            ResultSet themeInfo = conn.createStatement().executeQuery("select name from theme");
+            while (themeInfo.next()) {
+                if (!themeInfo.getString("name").equals("System")) {
+                    themeNames.add(themeInfo.getString("name"));
+                } else {
+                    themeNames.add(System.getProperty("os.name"));
+                }
             }
-            
-            rs1.close();
-            rs2.close();
+            themeInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return themeNames;
+    }
+
+    public ArrayList<String> getActiveModalities() {
+        ArrayList<String> modalities = new ArrayList<String>();
+        try {
+            ResultSet modalityInfo = conn.createStatement().executeQuery("select shortname from modality where status=true");
+            while (modalityInfo.next()) {
+                modalities.add(modalityInfo.getString("shortname"));
+            }
+            modalityInfo.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
         return modalities;
     }
 
-    public void insertDefaultListenerDetail() {
+    public Vector<String> getAllModalities() {
+        Vector<String> modalities = new Vector<String>();
         try {
-            boolean insertStatus = conn.createStatement().execute("insert into" + " listener(aetitle,port,storagelocation) values('MAYAM',1025,'" + ApplicationContext.getAppDirectory() + File.separator + "archive')");
-            conn.commit();
+            ResultSet modalityInfo = conn.createStatement().executeQuery("select shortname from modality");
+            while (modalityInfo.next()) {
+                modalities.add(modalityInfo.getString("shortname"));
+            }
+            modalityInfo.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return modalities;
     }
 
-    public void insertDefaultLayoutDetail() {
+    public boolean isModalityActive(String shortname) {
         try {
-            String sql1 = "select pk,shortname from modality";
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
+            ResultSet isActive = conn.createStatement().executeQuery("select status from modality where shortname='" + shortname + "'");
+            isActive.next();
+            return isActive.getBoolean("status");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public ArrayList<PresetModel> getPresetsForModality(String modality) {
+        ArrayList<PresetModel> presets = new ArrayList<PresetModel>();
+        try {
+            ResultSet modalityInfo = conn.createStatement().executeQuery("select pk from modality where shortname='" + modality + "'");
+            modalityInfo.next();
+            ResultSet presetInfo = conn.createStatement().executeQuery("select * from presets where modality_fk=" + modalityInfo.getInt("pk"));
+            while (presetInfo.next()) {
+                PresetModel preset = new PresetModel(presetInfo.getInt("pk"), modality, presetInfo.getString("presetname"), presetInfo.getString("windowwidth"), presetInfo.getString("windowlevel"));
+                presets.add(preset);
+            }
+            modalityInfo.close();
+            presetInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return presets;
+    }
+
+    public String[] getActiveLanguage() {
+        try {
+            ResultSet resultSet = conn.createStatement().executeQuery("select * from locale where status=true");
+            while (resultSet.next()) {
+                return new String[]{resultSet.getString("countrycode"), resultSet.getString("country"), resultSet.getString("languagecode"), resultSet.getString("language"), resultSet.getString("localeid")};
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public String[] getCountryList() {
+        try {
+            ResultSet count = conn.createStatement().executeQuery("select count(distinct country) from locale");
+            count.next();
+            String[] countryList = new String[count.getInt(1)];
+            int index = 0;
+            ResultSet result = conn.createStatement().executeQuery("select distinct country from locale");
+            while (result.next()) {
+                countryList[index] = result.getString("country");
+                index++;
+            }
+            count.close();
+            result.close();
+            return countryList;
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public String[] getLanguagesOfCountry(String country) {
+        try {
+            ResultSet count = conn.createStatement().executeQuery("select count(distinct language) from locale where country='" + country + "'");
+            count.next();
+            String languageList[] = new String[count.getInt(1)];
+            ResultSet result = conn.createStatement().executeQuery("select distinct language from locale where country='" + country + "'");
+            int index = 0;
+            while (result.next()) {
+                languageList[index] = result.getString("language");
+                index++;
+            }
+            count.close();
+            result.close();
+            return languageList;
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public String[] getLocaleIDForCountryAndLanguage(String country, String language) {
+        try {
+            ResultSet count = conn.createStatement().executeQuery("select count(localeid) from locale where country='" + country + "' and language='" + language + "'");
+            count.next();
+            String[] localeId = new String[count.getInt(1)];
+            ResultSet result = conn.createStatement().executeQuery("select localeid from locale where country='" + country + "' and language='" + language + "'");
+            int index = 0;
+            while (result.next()) {
+                localeId[index] = result.getString("localeid");
+                index++;
+            }
+            count.close();
+            result.close();
+            return localeId;
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return null;
+    }
+
+    public ArrayList<StudyModel> listAllLocalStudies() {
+        ArrayList<StudyModel> studies = new ArrayList<StudyModel>();
+        try {
+            ResultSet studyInfo = conn.createStatement().executeQuery("select * from study");
+            while (studyInfo.next()) {
+                ResultSet patientInfo = conn.createStatement().executeQuery("select PatientName,PatientBirthDate from patient where PatientId='" + studyInfo.getString("PatientId") + "'");
+                patientInfo.next();
+                StudyModel study = new StudyModel(studyInfo.getString("PatientId"), patientInfo.getString("PatientName"), patientInfo.getString("PatientBirthDate"), studyInfo.getString("AccessionNo"), studyInfo.getString("StudyDate"), studyInfo.getString("StudyTime"), studyInfo.getString("StudyDescription"), studyInfo.getString("ModalitiesInStudy"), studyInfo.getString("NoOfSeries"), studyInfo.getString("NoOfInstances"), studyInfo.getString("StudyInstanceUID"));
+                studies.add(study);
+                patientInfo.close();
+            }
+            studyInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return studies;
+    }
+
+    public boolean getLoopbackStatus() {
+        try {
+            ResultSet loopBackStatus = conn.createStatement().executeQuery("select Loopback from miscellaneous");
+            loopBackStatus.next();
+            return loopBackStatus.getBoolean("Loopback");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public int getTotalInstances(String studyUid) {
+        try {
+            ResultSet totalInstancesInfo = conn.createStatement().executeQuery("select NoOfInstances from study where StudyInstanceUID='" + studyUid + "'");
+            totalInstancesInfo.next();
+            return totalInstancesInfo.getInt("NoOfInstances");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    public boolean isLink(String studyUid) {
+        try {
+            ResultSet linkInfo = conn.createStatement().executeQuery("select StudyType from study where StudyInstanceUID='" + studyUid + "'");
+            linkInfo.next();
+            return linkInfo.getString("StudyType").equals("link") ? true : false;
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public ArrayList<Series> getSeriesList_SepMulti(String siuid) {
+        ArrayList<Series> arr = new ArrayList();
+        try {
+            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined,SeriesDate,SeriesTime,NoOfSeriesRelatedInstances from series where StudyInstanceUID='" + siuid + "' order by SeriesNo";
+            ResultSet rs = null;
+            rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
-                int pk = rs.getInt("pk");
-                boolean insertStatus = conn.createStatement().execute("insert into" + " layout(rowcount,columncount,modality_fk) values(1,2," + pk + ")");                
-                conn.commit();
+                Series series = new Series();
+                series.setStudyInstanceUID(siuid);
+                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
+                series.setSeriesNumber(rs.getString("SeriesNo"));
+                series.setSeriesDesc(rs.getString("SeriesDescription"));
+                series.setBodyPartExamined(rs.getString("BodyPartExamined"));
+                series.setSeriesDate(rs.getString("SeriesDate"));
+                series.setSeriesTime(rs.getString("SeriesTime"));
+                series.setMultiframe(false);
+                series.setInstanceUID(null);
+                series.setSeriesRelatedInstance(rs.getInt("NoOfSeriesRelatedInstances"));
+                ResultSet rs1 = null;
+                String sql1 = "select FileStoreUrl,totalframe,SopUID,InstanceNo,multiframe,EncapsulatedDocument from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + "AND multiframe=false" + " order by InstanceNo asc";
+                rs1 = conn.createStatement().executeQuery(sql1);
+                boolean allInstanceAreMultiframe = true;
+                while (rs1.next()) {
+                    allInstanceAreMultiframe = false;
+                    Instance img = new Instance();
+                    img.setFilepath(rs1.getString("FileStoreUrl"));
+                    img.setSop_iuid(rs1.getString("SopUID"));
+                    img.setInstance_no(rs1.getString("InstanceNo"));
+                    img.setEncapsulatedPDF(rs1.getBoolean("EncapsulatedDocument"));
+                    img.setMultiframe(false);
+                    series.setMultiframe(false);
+                    series.getImageList().add(img);
+                }
+                if (!allInstanceAreMultiframe) {
+                    arr.add(series);
+                }
+                arr.addAll(getMultiframeSeriesList(siuid, series.getSeriesInstanceUID()));
             }
-            rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return arr;
     }
 
-    public void insertLayoutDetail(int rowCount, int columnCount, String modality) {
+    public ArrayList<Series> getMultiframeSeriesList(String studyUID, String seriesUID) {
+        ArrayList<Series> arr = new ArrayList();
         try {
-            String sql1 = "select pk from modality where shortname='" + modality + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            rs.next();
-            int pk = rs.getInt("pk");
-
-            String sql2 = "select pk from layout where modality_fk=" + pk;
-            ResultSet rs1 = conn.createStatement().executeQuery(sql2);
-            rs1.next();
-            int layoutPK = rs1.getInt("pk");
-            if (layoutPK != -1) {
-                int n = conn.createStatement().executeUpdate("update layout set rowcount=" + rowCount + ",columncount=" + columnCount + ",modality_fk=" + pk + " where pk=" + layoutPK);
-                conn.commit();
-            } else {
-                boolean insertStatus = conn.createStatement().execute("insert into" + " layout(rowcount,columncount,modality_fk) values(1,2," + pk + ")");
-                conn.commit();
-            }
-            rs1.close();
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void insertPreset(PresetModel presetModel, String modality) {
-        try {
-            String sql1 = "select pk from modality where shortname='" + modality + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            rs.next();
-            int pk = rs.getInt("pk");
-            boolean insertStatus = conn.createStatement().execute("insert into" + " preset(presetname,windowwidth,windowlevel,modality_fk) values('" + presetModel.getPresetName() + "'," + presetModel.getWindowWidth() + "," + presetModel.getWindowLevel() + "," + pk + ")");
-            rs.close();
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public ArrayList getPresetValueForModality(String modality) {
-        ArrayList presetList = new ArrayList();
-        try {
-            String sql1 = "select pk from modality where shortname='" + modality + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            rs.next();
-            int pk = rs.getInt("pk");
-            String sql2 = "select pk,presetname,windowwidth,windowlevel from preset where modality_fk=" + pk;
-            ResultSet rs1 = conn.createStatement().executeQuery(sql2);
+            ResultSet rs1 = null;
+            String sql1 = "select FileStoreUrl,totalframe,SopUID,InstanceNo,multiframe,EncapsulatedDocument from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + seriesUID + "'" + " AND multiframe=true" + " order by InstanceNo asc";
+            rs1 = conn.createStatement().executeQuery(sql1);
             while (rs1.next()) {
-                PresetModel presetModel = new PresetModel();
-                presetModel.setPk(rs1.getInt("pk"));
-                presetModel.setPresetName(rs1.getString("presetname"));
-                presetModel.setWindowWidth(rs1.getString("windowwidth"));
-                presetModel.setWindowLevel(rs1.getString("windowlevel"));
-                presetList.add(presetModel);
+                Series series = new Series();
+                series.setStudyInstanceUID(studyUID);
+                series.setSeriesInstanceUID(seriesUID);
+                series.setSeriesDesc("Multiframe:" + rs1.getString("InstanceNo"));
+                series.setMultiframe(true);
+                series.setInstanceUID(rs1.getString("SopUID"));
+                int totalFrames = Integer.parseInt(rs1.getString("totalFrame"));
+                Instance img = new Instance();
+                img.setFilepath(rs1.getString("FileStoreUrl"));
+                img.setTotalNumFrames(totalFrames);
+                img.setSop_iuid(rs1.getString("SopUID"));
+                img.setInstance_no(rs1.getString("InstanceNo"));
+                img.setEncapsulatedPDF(rs1.getBoolean("EncapsulatedDocument"));
+                img.setMultiframe(true);
+                series.getImageList().add(img);
+                arr.add(series);
             }
-            rs1.close();
-            rs.close();
-
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        return presetList;
-
+        return arr;
     }
 
-    public void updatePresetValues(PresetModel presetModel) {
+    public ArrayList<String> getLocationsBasedOnSeries(String studyUid, String seriesUid) {
+        ArrayList<String> locations = new ArrayList<String>();
         try {
-            int n = conn.createStatement().executeUpdate("update preset set presetname='" + presetModel.getPresetName() + "',windowwidth=" + presetModel.getWindowWidth() + ",windowlevel=" + presetModel.getWindowLevel() + " where pk=" + presetModel.getPk());
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void deletePreset(PresetModel presetModel) {
-        try {
-            String sql = "delete from preset where pk=" + presetModel.getPk();
-            conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void updateServerListValues(ServerModel serverModel) {
-        try {
-            int n = conn.createStatement().executeUpdate("update ae set logicalname='" + serverModel.getServerName() + "',hostname='" + serverModel.getHostName() + "',aetitle='" + serverModel.getAeTitle() + "',port=" + serverModel.getPort() + ",retrievetype='" + serverModel.getRetrieveType() + "',wadocontext='" + serverModel.getWadoContextPath() + "',wadoport=" + serverModel.getWadoPort() + ",wadoprotocol='" + serverModel.getWadoProtocol() + "',retrievets='" + serverModel.getRetrieveTransferSyntax() + "' where pk=" + serverModel.getPk());
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void deleteServer(ServerModel serverModel) {
-        try {
-            String sql = "delete from ae where pk=" + serverModel.getPk();
-            conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void insertServer(ServerModel serverModel) {
-        try {
-            boolean insertStatus = conn.createStatement().execute("insert into" + " ae(logicalname,hostname,aetitle,port,retrievetype,wadocontext,wadoport,wadoprotocol,retrievets) values('" + serverModel.getServerName() + "','" + serverModel.getHostName() + "','" + serverModel.getAeTitle() + "'," + serverModel.getPort() + ",'" + serverModel.getRetrieveType() + "','" + serverModel.getWadoContextPath() + "'," + serverModel.getWadoPort() + ",'" + serverModel.getWadoProtocol() + "','" + serverModel.getRetrieveTransferSyntax() + "')");
-            conn.commit();
+            ResultSet locationInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and ThumbnailStatus=false");
+            while (locationInfo.next()) {
+                locations.add(locationInfo.getString("FileStoreUrl"));
+            }
+            locationInfo.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return locations;
     }
 
-    public ArrayList getServerList() {
-        ArrayList serverList = new ArrayList();
-        try {
-            String sql2 = "select * from ae";
-            ResultSet rs1 = conn.createStatement().executeQuery(sql2);
-            while (rs1.next()) {
-                ServerModel serverModel = new ServerModel();
-                serverModel.setPk(rs1.getInt("pk"));
-                serverModel.setServerName(rs1.getString("logicalname"));
-                serverModel.setHostName(rs1.getString("hostname"));
-                serverModel.setAeTitle(rs1.getString("aetitle"));
-                serverModel.setPort(rs1.getInt("port"));
-                serverModel.setRetrieveType(rs1.getString("retrievetype"));
-                serverModel.setWadoContextPath(rs1.getString("wadocontext") != null ? rs1.getString("wadocontext") : "");
-                serverModel.setWadoPort(rs1.getInt("wadoport"));
-                serverModel.setWadoProtocol(rs1.getString("wadoprotocol"));
-                serverModel.setRetrieveTransferSyntax(rs1.getString("retrievets"));
-                serverList.add(serverModel);                
-            }
-            rs1.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return serverList;
-    }
-    
-    public int[] getRowColumnForModality(String modality) {
-        int rowColumn[] = new int[2];
-        try {
-
-            String sql = "select pk,shortname from modality where shortname='" + modality + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            rs.next();
-            int pk = rs.getInt("pk");
-            String sql1 = "select rowcount,columncount from layout where modality_fk=" + pk;
-            ResultSet rs1 = conn.createStatement().executeQuery(sql1);
-            rs1.next();
-            rowColumn[0] = rs1.getInt("rowcount");
-            rowColumn[1] = rs1.getInt("columncount");
-
-            rs1.close();
-            rs.close();
-        } catch (SQLException ex) {
-            rowColumn[0] = 1;
-            rowColumn[1] = 1;
-        }
-        return rowColumn;
-    }
-
-    public int[] getRowColumnBasedStudyUID(String suid) {
-        return getRowColumnForModality(getModalityBasedonStudyUID(suid));
-    }
-
-    public String getModalityBasedonStudyUID(String suid) {
-        String modality = null;
-        try {
-            String sql = "select ModalityInStudy from study where StudyInstanceUID='" + suid + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            rs.next();
-            modality = rs.getString("ModalityInStudy");
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return modality;
-    }
-
-    public String getPatientNameBasedonStudyUID(String suid) {
+    public String getPatientNameBasedonStudyUID(String studyUid) {
         String patientName = null;
         try {
-
-            String sql = "select PatientId from study where StudyInstanceUID='" + suid + "'";
+            String sql = "select PatientId from study where StudyInstanceUID='" + studyUid + "'";
             ResultSet rs = conn.createStatement().executeQuery(sql);
             rs.next();
             String patientid = rs.getString("PatientId");
@@ -1061,475 +862,19 @@ public class DatabaseHandler {
             ResultSet rs1 = conn.createStatement().executeQuery(sql1);
             rs1.next();
             patientName = rs1.getString("PatientName");
-            
-            rs1.close();
             rs.close();
-
+            rs1.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
         return patientName;
     }
 
-    /** It checks the particular record exists or not. */
-    public boolean checkRecordExists(String tablename, String fieldname,
-            String compareWith) {
-        ResultSet rs = null;
-        boolean result = false;
-        try {
-            rs = conn.createStatement().executeQuery("select count(" + fieldname + ") from " + tablename + " where " + fieldname + " = '" + compareWith.trim() + "'");
-            rs.next();
-            if (rs.getInt(1) > 0) {
-                rs.close();
-                return true;
-            } else {
-                return false;
-            }            
-            
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-            return false;
-        }
-    }
-
-    public void writeDataToDatabase(DicomObject dataset) {
-        insertPatientData(dataset);
-        insertStudyData(dataset, false);
-        insertSeriesData(dataset);
-        insertImageData(dataset);
-    }
-
-    public void importDataToDatabase(DicomObject dataset, File dicomFile, boolean saveAsLink) {
-        insertPatientData(dataset);
-        insertStudyData(dataset, saveAsLink);
-        insertSeriesData(dataset);
-        insertImageData(dataset, dicomFile);
-    }
-
-    public void insertPatientData(DicomObject dataset) {
-        if (checkRecordExists(patientTable, "PatientId", dataset.getString(Tag.PatientID))) {
-        } else {
-            try {
-                String dat = null;
-                if ((dataset.getString(Tag.PatientBirthDate) != null) && dataset.getString(Tag.PatientBirthDate).length() > 0) {
-                    dat = (dataset.getDate(Tags.PatientBirthDate) != null) ? dateFormat.format(dataset.getDate(Tags.PatientBirthDate)) : "";
-                }
-                PreparedStatement prepareStatement = conn.prepareStatement("insert into " + patientTable + " values(?,?,?,?)");
-                prepareStatement.setString(1, dataset.getString(Tag.PatientID));
-                prepareStatement.setString(2, dataset.getString(Tag.PatientName));
-                prepareStatement.setString(3, dat);
-                prepareStatement.setString(4, dataset.getString(Tag.PatientSex));
-                prepareStatement.execute();
-                conn.commit();
-            } catch (SQLException ex) {
-                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
-    public void insertStudyData(DicomObject dataset, boolean saveAslink) {
-        if (checkRecordExists(studyTable, "StudyInstanceUID", dataset.getString(Tag.StudyInstanceUID))) {
-        } else {
-            try {
-                String dat = "null";
-                String accessionno = "null";
-                String refName = "null";
-                int noSeries = 0;
-                int noInstance = 0;
-                String retAe = "null";
-                String studyDescription = "null";
-                if ((dataset.getString(Tag.StudyDate) != null) && dataset.getString(Tag.StudyDate).length() > 0) {
-                    dat = "date('" + dateFormat.format(dataset.getDate(Tag.StudyDate)) + "')";
-                }
-                if (dataset.getString(Tag.AccessionNumber) != null && dataset.getString(Tag.AccessionNumber).length() > 0) {
-                    accessionno = dataset.getString(Tag.AccessionNumber);
-                }
-                if (dataset.getString(Tag.ReferringPhysicianName) != null && dataset.getString(Tag.ReferringPhysicianName).length() > 0) {
-                    refName = dataset.getString(Tag.ReferringPhysicianName);
-                }
-                if (dataset.getString(Tag.NumberOfStudyRelatedSeries) != null && dataset.getString(Tag.NumberOfStudyRelatedSeries).length() > 0) {
-                    noSeries = Integer.parseInt(dataset.getString(Tag.NumberOfStudyRelatedSeries));
-                }
-                if (dataset.getString(Tag.NumberOfStudyRelatedInstances) != null && dataset.getString(Tag.NumberOfStudyRelatedInstances).length() > 0) {
-                    noInstance = Integer.parseInt(dataset.getString(Tag.NumberOfStudyRelatedInstances));
-                }
-                if (dataset.getString(Tag.StudyDescription) != null && dataset.getString(Tag.StudyDescription).length() > 0) {
-                    studyDescription = dataset.getString(Tag.StudyDescription);
-                }
-                String studyType = "local";
-                if (saveAslink) {
-                    studyType = "link";
-                }
-                conn.createStatement().execute("insert into " + studyTable + " values('" + dataset.getString(Tag.StudyInstanceUID) + "'," + dat + ",'" + accessionno + "','" + refName + "','" + studyDescription.replace('\'', ' ') + "','" + dataset.getString(Tag.Modality) + "'," + noSeries + "," + noInstance + "," + 0 + "," + 1 + ",'" + retAe + "','" + studyType + "','" + dataset.getString(Tag.PatientID) + "')");
-                conn.commit();
-            } catch (SQLException ex) {
-                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
-    public void deleteCopyAsLinkStudies() {
-        try {
-            String sql = "Select StudyInstanceUID from " + studyTable + " where studytype='link'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                String studyUID = rs.getString("StudyInstanceUID");
-                String sql1 = "select SeriesInstanceUID from series where StudyInstanceUID='" + studyUID + "'";
-                ResultSet rs1 = conn.createStatement().executeQuery(sql1);
-                while (rs1.next()) {
-                    String sql2 = "select SopUID from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + rs1.getString("SeriesInstanceUID") + "'";
-                    ResultSet rs2 = conn.createStatement().executeQuery(sql2);
-                    while (rs2.next()) {
-                        instanceTableRowDelete(rs2.getString("SopUID"));
-                    }
-                    rs2.close();
-                    seriesTableRowDelete(rs1.getString("SeriesInstanceUID"));
-                }
-                studyTableRowDelete(studyUID);
-                rs1.close();
-            }            
-            rs.close();
-            SwingUtilities.invokeLater(new Runnable() {
-
-                public void run() {
-                    if(!ApplicationContext.isUpgrade)
-                        MainScreen.refreshLocalDBStorage();
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void insertSeriesData(DicomObject dataset) {
-        if (checkRecordExists(seriesTable, "SeriesInstanceUID", dataset.getString(Tag.SeriesInstanceUID))) {
-        } else {
-            try {
-                String dat = "null";
-                int noSeries = 0;
-                String institution = "null";
-                String seriesNo = "null";
-                String modality = "null";
-                String studyDesc = "null";
-                String bodyPartExamined = "null";
-                if (dataset.getString(Tag.SeriesDate) != null && dataset.getString(Tag.SeriesDate).length() > 0) {
-                    dat = "date('" + dateFormat.format(dataset.getDate(Tag.SeriesDate)) + "')";
-                }
-                if (dataset.getString(Tag.NumberOfSeriesRelatedInstances) != null && dataset.getString(Tag.NumberOfSeriesRelatedInstances).length() > 0) {
-                    noSeries = Integer.parseInt(dataset.getString(Tag.NumberOfSeriesRelatedInstances));
-                }
-                if (dataset.getString(Tag.InstitutionName) != null && dataset.getString(Tag.InstitutionName).length() > 0) {
-                    institution = dataset.getString(Tag.InstitutionName).replace('\'', ' ');
-                }
-                if (dataset.getString(Tag.SeriesNumber) != null && dataset.getString(Tag.SeriesNumber).length() > 0) {
-                    seriesNo = dataset.getString(Tag.SeriesNumber);
-                }
-                if (dataset.getString(Tag.Modality) != null && dataset.getString(Tag.Modality).length() > 0) {
-                    modality = dataset.getString(Tag.Modality);
-                }
-                if (dataset.getString(Tag.SeriesDescription) != null && dataset.getString(Tag.SeriesDescription).length() > 0) {
-                    studyDesc = dataset.getString(Tag.SeriesDescription).replace('\'', ' ');
-                }
-                if (dataset.getString(Tag.BodyPartExamined) != null && dataset.getString(Tag.BodyPartExamined).length() > 0) {
-                    bodyPartExamined = dataset.getString(Tag.BodyPartExamined).replace('\'', ' ');
-                }
-                conn.createStatement().execute("insert into " + seriesTable + " values('" + dataset.getString(Tag.SeriesInstanceUID) + "','" + seriesNo + "','" + modality + "','" + studyDesc + "','" + bodyPartExamined + "','" + institution + "'," + noSeries + ",'" + dataset.getString(Tag.PatientID) + "','" + dataset.getString(Tag.StudyInstanceUID) + "')");
-                conn.commit();
-            } catch (SQLException ex) {
-                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        SwingUtilities.invokeLater(new Runnable() {
-
-            public void run() {
-                if(!ApplicationContext.isUpgrade)
-                    MainScreen.refreshLocalDBStorage();
-            }
-        });
-    }
-
-    public void insertImageData(DicomObject dataset) {
-        if (checkRecordExists(instanceTable, "SopUID", dataset.getString(Tag.SOPInstanceUID))) {
-        } else {
-            try {
-                Calendar today = Calendar.getInstance();
-                String struturedDestination = ApplicationContext.getAppDirectory() + File.separator + "archive" + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + dataset.getString(Tag.StudyInstanceUID) + File.separator + dataset.getString(Tag.SOPInstanceUID);
-                String multiframe = "false";
-                int totalFrame = 0;
-                boolean encapsulatedPDF = false;
-                if (dataset.getString(Tags.SOPClassUID)!=null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
-                    encapsulatedPDF = true;
-                }
-                if (dataset.getString(Tags.NumberOfFrames) != null && Integer.parseInt(dataset.getString(Tags.NumberOfFrames)) > 1) {
-                    multiframe = "true";
-                    totalFrame = Integer.parseInt(dataset.getString(Tags.NumberOfFrames));
-                }
-                String sliceLocation = (dataset.getString(Tags.SliceLocation) != null) ? dataset.getString(Tags.SliceLocation) : "100000";
-                conn.createStatement().execute("insert into " + instanceTable + " values('" + dataset.getString(Tag.SOPInstanceUID) + "'," + dataset.getInt(Tag.InstanceNumber) + ",'" + multiframe + "','" + totalFrame + "','" + "partial" + "','" + " " + "','" + " " + "','" + "partial" + "','" + struturedDestination + "'," + sliceLocation + ",'" + encapsulatedPDF + "','" + dataset.getString(Tag.PatientID) + "','" + dataset.getString(Tag.StudyInstanceUID) + "','" + dataset.getString(Tag.SeriesInstanceUID) + "')");
-                conn.commit();
-                int receivedCount = this.getReceiveCount(dataset.getString(Tag.StudyInstanceUID));
-                receivedCount = receivedCount + 1;
-                this.update("study", "RecdImgCnt", receivedCount, "StudyInstanceUID", dataset.getString(Tag.StudyInstanceUID));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    public void insertImageData(DicomObject dataset, File dicomFile) {
-        if (checkRecordExists(instanceTable, "SopUID", dataset.getString(Tag.SOPInstanceUID))) {
-        } else {
-            try {
-                Calendar today = Calendar.getInstance();
-                String struturedDestination = dicomFile.getAbsolutePath();
-                String multiframe = "false";
-                int totalFrame = 0;
-                boolean encapsulatedPDF = false;
-                if (dataset.getString(Tags.SOPClassUID)!=null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
-                    encapsulatedPDF = true;
-                }
-                if (dataset.getString(Tags.NumberOfFrames) != null && Integer.parseInt(dataset.getString(Tags.NumberOfFrames)) > 1) {
-                    multiframe = "true";
-                    totalFrame = Integer.parseInt(dataset.getString(Tags.NumberOfFrames));
-                }
-                String sliceLocation = (dataset.getString(Tags.SliceLocation) != null) ? dataset.getString(Tags.SliceLocation) : "100000";
-                conn.createStatement().execute("insert into " + instanceTable + " values('" + dataset.getString(Tag.SOPInstanceUID) + "'," + dataset.getInt(Tag.InstanceNumber) + ",'" + multiframe + "','" + totalFrame + "','" + "partial" + "','" + " " + "','" + " " + "','" + "partial" + "','" + struturedDestination + "'," + sliceLocation + ",'" + encapsulatedPDF + "','" + dataset.getString(Tag.PatientID) + "','" + dataset.getString(Tag.StudyInstanceUID) + "','" + dataset.getString(Tag.SeriesInstanceUID) + "')");
-                conn.commit();
-                int receivedCount = this.getReceiveCount(dataset.getString(Tag.StudyInstanceUID));
-                receivedCount = receivedCount + 1;
-                this.update("study", "RecdImgCnt", receivedCount, "StudyInstanceUID", dataset.getString(Tag.StudyInstanceUID));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    public Object[] retrieveAEList() {
-        Object Root[];
-        ArrayList list = new ArrayList();
-        try {
-            String sql = "Select * from AE";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                Object[] value = {rs.getString("logicalname")};
-                list.add(value);
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Root = list.toArray();
-        return Root;
-    }
-
-    public Object[] retrieveAEListWithHeader() {
-        Object Root[];
-        ArrayList list = new ArrayList();
-        list.add(DicomServersHeaderDisplayName);
-        try {
-            String sql = "Select * from AE";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                Object[] value = {rs.getString("logicalname")};
-                list.add(value);
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Root = list.toArray();
-        return Root;
-    }
-
-    public AEModel getServerDetail(String serverName) {
-        AEModel ae = null;
-        try {
-            String sql = "Select * from AE where logicalname='" + serverName + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                ae = new AEModel(rs.getString("logicalname"), rs.getString("hostname"), rs.getString("aetitle"), rs.getInt("port"), rs.getString("retrievetype"));
-            }
-            rs.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return ae;
-
-    }
-
-    public ArrayList getPresets() {
-        ArrayList presetList = new ArrayList();
-        presetList.add(getNonePreset());
-        try {
-            String sql = "select * from preset";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                PresetModel presetModel = new PresetModel();
-                presetModel.setPresetName(rs.getString("presetname"));
-                presetModel.setWindowWidth(rs.getString("windowwidth"));
-                presetModel.setWindowLevel(rs.getString("windowlevel"));
-                presetList.add(presetModel);
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return presetList;
-    }
-
-    private PresetModel getNonePreset() {
-        PresetModel presetModel = new PresetModel();
-        presetModel.setPresetName("Default");
-        return presetModel;
-    }
-
-    public ServerModel getServerModel(String serverName) {
-        ServerModel serverModel = null;
-        try {
-            String sql = "Select * from AE where logicalname='" + serverName + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                serverModel = new ServerModel(rs.getString("logicalname"), rs.getString("hostname"), rs.getString("aetitle"), rs.getInt("port"), rs.getString("retrievetype"), rs.getString("wadocontext"), rs.getInt("wadoport"), rs.getString("wadoprotocol"), rs.getString("retrievets"));
-            }
-            rs.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return serverModel;
-
-    }
-
-    public PresetModel getPreset(String presetName) {
-        PresetModel presetModel = null;
-        try {
-            String sql = "select * from preset where presetname='" + presetName + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            rs.next();
-            presetModel = new PresetModel();
-            presetModel.setPk(rs.getInt("pk"));
-            presetModel.setPresetName(rs.getString("presetname"));
-            presetModel.setWindowLevel(rs.getString("windowlevel"));
-            presetModel.setWindowWidth(rs.getString("windowwidth"));
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return presetModel;
-    }
-
-    public ArrayList getFirstInstanceListFromMultipleStudies(String[] studies) {
-        ArrayList fileArray = new ArrayList();
-        for (int i = 0; i < studies.length; i++) {
-            fileArray.add(((ArrayList) this.getUrlBasedOnStudyIUID(studies[i])).get(0));
-        }
-        return fileArray;
-
-    }
-
-    public ArrayList getUrlBasedOnStudyIUID(String siuid) {
-        ArrayList fileArray = new ArrayList();
-        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-            fileArray = getUrlBasedOnStudyIUID_SepMulti(siuid);
-        } else {
-            fileArray = getUrlBasedOnStudyIUID_Normal(siuid);
-        }
-        return fileArray;
-    }
-
-    public ArrayList getUrlBasedOnStudyIUID_Normal(String siuid) {
-
-        ArrayList fileArray = new ArrayList();
-        try {
-            int i = 0;
-            String sql = "select SeriesInstanceUID from series where StudyInstanceUID='" + siuid + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                ResultSet rs1 = null;
-                String sql1 = "select FileStoreUrl from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + " order by InstanceNo asc";
-                rs1 = conn.createStatement().executeQuery(sql1);
-                File imageUrl = null;
-                if (rs1.next()) {
-                    imageUrl = new File(rs1.getString("FileStoreUrl"));
-                }
-                fileArray.add(imageUrl);
-                rs1.close();
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return fileArray;
-    }
-
-    public ArrayList getUrlBasedOnStudyIUID_SepMulti(String siuid) {
-
-        ArrayList fileArray = new ArrayList();
-        try {
-            int i = 0;
-            String sql = "select SeriesInstanceUID from series where StudyInstanceUID='" + siuid + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                ResultSet rs1 = null;
-                ResultSet rs2 = null;
-                String sql1 = "select FileStoreUrl from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + "AND " + "multiframe='false'" + " order by InstanceNo asc";
-                String sql2 = "select FileStoreUrl from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + "AND " + "multiframe='true'";
-                rs1 = conn.createStatement().executeQuery(sql1);
-                if (rs1.next()) {
-                    File imageUrl = new File(rs1.getString("FileStoreUrl"));
-                    fileArray.add(imageUrl);
-                }
-                rs2 = conn.createStatement().executeQuery(sql2);
-                while (rs2.next()) {
-                    File imageUrl = new File(rs2.getString("FileStoreUrl"));
-                    fileArray.add(imageUrl);
-                }
-                rs2.close();
-                rs1.close();
-            }
-            rs.close();            
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return fileArray;
-    }
-
-    public ArrayList getUrlBasedOnStudyAndSeriesUID(String studyUID, String seriesUID) {
-        ArrayList fileArray = new ArrayList();
-        try {
-            ResultSet rs1 = null;
-            String sql1 = "select FileStoreUrl from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + seriesUID + "'";
-            rs1 = conn.createStatement().executeQuery(sql1);
-            while (rs1.next()) {
-                File imageUrl = new File(rs1.getString("FileStoreUrl"));
-                fileArray.add(imageUrl);
-            }
-            
-            rs1.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return fileArray;
-    }
-
     public ArrayList<Series> getSeriesList(String siuid) {
         ArrayList<Series> arr = new ArrayList();
-        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-            arr = getSeriesList_SepMulti(siuid);
-        } else {
-            arr = getSeriesList_Normal(siuid);
-        }
-        return arr;
-    }
-
-    public ArrayList<Series> getSeriesList_Normal(String siuid) {
-        ArrayList<Series> arr = new ArrayList();
         try {
-            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined from series where StudyInstanceUID='" + siuid + "'";
-            ResultSet rs = null;
+            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined from series where StudyInstanceUID='" + siuid + "'" + " order by SeriesNo";
+            ResultSet rs;
             rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
                 int seriesLevelIndex = 0;
@@ -1539,7 +884,7 @@ public class DatabaseHandler {
                 series.setSeriesNumber(rs.getString("SeriesNo"));
                 series.setSeriesDesc(rs.getString("SeriesDescription"));
                 series.setBodyPartExamined(rs.getString("BodyPartExamined"));
-                ResultSet rs1 = null;
+                ResultSet rs1;
                 String sql1 = "select FileStoreUrl,SopUID,InstanceNo,multiframe,totalframe from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + " order by InstanceNo asc";
                 rs1 = conn.createStatement().executeQuery(sql1);
                 while (rs1.next()) {
@@ -1569,765 +914,438 @@ public class DatabaseHandler {
         return arr;
     }
 
-    public ArrayList<Series> getSeriesList_SepMulti(String siuid) {
-        ArrayList<Series> arr = new ArrayList();
+    public int getSeriesLevelInstance(String studyUid, String seriesUid) {
+        int totalInstance = 0;
         try {
-            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined from series where StudyInstanceUID='" + siuid + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                Series series = new Series();
-                series.setStudyInstanceUID(siuid);
-                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
-                series.setSeriesNumber(rs.getString("SeriesNo"));
-                series.setSeriesDesc(rs.getString("SeriesDescription"));
-                series.setBodyPartExamined(rs.getString("BodyPartExamined"));
-                ResultSet rs1 = null;
-                String sql1 = "select FileStoreUrl,totalframe,SopUID,InstanceNo,multiframe,EncapsulatedDocument from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + "AND multiframe='false'" + " order by InstanceNo asc";
-                rs1 = conn.createStatement().executeQuery(sql1);
-                boolean allInstanceAreMultiframe = true;
-                while (rs1.next()) {
-                    allInstanceAreMultiframe = false;
-                    Instance img = new Instance();
-                    img.setFilepath(rs1.getString("FileStoreUrl"));
-                    img.setSop_iuid(rs1.getString("SopUID"));
-                    img.setInstance_no(rs1.getString("InstanceNo"));
-                    img.setEncapsulatedPDF(rs1.getBoolean("EncapsulatedDocument"));
-                    img.setMultiframe(false);
-                    series.setMultiframe(false);
-                    series.getImageList().add(img);
-                }
-                if (!allInstanceAreMultiframe) {
-                    arr.add(series);
-                }
-                arr.addAll(getMultiframeSeriesList(siuid, series.getSeriesInstanceUID()));
-                rs1.close();
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return arr;
-    }
-
-    public ArrayList<Series> getMultiframeSeriesList(String studyUID, String seriesUID) {
-        ArrayList<Series> arr = new ArrayList();
-        try {
-            ResultSet rs1 = null;
-            String sql1 = "select FileStoreUrl,totalframe,SopUID,InstanceNo,multiframe,EncapsulatedDocument from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + seriesUID + "'" + " AND multiframe='true'" + " order by InstanceNo asc";
-            rs1 = conn.createStatement().executeQuery(sql1);
-            while (rs1.next()) {
-                Series series = new Series();
-                series.setStudyInstanceUID(studyUID);
-                series.setSeriesInstanceUID(seriesUID);
-                series.setSeriesDesc("Multiframe: " + rs1.getString("InstanceNo"));
-                series.setMultiframe(true);
-                series.setInstanceUID(rs1.getString("SopUID"));
-                int totalFrames = Integer.parseInt(rs1.getString("totalFrame"));
-                Instance img = new Instance();
-                img.setFilepath(rs1.getString("FileStoreUrl"));
-                img.setTotalNumFrames(totalFrames);
-                img.setSop_iuid(rs1.getString("SopUID"));
-                img.setInstance_no(rs1.getString("InstanceNo"));
-                img.setEncapsulatedPDF(rs1.getBoolean("EncapsulatedDocument"));
-                img.setMultiframe(true);
-                series.getImageList().add(img);
-                arr.add(series);
-            }
-            rs1.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return arr;
-    }
-
-    public Series getSeries(String studyUID, String seriesUID) {
-        Series series = null;
-        try {
-            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined from series where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + seriesUID + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                int seriesLevelIndex = 0;
-                series = new Series();
-                series.setStudyInstanceUID(studyUID);
-                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
-                series.setSeriesNumber(rs.getString("SeriesNo"));
-                series.setSeriesDesc(rs.getString("SeriesDescription"));
-                series.setBodyPartExamined(rs.getString("BodyPartExamined"));
-                ResultSet rs1 = null;
-                String sql1 = "select FileStoreUrl,SopUID,InstanceNo,multiframe,totalframe from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'" + " order by InstanceNo asc";
-                rs1 = conn.createStatement().executeQuery(sql1);
-                while (rs1.next()) {
-                    int totalFrames = Integer.parseInt(rs1.getString("totalFrame"));
-                    int tempi = 0;
-                    seriesLevelIndex++;
-                    do {
-                        Instance img = new Instance();
-                        img.setFilepath(rs1.getString("FileStoreUrl"));
-                        img.setSop_iuid(rs1.getString("SopUID"));
-                        img.setInstance_no(rs1.getString("InstanceNo"));
-                        img.setMultiframe(new Boolean(rs1.getString("multiframe")));
-                        img.setCurrentFrameNum(tempi);
-                        img.setTotalNumFrames(totalFrames);
-                        img.setSeriesLevelIndex(seriesLevelIndex);
-                        series.getImageList().add(img);
-                        tempi++;
-                    } while (tempi < totalFrames);
-                    
-                }
-                rs1.close();
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return series;
-    }
-
-    public Series getSeries(String studyUID, String seriesUID, boolean multiframe, String instanceUID) {
-        Series series = null;
-        try {
-            String sql = "select SeriesInstanceUID,SeriesNo,SeriesDescription,BodyPartExamined from series where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + seriesUID + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                series = new Series();
-                series.setStudyInstanceUID(studyUID);
-                series.setSeriesInstanceUID(rs.getString("SeriesInstanceUID"));
-                series.setSeriesDesc(rs.getString("SeriesDescription"));
-                series.setMultiframe(multiframe);
-                ResultSet rs1 = null;
-                String sopUID = "";
-                if (!multiframe) {
-                    sopUID = "SopUID,";
-                }
-
-                String sql1 = "select FileStoreUrl,totalframe," + sopUID + "InstanceNo from image where StudyInstanceUID='" + studyUID + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'";
-                if (multiframe) {
-                    sql1 += " AND SopUID='" + instanceUID + "'" + " AND multiframe='" + multiframe + "'" + " order by InstanceNo asc";
-                    series.setInstanceUID(instanceUID);
-                } else {
-                    sql1 += " AND multiframe='" + multiframe + "'" + " order by InstanceNo asc";
-                }
-
-                // sql1+=" order by InstanceNo asc";
-
-                rs1 = conn.createStatement().executeQuery(sql1);
-                while (rs1.next()) {
-                    int totalFrames = Integer.parseInt(rs1.getString("totalFrame"));
-                    Instance img = new Instance();
-                    img.setFilepath(rs1.getString("FileStoreUrl"));
-                    if (!multiframe) {
-                        img.setSop_iuid(rs1.getString("SopUID"));
-                    } else {
-                        img.setSop_iuid(instanceUID);
-                    }
-                    img.setMultiframe(multiframe);
-                    img.setTotalNumFrames(totalFrames);
-                    img.setInstance_no(rs1.getString("InstanceNo"));
-                    series.getImageList().add(img);
-
-                }
-                
-                rs1.close();
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return series;
-    }
-
-    public int getStudyLevelInstance(String siuid) {
-        int size = 0;
-        try {
-            String sql = "select SeriesInstanceUID from series where StudyInstanceUID='" + siuid + "'";
-            ResultSet rs = null;
-            rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                ResultSet rs1 = null;
-                String sql1 = "select count(*) from image where StudyInstanceUID='" + siuid + "' AND " + "SeriesInstanceUID='" + rs.getString("SeriesInstanceUID") + "'";
-                rs1 = conn.createStatement().executeQuery(sql1);
-                rs1.next();
-                size = size + rs1.getInt(1);
-                rs1.close();
-            }
-            rs.close();
-        } catch (Exception ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return size;
-    }
-
-    public String getStudyDescBasedOnStudyUID(String studyUID) {
-        String studyDesc = "";
-        try {
-            String sql = "select studyDesc from Study where StudyInstanceUID='" + studyUID + "'";
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return studyDesc;
-    }
-
-    public String getSeriesDesc(String studyUID, String seriesUID) {
-        String seriesDesc = "";
-        try {
-            String sql = "select SeriesDescription from Series where StudyInstanceUID='" + studyUID + "'" + "SeriesInstanceUID='" + seriesUID + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
+            ResultSet rs = conn.createStatement().executeQuery("select count(*) from image where StudyInstanceUID='" + studyUid + "' AND " + "SeriesInstanceUID='" + seriesUid + "' AND multiframe = false");
             rs.next();
-            seriesDesc = rs.getString("SeriesDescription");
+            totalInstance = rs.getInt(1);
             rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return seriesDesc;
-    }
-
-    public int getSeriesLevelInstance(String studyuid, String seriesuid) {
-        int size = 0;
-        try {
-            String sql1 = "";
-            if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                sql1 = "select count(*) from image where StudyInstanceUID='" + studyuid + "' AND " + "SeriesInstanceUID='" + seriesuid + "'" + " AND multiframe='false'";
-            } else {
-                sql1 = "select count(*) from image where StudyInstanceUID='" + studyuid + "' AND " + "SeriesInstanceUID='" + seriesuid + "'";
-            }
-
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            rs.next();
-            size = rs.getInt(1);
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return size;
-    }
-    public ArrayList<String> getSeriesLevelInstanceUrl(String studyuid,String seriesuid){
-        ArrayList<String> instanceUrlList=new ArrayList<String>();
-        try {
-            String sql1="select * from image where StudyInstanceUID='" + studyuid + "' AND " + "SeriesInstanceUID='" + seriesuid + "'";
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            while (rs.next()) {
-                String fileUrl=rs.getString("FileStoreUrl");
-                instanceUrlList.add(fileUrl);
-            }   
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return instanceUrlList;
-    }
-
-    public boolean isSeriesHasInstance(String seriesuid) {
-        boolean hasInstance = true;
-        try {
-            String sql1 = "";
-            sql1 = "select count(*) from image where SeriesInstanceUID='" + seriesuid + "'";
-
-            ResultSet rs = conn.createStatement().executeQuery(sql1);
-            rs.next();
-            int size = rs.getInt(1);
-            if (size > 0) {
-                hasInstance = true;
-            } else {
-                hasInstance = false;
-            }
-            rs.close();            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return hasInstance;
-
-    }
-
-    /**
-     * It updates the particular field on  table.
-     */
-    public void update(String tablename, String fieldname, String fieldvalue, String whereField, String whereValue) {
-        try {
-            int value = conn.createStatement().executeUpdate("update " + tablename + " set " + fieldname + "='" + fieldvalue + "' where " + whereField + "='" + whereValue + "'");
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-        }
-    }
-
-    public void update(String tablename, String fieldname, int fieldvalue, String whereField, String whereValue) {
-        try {
-            int value = conn.createStatement().executeUpdate("update " + tablename + " set " + fieldname + "=" + fieldvalue + " where " + whereField + "='" + whereValue + "'");
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-        }
-    }
-
-    /**
-     * It deletes all rows in patient,study,series and image.
-     */
-    public void deleteRows() {
-        try {
-            if (statement == null) {
-                statement = conn.createStatement();
-            }
-            statement.execute("delete from " + instanceTable);
-            statement.execute("delete from " + seriesTable);
-            statement.execute("delete from " + studyTable);
-            statement.execute("delete from " + patientTable);
-            statement.execute("delete from " + coordTable); // Mayam CAD
-            conn.commit();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-        }
-    }
-
-    public void instanceTableRowDelete(String instanceUID) {
-        try {
-            String sql = "delete from image where SopUID='" + instanceUID + "'";
-            conn.createStatement().execute(sql);
-            conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return totalInstance;
     }
 
-    public void seriesTableRowDelete(String seriesUID) {
+    public String getInstanceUIDBasedOnSliceLocation(String studyUid, String seriesUid, String sliceLocation, String sliceThickness) {
+        String fileStoreUrl = null;
         try {
-            if (!isSeriesHasInstance(seriesUID)) {
-                String sql = "delete from series where SeriesInstanceUID='" + seriesUID + "'";
-                conn.createStatement().execute(sql);
-                conn.commit();
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void studyTableRowDelete(String studyUID) {
-        try {
-            String sql = "delete from study where StudyInstanceUID='" + studyUID + "'";
-            conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void dropTables() {
-        try {
-            statement.execute("drop table " + instanceTable);
-            statement.execute("drop table " + seriesTable);
-            statement.execute("drop table " + studyTable);
-            statement.execute("drop table " + patientTable);
-            statement.execute("drop table ae");
-            statement.execute("drop table listener");
-            statement.execute("drop table preset");
-            statement.execute("drop table layout");
-            statement.execute("drop table modality");
-            statement.execute("drop table " + hl7Table); // Mayam Derm CAD
-            statement.execute("drop table " + coordTable); // Mayam Derm CAD
-            conn.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void resetStudyDB() {
-        try {
-            statement.execute("drop table " + instanceTable);
-            statement.execute("drop table " + seriesTable);
-            statement.execute("drop table " + studyTable);
-            statement.execute("drop table " + patientTable);
-            statement.execute("drop table " + coordTable); // Mayam Derm CAD
-            conn.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getSendStatus(String studyIUID) {
-        String status = null;
-        try {
-            String str = "select sendstatus "
-                    + "from study where studyinstanceuid='" + studyIUID + "'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            while (rs.next()) {
-                status = rs.getString("sendstatus");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-            str = null;
-        }
-        return status;
-    }
-
-    public int getSendCount(String studyIUID) {
-        int count = 0;
-        try {
-            String str = "select SendImgCnt "
-                    + "from study where StudyInstanceUID='" + studyIUID + "'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            while (rs.next()) {
-                count = rs.getInt("SendImgCnt");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-            str = null;
-        }
-        return count;
-    }
-
-    public String getReceiveStatus(String studyIUID) {
-        String status = null;
-        try {
-            String str = "select receivestatus "
-                    + "from study where studyinstanceuid='" + studyIUID + "'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            while (rs.next()) {
-                status = rs.getString("receivestatus");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-            str = null;
-        }
-        return status;
-    }
-
-    public int getReceiveCount(String studyIUID) {
-        int count = 0;
-        try {
-            String str = "select RecdImgCnt "
-                    + "from study where StudyInstanceUID='" + studyIUID + "'";
-            ResultSet rs = conn.createStatement().executeQuery(str);
-            while (rs.next()) {
-                count = rs.getInt("RecdImgCnt");
-            }
-            rs.close();
-        } catch (Exception e) {
-            StringWriter str = new StringWriter();
-            e.printStackTrace(new PrintWriter(str));
-            str = null;
-        }
-        return count;
-    }
-
-    public void doCreateServerRecords(String serverName, String host, String aeTitle, int port) {
-        try {
-            String sql = "insert into AE(logicalname,hostname,aetitle,port)values('" + serverName + "','" + host + "','" + aeTitle + "'," + port + ")";
-            boolean b = conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void doEditServerRecords(String serverName, String host, String aeTitle, int port, String keyName) {
-        try {
-            String getPKSql = "select pk from ae where logicalname='" + keyName + "'";
-
-            ResultSet rs = conn.createStatement().executeQuery(getPKSql);
-            while (rs.next()) {
-                String pk = rs.getString("pk");
-                String sql = "update AE SET logicalname='" + serverName + "',hostname='" + host + "',aetitle='" + aeTitle + "',port=" + port + "where pk=" + pk;
-                int n = conn.createStatement().executeUpdate(sql);
-            }
-            rs.close();
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void doDeleteRecords(String serverName) {
-        try {
-            String sql = "delete from ae where logicalname='" + serverName + "'";
-            boolean b = conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int getInstaneNumberBasedOnSliceLocation(String studyUID, String seriesUID, String instanceUID, String sliceLocation) {
-        int instanceNumber = -1;
-        try {
-            double sliceLocTemp = 0;
-            if (sliceLocation != null && !sliceLocation.equalsIgnoreCase("")) {
+            double sliceLocTemp = 0, sliceThicknessTemp = 0;
+            if (sliceLocation != null && !sliceLocation.equals("")) {
                 sliceLocTemp = Double.parseDouble(sliceLocation);
-            }
-            String sql = "select instanceNo from image where StudyInstanceUID='" + studyUID + "' and SeriesInstanceUID='" + seriesUID + "' and SliceLocation between " + (sliceLocTemp - 0.5) + " and " + (sliceLocTemp + 0.5);
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                instanceNumber = rs.getInt("instanceNo");
-            }
-            rs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return instanceNumber;
-    }
-
-    public ArrayList getStudyUIDBasedOnPatientName(String patientName) {
-        ArrayList<Study> studyList = new ArrayList<Study>();
-        try {
-            String getIDSql = "select PatientId from patient where patientName='" + patientName + "'";
-            ResultSet rs = conn.createStatement().executeQuery(getIDSql);
-            while (rs.next()) {
-                String id = rs.getString("PatientId");
-                String sql = "select StudyInstanceUID,StudyDescription from study where study.PatientId='" + id + "'";
-                ResultSet rs1 = conn.createStatement().executeQuery(sql);
-                while (rs1.next()) {
-                    Study study = new Study();
-                    study.setStudyInstanceUID(rs1.getString("StudyInstanceUID"));
-                    study.setStudyDesc(rs1.getString("StudyDescription"));
-                    studyList.add(study);
+                if (!sliceThickness.equals("")) {
+                    sliceThicknessTemp = Double.parseDouble(sliceThickness);
                 }
-                rs1.close();
             }
-            rs.close();
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return studyList;
-    }
-
-    public static DatabaseHandler getInstance() {
-        DatabaseHandler DatabaseUpdateRef = new DatabaseHandler();
-        return DatabaseUpdateRef;
-    }
-    
-    public boolean checkLocaleExist() {
-        try {
-            ResultSet tablenames = conn.getMetaData().getTables(null, "MAYAM", "LOCALE", null);
-            tablenames.next();
-            if ("LOCALE".equals(tablenames.getString("TABLE_NAME"))) {
-                return true;
-            }
-            tablenames.close();
-        } catch (SQLException ex) {
-            System.out.println("");
-        }
-        return false;
-    }
-
-    public void dropTablesForUpgrade() {
-        try {
-            statement.execute("drop table " + instanceTable);
-            statement.execute("drop table " + seriesTable);
-            statement.execute("drop table " + studyTable);
-            statement.execute("drop table " + patientTable);
-            conn.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void createTablesForUpgrade() {
-        try {
-            String sql = "";
-            sql = "create table " + patientTable + " (PatientId varchar(255) NOT NULL CONSTRAINT PatientId_Pk PRIMARY KEY ," + "PatientName varchar(255)," + "PatientBirthDate varchar(30)," + "PatientSex varchar(10))";
-            statement.executeUpdate(sql);
-
-            sql = "create table " + studyTable + "(StudyInstanceUID varchar(255)  NOT NULL CONSTRAINT StudyInstanceUID_pk PRIMARY KEY ," + "StudyDate varchar(30), " + "AccessionNo varchar(50), " + "ReferringPhysicianName varchar(255), " + "StudyDescription  varchar(80), " + "ModalityInStudy varchar(10), " + "NoOfSeries integer," + "NoOfInstances integer," + "RecdImgCnt Integer," + "SendImgCnt integer," + "RetrieveAET varchar(50)," + "StudyType varchar(75)," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId))";
-            statement.executeUpdate(sql);
-
-            sql = "create table " + seriesTable + " (SeriesInstanceUID varchar(255) NOT NULL CONSTRAINT SeriesInstanceUID_pk PRIMARY KEY ," + "SeriesNo varchar(50)," + "Modality varchar(10)," + "SeriesDescription varchar(100)," + "BodyPartExamined varchar(100)," + "InstitutionName varchar(255)," + "NoOfSeriesRelatedInstances integer," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255), foreign key (StudyInstanceUID) references Study(StudyInstanceUID))";
-            statement.executeUpdate(sql);
-
-            sql = "create table " + instanceTable + " (SopUID varchar(255) NOT NULL CONSTRAINT SopUID_pk PRIMARY KEY ," + "InstanceNo integer," + "multiframe varchar(50)," + "totalframe varchar(50)," + "SendStatus varchar(50)," + "ForwardDateTime varchar(30)," + "ReceivedDateTime varchar(30)," + "ReceiveStatus varchar(50)," + "FileStoreUrl varchar(750)," + "SliceLocation integer," + "EncapsulatedDocument varchar(50)," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255), foreign key (StudyInstanceUID) references Study(StudyInstanceUID)," + "SeriesInstanceUID varchar(255), foreign key (SeriesInstanceUID) references Series(SeriesInstanceUID))";
-            statement.executeUpdate(sql);
-
-            sql = "create table " + localeTable + "(pk integer primary key GENERATED ALWAYS AS IDENTITY,country varchar(255),countrycode varchar(10),language varchar(255),languagecode varchar(10),localeid varchar(255),status varchar(155))";
-            statement.executeUpdate(sql);
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        insertDefaultLocales();
-    }
-
-    public ArrayList<String> getStudyUIDList() {
-        ArrayList<String> studyuid = new ArrayList<String>();
-        try {
-            ResultSet rs = conn.createStatement().executeQuery("select StudyInstanceUID from study");
-            while (rs.next()) {
-                studyuid.add(rs.getString("StudyInstanceUID"));
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return studyuid;
-    }
-
-    public ArrayList<String> getSeriesUIDList(String studyuid) {
-        ArrayList<String> seriesuid = new ArrayList<String>();
-        try {
-            ResultSet rs = conn.createStatement().executeQuery("select SeriesInstanceUID from series where StudyInstanceUID='" + studyuid + "'");
-            while (rs.next()) {
-                seriesuid.add(rs.getString("SeriesInstanceUID"));
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return seriesuid;
-    }
-    
-    public void deletePresets(){
-        try {
-            String sql = "delete from preset";
-            boolean b = conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    
-    // Agregado Derm CAD
-    /* ************************************************************************** */
-    public ServerHL7Model getServerHL7Detail(String serverName) {
-        ServerHL7Model hl7 = null;
-        try {
-            String sql = "select * from "+ hl7Table +" where servername='" + serverName + "'";
+            String sql = "select SopUid from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and SliceLocation between " + (sliceLocTemp - sliceThicknessTemp) + " and " + (sliceLocTemp + sliceThicknessTemp);
             ResultSet rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
-                hl7 = new ServerHL7Model();
-                hl7.setServerName(rs.getString("servername"));
-                hl7.setServerAddr(rs.getString("serveraddr"));
-                hl7.setPort(rs.getInt("port"));
-                hl7.setSubProtocol(rs.getString("subprotocol"));
+                fileStoreUrl = rs.getString("SopUid");
             }
             rs.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return hl7;
+        return fileStoreUrl;
     }
-        
-   /**
-     * Retorn lista de servidores HL7
-     * @return 
-     */
-    public ArrayList getServerHL7List() {
-        ArrayList serverList = new ArrayList();
+
+    public ArrayList getSeriesInstancesLocation(String studyUid) {
+        ArrayList locations = new ArrayList();
         try {
-            String sql = "select * from "+ hl7Table;
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                ServerHL7Model serverModel = new ServerHL7Model();
-                serverModel.setServerName(rs.getString("servername"));
-                serverModel.setServerAddr(rs.getString("serveraddr"));
-                serverModel.setPort(rs.getInt("port"));
-                serverModel.setSubProtocol(rs.getString("subprotocol"));
-                serverList.add(serverModel);
+            ResultSet seriesInfo = conn.createStatement().executeQuery("select SeriesInstanceUID from Series where StudyInstanceUID='" + studyUid + "' order by SeriesNo");
+            while (seriesInfo.next()) {
+                ResultSet location = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesInfo.getString("SeriesInstanceUID") + "'" + " order by InstanceNo asc");
+                ResultSet multiframesInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesInfo.getString("SeriesInstanceUID") + "' and multiframe=true" + " order by InstanceNo asc");
+                if (location.next()) {
+                    locations.add(location.getString("FileStoreUrl"));
+                }
+                while (multiframesInfo.next()) {
+                    locations.add(multiframesInfo.getString("FileStoreUrl"));
+                }
+                location.close();
+                multiframesInfo.close();
             }
-            rs.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            seriesInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return serverList;
-    }
-    
-    /**
-     * Actualiza entradas de servidores HL7
-     * @param serverModel 
-     */
-    public void updateServerHL7ListValues(ServerHL7Model serverModel) {
-        try {
-            int n = conn.createStatement().executeUpdate("update "+hl7Table+" set servername='" + serverModel.getServerName() 
-                    + "',serveraddr='" + serverModel.getServerAddr()
-                    + "',port='" + serverModel.getPort()
-                    + "',subprotocol='" + serverModel.getSubProtocol()+"'");
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-    public void deleteHL7Server(ServerHL7Model serverModel) {
-        try {
-            String sql = "delete from "+hl7Table+" where servername='" + serverModel.getServerName() +"'";
-            conn.createStatement().execute(sql);
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        return locations;
     }
 
-    public void insertHL7Server(ServerHL7Model serverModel) {
+    public ArrayList<String> getInstancesLocation(String studyUid, String seriesUid) {
+        ArrayList<String> locations = new ArrayList<String>();
         try {
-            boolean insertStatus = conn.createStatement().execute("insert into " +hl7Table+"(servername,serveraddr,port,subprotocol) values('" + serverModel.getServerName() + "','" 
-                    + serverModel.getServerAddr() + "','" + serverModel.getPort() + "','" + serverModel.getSubProtocol() + "')");
+            ResultSet instanceInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and multiframe=false" + " order by InstanceNo asc");
+            while (instanceInfo.next()) {
+                locations.add(instanceInfo.getString("FileStoreUrl"));
+            }
+            instanceInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return locations;
+
+    }
+
+    public String getFirstInstanceLocation(String studyUid, String seriesInstanceUid) {
+        String location = null;
+        try {
+            ResultSet locationInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesInstanceUid + "'" + " order by InstanceNo asc");
+            locationInfo.next();
+            location = locationInfo.getString("FileStoreUrl");
+            locationInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return location;
+    }
+
+    public String getFirstInstanceLocation(String studyUid) {
+        String location = null;
+        try {
+            ResultSet seriesInfo = conn.createStatement().executeQuery("select SeriesInstanceUID from series where StudyInstanceUID='" + studyUid + "' order by SeriesNo asc");
+            seriesInfo.next();
+            ResultSet locationInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesInfo.getString("SeriesInstanceUID") + "'" + " order by InstanceNo asc");
+            locationInfo.next();
+            location = locationInfo.getString("FileStoreUrl");
+            seriesInfo.close();
+            locationInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return location;
+    }
+
+    public String getFileLocation(String studyUid, String seriesUid, String sopUid) {
+        String path = null;
+        try {
+            ResultSet pathInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and SopUid='" + sopUid + "'");
+            pathInfo.next();
+            path = pathInfo.getString("FileStoreUrl");
+            pathInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return path;
+    }
+
+    public String getFileLocation(String studyUid, String seriesUid, int instanceNumber) {
+        int i = -1;
+        try {
+            ResultSet pathInfo = conn.createStatement().executeQuery("select FileStoreUrl from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' order by InstanceNo");
+            while (pathInfo.next()) {
+                i++;
+                if (i == instanceNumber) {
+                    return pathInfo.getString("FileStoreUrl");
+                }
+            }
+            pathInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public ArrayList<StudyModel> listStudies(String patientName, String patientID, String dob, String accNo, String studyDate, String studyDesc, String modality) {
+        ArrayList<StudyModel> matchingStudies = new ArrayList<StudyModel>();
+        ResultSet matchingInfo;
+        try {
+            matchingInfo = conn.createStatement().executeQuery("select * from patient inner join study on patient.PatientId=study.PatientId where upper(patient.PatientId) like '" + patientID + "' and upper(patient.PatientName) like '" + patientName + "' and patient.PatientBirthDate like '" + dob + "' and upper(study.AccessionNo) like '" + accNo + "' and study.StudyDate like '" + studyDate + "' and upper(study.StudyDescription) like '" + studyDesc + "' and upper(study.ModalitiesInStudy) like '" + modality + "'");
+            while (matchingInfo.next()) {
+                StudyModel study = new StudyModel(matchingInfo.getString("PatientId"), matchingInfo.getString("PatientName"), matchingInfo.getString("PatientBirthDate"), matchingInfo.getString("AccessionNo"), matchingInfo.getString("StudyDate"), matchingInfo.getString("StudyTime"), matchingInfo.getString("StudyDescription"), matchingInfo.getString("ModalitiesInStudy"), matchingInfo.getString("NoOfSeries"), matchingInfo.getString("NoOfInstances"), matchingInfo.getString("StudyInstanceUID"));
+                matchingStudies.add(study);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NumberFormatException nfe) {
+        }
+        return matchingStudies;
+    }
+
+    //Added for Memeory Handling
+    public ArrayList<String> getInstanceUidList(String studyUid, String seriesUid) {
+        ArrayList<String> locations = new ArrayList<String>();
+        try {
+            ResultSet imageLocations = conn.createStatement().executeQuery("select SopUid from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and multiframe = false order by InstanceNo,FileStoreUrl");
+            while (imageLocations.next()) {
+                locations.add(imageLocations.getString("SopUid"));
+            }
+            imageLocations.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return locations;
+    }
+
+    public ScoutLineInfoModel[] getFirstAndLastInstances(String studyUid, String seriesUid) {
+        ScoutLineInfoModel[] borderLines = new ScoutLineInfoModel[2];
+        try {
+            ResultSet scoutDetails = conn.createStatement().executeQuery("select ImagePosition,ImageOrientation,PixelSpacing,NoOfRows,NoOfColumns,FrameOfReferenceUID,ReferencedSopUid,ImageType,SliceLocation from Image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and InstanceNo in(select min(InstanceNo) from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and ImageType not in('LOCALIZER'))");
+            scoutDetails.next();
+            borderLines[0] = new ScoutLineInfoModel(scoutDetails.getString("ImagePosition"), scoutDetails.getString("ImageOrientation"), scoutDetails.getString("PixelSpacing"), scoutDetails.getInt("NoOfRows"), scoutDetails.getInt("NoOfColumns"), scoutDetails.getString("FrameOfReferenceUID"), scoutDetails.getString("ReferencedSopUid"), scoutDetails.getString("ImageType"), scoutDetails.getString("SliceLocation"));
+            scoutDetails = conn.createStatement().executeQuery("select ImagePosition,ImageOrientation,PixelSpacing,NoOfRows,NoOfColumns,FrameOfReferenceUID,ReferencedSopUid,ImageType,SliceLocation from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and InstanceNo in(select max(InstanceNo) from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "') and ImageType not in('LOCALIZER')");
+            scoutDetails.next();
+            borderLines[1] = new ScoutLineInfoModel(scoutDetails.getString("ImagePosition"), scoutDetails.getString("ImageOrientation"), scoutDetails.getString("PixelSpacing"), scoutDetails.getInt("NoOfRows"), scoutDetails.getInt("NoOfColumns"), scoutDetails.getString("FrameOfReferenceUID"), scoutDetails.getString("ReferencedSopUid"), scoutDetails.getString("ImageType"), scoutDetails.getString("SliceLocation"));
+            scoutDetails.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return borderLines;
+    }
+
+    public ScoutLineInfoModel getScoutLineDetails(String studyUid, String seriesUid, String instanceUid) {
+        try {
+            ResultSet scoutDetails = conn.createStatement().executeQuery("select ImagePosition,ImageOrientation,PixelSpacing,NoOfRows,NoOfColumns,FrameOfReferenceUID,ReferencedSopUid,ImageType,SliceLocation from Image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and SopUid='" + instanceUid + "'");
+            while (scoutDetails.next()) {
+                return new ScoutLineInfoModel(scoutDetails.getString("ImagePosition"), scoutDetails.getString("ImageOrientation"), scoutDetails.getString("PixelSpacing"), scoutDetails.getInt("NoOfRows"), scoutDetails.getInt("NoOfColumns"), scoutDetails.getString("FrameOfReferenceUID"), scoutDetails.getString("ReferencedSopUid"), scoutDetails.getString("ImageType"), scoutDetails.getString("SliceLocation"));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public String getSlicePosition(String studyUid, String seriesUid, String instanceUid) {
+        ResultSet sliceInfo = null;
+        try {
+            sliceInfo = conn.createStatement().executeQuery("select SliceLocation from image where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and SopUid='" + instanceUid + "'");
+            sliceInfo.next();
+            return sliceInfo.getString("SliceLocation");
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                sliceInfo.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (NullPointerException ex) {
+                //ignore
+            }
+        }
+        return null;
+    }
+
+    //Updations
+    public void update(String tableName, String fieldName, String fieldValue, String whereField, String whereValue) {
+        try {
+            conn.createStatement().executeUpdate("update " + tableName + " set " + fieldName + "='" + fieldValue + "' where " + whereField + "='" + whereValue + "'");
             conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public void updateCoords(String sopInstanceUID, ArrayList<CoordBean> coords) { // MEJORAR ESTO!!!
+
+    public void update(String tableName, String fieldName, int fieldValue, String whereField, String whereValue) {
         try {
-            deleteCoords(sopInstanceUID);
-            insertCoords(sopInstanceUID, coords);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            conn.createStatement().executeUpdate("update " + tableName + " set " + fieldName + "=" + fieldValue + " where " + whereField + "='" + whereValue + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void deleteCoords(String sopInstanceUID) throws SQLException {
-        String sql = "delete from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
-        conn.createStatement().executeUpdate(sql);
+    public void update(String tableName, String fieldName, boolean fieldValue, String whereField, String whereValue) {
+        try {
+            conn.createStatement().executeUpdate("update " + tableName + " set " + fieldName + "=" + fieldValue + " where " + whereField + "='" + whereValue + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void addInstanceCount(String studyUid, String seriesUid) throws SQLException {
+        ResultSet studyLevelInstances = conn.createStatement().executeQuery("select NoOfInstances from study where StudyInstanceUID='" + studyUid + "'");
+        studyLevelInstances.next();
+        ResultSet seriesLevelInstances = conn.createStatement().executeQuery("select NoOfSeriesRelatedInstances from series where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "'");
+        seriesLevelInstances.next();
+        conn.createStatement().executeUpdate("update study set NoOfInstances=" + (studyLevelInstances.getInt("NoOfInstances") + 1) + "where StudyInstanceUID='" + studyUid + "'");
+        conn.createStatement().executeUpdate("update series set NoOfSeriesRelatedInstances=" + (seriesLevelInstances.getInt("NoOfSeriesRelatedInstances") + 1) + "where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "'");
+        studyLevelInstances.close();
+        seriesLevelInstances.close();
         conn.commit();
     }
 
-    private void insertCoords(String sopInstanceUID, ArrayList<CoordBean> coords) throws SQLException {
-        PreparedStatement stm = conn.prepareStatement("insert into " + coordTable + " values(?,?,?,?,?)");
-        for(CoordBean cb : coords) {
-            stm.setString(1, sopInstanceUID);
-            stm.setFloat(2, cb.getPoint().getX());
-            stm.setFloat(3, cb.getPoint().getY());
-            stm.setFloat(4, cb.getPoint().getZ());
-            stm.setInt(5, cb.getFrameNuber());
-            stm.executeUpdate();
-         }
-        conn.commit();
-    }
-    
-    public ArrayList<CoordBean> getCoords(String sopInstanceUID) { //FN es frame number
-        String sql = "select X,Y,Z,FN from "+ coordTable + " where " + coordTablePK + "='" + sopInstanceUID + "'";
-        ArrayList<CoordBean> list = new ArrayList<CoordBean>();
+    public void updateDownloadStatus(String studyUid) {
         try {
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                CoordBean cb = new CoordBean();
-                Vector3f v = new Vector3f();
-                v.setX(rs.getFloat("X"));
-                v.setY(rs.getFloat("Y"));
-                v.setZ(rs.getFloat("Z"));
-                cb.setPoint(v);
-                cb.setSOPId(sopInstanceUID);
-                cb.setFrameNuber(rs.getInt("FN"));
-                list.add(cb);
-            }
-            rs.close();
+            conn.createStatement().executeUpdate("update study set DownloadStatus=true where StudyInstanceUID='" + studyUid + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
-        catch(SQLException e) {
-            e.printStackTrace();
-        } 
-        return list;
-    } 
-    
-    /* ************************************************************************** */
-    // Fin Agregado Derm CAD
+    }
 
+    public void updateThumbnailStatus(String studyUid, String seriesUid, String sopUid) {
+        try {
+            conn.createStatement().executeUpdate("update image set ThumbnailStatus=true where StudyInstanceUID='" + studyUid + "' and SeriesInstanceUID='" + seriesUid + "' and SopUID='" + sopUid + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateListener(String aetitle, String port) {
+        try {
+            ResultSet pk = conn.createStatement().executeQuery("select pk from listener");
+            pk.next();
+            conn.createStatement().executeUpdate("update listener set aetitle='" + aetitle + "',port='" + port + "' where pk=" + pk.getInt("pk"));
+            pk.close();
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateTheme(String themeName) {
+        try {
+            ResultSet activeInfo = conn.createStatement().executeQuery("select name from theme where status=true");
+            activeInfo.next();
+            conn.createStatement().executeUpdate("update theme set status=false where name='" + activeInfo.getString("name") + "'");
+            conn.createStatement().executeUpdate("update theme set status=true where name='" + themeName + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void reArrangeButtons(String buttonToMove, String buttonToReplace) {
+        String selectQuery = "select buttonno from buttons where description='";
+        try {
+            ResultSet buttonToMoveInfo = conn.createStatement().executeQuery(selectQuery + buttonToMove + "'");
+            buttonToMoveInfo.next();
+            ResultSet buttonToReplaceInfo = conn.createStatement().executeQuery(selectQuery + buttonToReplace + "'");
+            buttonToReplaceInfo.next();
+            conn.createStatement().executeUpdate("update buttons set buttonno=" + buttonToMoveInfo.getInt("buttonno") + " where description='" + buttonToReplace + "'");
+            conn.createStatement().executeUpdate("update buttons set buttonno=" + buttonToReplaceInfo.getInt("buttonno") + " where description='" + buttonToMove + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public boolean updateServer(ServerModel serverModel) {
+        boolean duplicate = false;
+        try {
+            conn.createStatement().executeUpdate("update servers set logicalname='" + serverModel.getDescription() + "',aetitle='" + serverModel.getAeTitle() + "',hostname='" + serverModel.getHostName() + "',port=" + serverModel.getPort() + ",retrievetype='" + serverModel.getRetrieveType() + "',showpreviews=" + serverModel.isPreviewEnabled() + ",wadocontext='" + serverModel.getWadoURL() + "',wadoport=" + serverModel.getWadoPort() + ",wadoprotocol='" + serverModel.getWadoProtocol() + "',retrievets='" + serverModel.getRetrieveTransferSyntax() + "' where pk=" + serverModel.getPk());
+            conn.commit();
+        } catch (SQLException ex) {
+            duplicate = true;
+        }
+        return duplicate;
+    }
+
+    public void updatePreset(PresetModel presetModel) {
+        try {
+            conn.createStatement().execute("update presets set presetname='" + presetModel.getPresetName() + "',windowwidth=" + presetModel.getWindowWidth() + ",windowlevel=" + presetModel.getWindowLevel() + " where pk=" + presetModel.getPk());
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateModalitiesStatus(String modality, boolean status) {
+        try {
+            conn.createStatement().execute("update modality set status=" + status + " where shortname='" + modality + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void setAllModalitiesIdle() {
+        try {
+            conn.createStatement().execute("update modality set status=false");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateDefaultLocale(String localeName) {
+        try {
+            conn.createStatement().execute("update locale set status=false");
+            conn.createStatement().execute("update locale set status=true where localeid='" + localeName + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateLoopBack(boolean isLoopback) {
+        try {
+            conn.createStatement().executeUpdate("update miscellaneous set Loopback=" + isLoopback);
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    //Deletions
+    public void deleteButton(String description) {
+        try {
+            conn.createStatement().execute("delete from buttons where description='" + description + "'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void deletePreset(PresetModel presetModel) {
+        try {
+            conn.createStatement().execute("delete from presets where pk=" + presetModel.getPk());
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void deleteServer(ServerModel serverModel) {
+        try {
+            conn.createStatement().execute("delete from servers where pk=" + serverModel.getPk());
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void rebuild() {
+        deleteRows();
+        ApplicationContext.deleteDir(new File(ApplicationContext.listenerDetails[2]));
+    }
+
+    private void deleteRows() {
+        try {
+            Statement statement = conn.createStatement();
+            statement.execute("delete from image");
+            statement.execute("delete from series");
+            statement.execute("delete from study");
+            statement.execute("delete from patient");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void deleteLinkStudies() {
+        try {
+            ResultSet linkStudies = conn.createStatement().executeQuery("select StudyInstanceUID from study where StudyType='link'");
+            while (linkStudies.next()) {
+                ResultSet linkSeries = conn.createStatement().executeQuery("select SeriesInstanceUID from series where StudyInstanceUID='" + linkStudies.getString("StudyInstanceUID") + "'");
+                while (linkSeries.next()) {
+                    ResultSet linkInstances = conn.createStatement().executeQuery("select SopUid from image where StudyInstanceUID='" + linkStudies.getString("StudyInstanceUID") + "' and SeriesInstanceUID='" + linkSeries.getString("SeriesInstanceUID") + "'");
+                    while (linkInstances.next()) {
+                        deleteRow("image", "SopUid", linkInstances.getString("SopUid"));
+                    }
+                    deleteRow("series", "SeriesInstanceUID", linkSeries.getString("SeriesInstanceUID"));
+                }
+                deleteRow("study", "StudyInstanceUID", linkStudies.getString("StudyInstanceUID"));
+            }
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void deleteRow(String tableName, String whereFiled, String whereValue) throws SQLException {
+        conn.createStatement().execute("delete from " + tableName + " where " + whereFiled + "='" + whereValue + "'");
+    }
 }

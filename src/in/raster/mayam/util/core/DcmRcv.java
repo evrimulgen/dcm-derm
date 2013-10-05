@@ -37,13 +37,9 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.util.core;
 
-import in.raster.mayam.delegate.NetworkQueueUpdateDelegate;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import in.raster.mayam.context.ApplicationContext;
+import in.raster.mayam.delegates.InfoUpdateDelegate;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -53,33 +49,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.Executor;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.UID;
-import org.dcm4che2.data.VR;
+import org.apache.commons.cli.*;
+import org.dcm4che.dict.Tags;
+import org.dcm4che2.data.*;
 import org.dcm4che2.filecache.FileCache;
 import org.dcm4che2.io.DicomOutputStream;
-import org.dcm4che2.net.Association;
-import org.dcm4che2.net.Device;
-import org.dcm4che2.net.DicomServiceException;
-import org.dcm4che2.net.DimseRSPHandler;
-import org.dcm4che2.net.NetworkApplicationEntity;
-import org.dcm4che2.net.NetworkConnection;
-import org.dcm4che2.net.NewThreadExecutor;
-import org.dcm4che2.net.PDVInputStream;
-import org.dcm4che2.net.Status;
-import org.dcm4che2.net.TransferCapability;
+import org.dcm4che2.net.*;
 import org.dcm4che2.net.service.VerificationService;
 import org.dcm4che2.util.CloseUtils;
 import org.slf4j.Logger;
@@ -87,7 +62,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author gunter zeilinger(gunterze@gmail.com)
- * @version $Revision: 13013 $ $Date: 2010-03-31 12:57:21 +0200 (Wed, 31 Mar 2010) $
+ * @version $Revision: 13013 $ $Date: 2010-03-31 12:57:21 +0200 (Wed, 31 Mar
+ * 2010) $
  * @since Oct 13, 2005
  */
 public class DcmRcv {
@@ -141,8 +117,8 @@ public class DcmRcv {
         UID.DigitalXRayImageStorageForProcessing,
         UID.DigitalMammographyXRayImageStorageForPresentation,
         UID.DigitalMammographyXRayImageStorageForProcessing,
-        UID.DigitalIntraoralXRayImageStorageForPresentation,
-        UID.DigitalIntraoralXRayImageStorageForProcessing,
+        UID.DigitalIntraOralXRayImageStorageForPresentation,
+        UID.DigitalIntraOralXRayImageStorageForProcessing,
         UID.StandaloneModalityLUTStorageRetired,
         UID.EncapsulatedPDFStorage, UID.StandaloneVOILUTStorageRetired,
         UID.GrayscaleSoftcopyPresentationStateStorageSOPClass,
@@ -155,8 +131,8 @@ public class DcmRcv {
         UID.PositronEmissionTomographyImageStorage,
         UID.StandalonePETCurveStorageRetired, UID.CTImageStorage,
         UID.EnhancedCTImageStorage, UID.NuclearMedicineImageStorage,
-        UID.UltrasoundMultiframeImageStorageRetired,
-        UID.UltrasoundMultiframeImageStorage, UID.MRImageStorage,
+        UID.UltrasoundMultiFrameImageStorageRetired,
+        UID.UltrasoundMultiFrameImageStorage, UID.MRImageStorage,
         UID.EnhancedMRImageStorage, UID.MRSpectroscopyStorage,
         UID.RTImageStorage, UID.RTDoseStorage, UID.RTStructureSetStorage,
         UID.RTBeamsTreatmentRecordStorage, UID.RTPlanStorage,
@@ -167,10 +143,10 @@ public class DcmRcv {
         UID.RawDataStorage, UID.SpatialRegistrationStorage,
         UID.SpatialFiducialsStorage, UID.RealWorldValueMappingStorage,
         UID.SecondaryCaptureImageStorage,
-        UID.MultiframeSingleBitSecondaryCaptureImageStorage,
-        UID.MultiframeGrayscaleByteSecondaryCaptureImageStorage,
-        UID.MultiframeGrayscaleWordSecondaryCaptureImageStorage,
-        UID.MultiframeTrueColorSecondaryCaptureImageStorage,
+        UID.MultiFrameSingleBitSecondaryCaptureImageStorage,
+        UID.MultiFrameGrayscaleByteSecondaryCaptureImageStorage,
+        UID.MultiFrameGrayscaleWordSecondaryCaptureImageStorage,
+        UID.MultiFrameTrueColorSecondaryCaptureImageStorage,
         UID.VLImageStorageTrialRetired, UID.VLEndoscopicImageStorage,
         UID.VideoEndoscopicImageStorage, UID.VLMicroscopicImageStorage,
         UID.VideoMicroscopicImageStorage,
@@ -179,7 +155,7 @@ public class DcmRcv {
         UID.OphthalmicPhotography8BitImageStorage,
         UID.OphthalmicPhotography16BitImageStorage,
         UID.StereometricRelationshipStorage,
-        UID.VLMultiframeImageStorageTrialRetired,
+        UID.VLMultiFrameImageStorageTrialRetired,
         UID.StandaloneOverlayStorageRetired, UID.BasicTextSRStorage,
         UID.EnhancedSRStorage, UID.ComprehensiveSRStorage,
         UID.ProcedureLogStorage, UID.MammographyCADSRStorage,
@@ -187,7 +163,7 @@ public class DcmRcv {
         UID.ChestCADSRStorage, UID.XRayRadiationDoseSRStorage,
         UID.EncapsulatedPDFStorage, UID.EncapsulatedCDAStorage,
         UID.StandaloneCurveStorageRetired,
-        UID._12leadECGWaveformStorage, UID.GeneralECGWaveformStorage,
+        UID.TwelveLeadECGWaveformStorage, UID.GeneralECGWaveformStorage,
         UID.AmbulatoryECGWaveformStorage, UID.HemodynamicWaveformStorage,
         UID.CardiacElectrophysiologyWaveformStorage,
         UID.BasicVoiceAudioWaveformStorage, UID.HangingProtocolStorage,
@@ -226,6 +202,7 @@ public class DcmRcv {
     private String stgcmtRetrieveAETs;
     private final DimseRSPHandler nEventReportRspHandler =
             new DimseRSPHandler();
+    InfoUpdateDelegate infoUpdateDelegate = new InfoUpdateDelegate();
 
     public DcmRcv() {
         this("DCMRCV");
@@ -1058,13 +1035,13 @@ public class DcmRcv {
     }
 
     public void start() throws IOException {
-        device.startListening(executor);       
+        device.startListening(executor);
     }
 
     public void stop() {
         if (device != null) {
             device.stopListening();
-        }      
+        }
     }
 
     private static String[] split(String s, char delim, int defPos) {
@@ -1114,15 +1091,13 @@ public class DcmRcv {
 
         DicomObject data = dataStream.readDataset(); //You have one shot to get the data. You can't read twice with readDataset method.
         String suid = data.getString(Tag.StudyInstanceUID);
-        
+        String serUid = data.getString(Tag.SeriesInstanceUID);
         Calendar today = Calendar.getInstance();
-        File struturedDestination = new File(destination.getAbsolutePath() + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + suid);
+        File struturedDestination = new File(destination.getAbsolutePath() + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + suid + File.separator + serUid);
         String child[] = struturedDestination.list();
         if (child == null) {
             struturedDestination.mkdirs();
         }
-
-
         File file = devnull != null ? struturedDestination : new File(struturedDestination, iuid);
         // LOG.info("M-WRITE {}", file);
         try {
@@ -1134,8 +1109,9 @@ public class DcmRcv {
                 BasicDicomObject fmi = new BasicDicomObject();
                 fmi.initFileMetaInformation(cuid, iuid, tsuid);
                 dos.writeFileMetaInformation(fmi);
-                // dataStream.copyTo(dos);
+                // dataStream.copyTo(dos);                
                 dos.writeDataset(data, tsuid);
+                infoUpdateDelegate.updateFileDetails(file);
             } finally {
                 CloseUtils.safeClose(dos);
             }
@@ -1150,16 +1126,16 @@ public class DcmRcv {
         }
 
         // Rename the file after it has been written. See DCM-279
-        /*if (devnull == null && file != null) {
-        File rename = new File(file.getParent(), iuid);
-        LOG.info("M-RENAME {} to {}", file, rename);
-        file.renameTo(rename);
-        if (cache.getJournalRootDir() != null) {
-        cache.record(rename);
-        }
-        }*/
-        NetworkQueueUpdateDelegate networkQueueUpdateDelegate = new NetworkQueueUpdateDelegate();
-        networkQueueUpdateDelegate.updateReceiveTable(file, as.getCallingAET());
+        /*
+         * if (devnull == null && file != null) { File rename = new
+         * File(file.getParent(), iuid); LOG.info("M-RENAME {} to {}", file,
+         * rename); file.renameTo(rename); if (cache.getJournalRootDir() !=
+         * null) { cache.record(rename); } }
+         */
+
+//        if (!ApplicationContext.isRetrieveForTemp) {              
+//            networkQueueUpdateDelegate.updateProgressBar(file,suid);            
+//        }
     }
 
     private File getDir(Association as) {
