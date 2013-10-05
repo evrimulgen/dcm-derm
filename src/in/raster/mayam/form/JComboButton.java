@@ -19,7 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
- * Meenakshisundaram A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -39,32 +39,37 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.form;
 
+import in.raster.mayam.context.ApplicationContext;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.DefaultButtonModel;
-import javax.swing.Icon;
-import javax.swing.JPopupMenu;
-import javax.swing.JToggleButton;
+import java.awt.event.*;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.plaf.ButtonUI;
 
 /**
- * A button primarily targeted for toolbar which features a sub-section containing an arrow.
+ *
+ * @author BabuHussain
+ * @version 0.5
+ *
+ */
+/**
+ * A button primarily targeted for tool bar which features a sub-section
+ * containing an arrow.
  */
 public class JComboButton extends JToggleButton {
 
     private static final String ARROW_EVENT_SUFFIX = "[Arrow]";
+    private String originalActionCommand;
+    private Border originalBorder;
+    private boolean isMouseOver;
+    private boolean isArrowMouseOver;
+    private int arrowWidth;
+    private int arrowSpaceWidth;
+    private boolean isImageLayout = false;
     private MouseInputAdapter mouseHandler = new MouseInputAdapter() {
 
         @Override
@@ -109,17 +114,13 @@ public class JComboButton extends JToggleButton {
             }
         }
     };
-    private String originalActionCommand;
-    private Border originalBorder;
-    private boolean isMouseOver;
-    private boolean isArrowMouseOver;
-    private int arrowWidth;
-    private int arrowSpaceWidth;
 
     /**
      * Construct a combo button with an action.
+     *
      * @param action the action to use.
-     * @param isDivided true if the button is to be devided in two sections (button area, arrow area), false otherwise.
+     * @param isDivided true if the button is to be devided in two sections
+     * (button area, arrow area), false otherwise.
      */
     public JComboButton(Action action, boolean isDivided) {
         super("JCombo");
@@ -129,7 +130,9 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Construct a combo button.
-     * @param isDivided true if the button is to be devided in two sections (button area, arrow area), false otherwise.
+     *
+     * @param isDivided true if the button is to be devided in two sections
+     * (button area, arrow area), false otherwise.
      */
     public JComboButton(boolean isDivided) {
         this(null, null, isDivided);
@@ -137,8 +140,10 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Construct a combo button with an icon.
+     *
      * @param icon the icon to use.
-     * @param isDivided true if the button is to be devided in two sections (button area, arrow area), false otherwise.
+     * @param isDivided true if the button is to be devided in two sections
+     * (button area, arrow area), false otherwise.
      */
     public JComboButton(Icon icon, boolean isDivided) {
         this(null, icon, isDivided);
@@ -146,8 +151,10 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Construct a combo button with some text.
+     *
      * @param text the text to use.
-     * @param isDivided true if the button is to be devided in two sections (button area, arrow area), false otherwise.
+     * @param isDivided true if the button is to be devided in two sections
+     * (button area, arrow area), false otherwise.
      */
     public JComboButton(String text, boolean isDivided) {
         this(text, null, isDivided);
@@ -155,9 +162,11 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Construct a combo button with an icon and some text.
+     *
      * @param text the text to use.
      * @param icon the icon to use.
-     * @param isDivided true if the button is to be devided in two sections (button area, arrow area), false otherwise.
+     * @param isDivided true if the button is to be devided in two sections
+     * (button area, arrow area), false otherwise.
      */
     public JComboButton(String text, Icon icon, boolean isDivided) {
         super("JCombo");
@@ -165,7 +174,8 @@ public class JComboButton extends JToggleButton {
         setText(text);
         setIcon(icon);
     }
-    public JComboButton(){
+
+    public JComboButton() {
         this("JCombo", null, false);
     }
 
@@ -193,8 +203,8 @@ public class JComboButton extends JToggleButton {
                 return super.isPressed() && JComboButton.this.isDivided && (!isArrowMouseOver || isKeyEvent);
             }
         });
-        addMouseListener(mouseHandler);
-        addMouseMotionListener(mouseHandler);
+//        addMouseListener(mouseHandler);
+//        addMouseMotionListener(mouseHandler);
         enableEvents(KeyEvent.KEY_EVENT_MASK);
     }
 
@@ -232,7 +242,14 @@ public class JComboButton extends JToggleButton {
         if (isArrowEvent(e)) {
             requestFocus();
             if (arrowPopupMenu != null) {
-                arrowPopupMenu.show(JComboButton.this, getComponentOrientation().isLeftToRight() ? 0 : getWidth() - arrowPopupMenu.getPreferredSize().width, getHeight());
+                if (isImageLayout) {
+                    ApplicationContext.imgView.getImageToolbar().isImageLayout = true;
+                    ApplicationContext.imgView.getImageToolbar().getImageLayoutPopupDesign().resetPopupMenu();
+                    arrowPopupMenu.show(JComboButton.this, getComponentOrientation().isLeftToRight() ? 0 : getWidth() - arrowPopupMenu.getPreferredSize().width, getHeight());
+                } else {
+                    ApplicationContext.imgView.getImageToolbar().isImageLayout = false;
+                    arrowPopupMenu.show(JComboButton.this, getComponentOrientation().isLeftToRight() ? 0 : getWidth() - arrowPopupMenu.getPreferredSize().width, getHeight());
+                }
                 return true;
             }
         }
@@ -259,6 +276,7 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Indicate whether the event originates from the arrow of a combo button.
+     *
      * @param e the event to test.
      * @return true if the event comes from the arrow, false otherwise.
      */
@@ -314,11 +332,11 @@ public class JComboButton extends JToggleButton {
         if (getComponentOrientation().isLeftToRight()) {
             x = w - arrowSpaceWidth - borderInsets.right + 1;
             int size = (arrowWidth + 1) / 2;
-            paintTriangle(g, x + arrowSpaceWidth / 2, (h - size) - 5 , size+1, isEnabled);
+            paintTriangle(g, x + arrowSpaceWidth / 2, (h - size) - 5, size + 1, isEnabled);
         } else {
             x = arrowSpaceWidth + borderInsets.left - 1;
             int size = (arrowWidth + 1) / 2;
-            paintTriangle(g, x - 1 - arrowWidth, (h - size) - 5 , size+1, isEnabled);
+            paintTriangle(g, x - 1 - arrowWidth, (h - size) - 5, size + 1, isEnabled);
         }
         if (isDivided && (isMouseOver || hasFocus()) && isEnabled) {
             int gradientHeight = Math.max((y2 - y1 + 1) / 5, 1);
@@ -338,7 +356,9 @@ public class JComboButton extends JToggleButton {
     private boolean isDivided;
 
     /**
-     * Set whether the combo button is divided in two different parts each with their own events: the button and the arrow.
+     * Set whether the combo button is divided in two different parts each with
+     * their own events: the button and the arrow.
+     *
      * @param isDivided true if the button should be divided, false otherwise.
      */
     public void setDivided(boolean isDivided) {
@@ -347,6 +367,7 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Indicate whether the button is divided in two different parts.
+     *
      * @return true if the button is divided, false otherwise.
      */
     public boolean isDivided() {
@@ -375,9 +396,12 @@ public class JComboButton extends JToggleButton {
     private JPopupMenu arrowPopupMenu;
 
     /**
-     * Set a popup menu that is automatically shown when the arrow is pressed.<br>
-     * Note that setting an automatically managed popup menu prevents the firing of action events from the arrow.
-     * @param arrowPopupMenu the popup menu to show, or null to remove the popup menu.
+     * Set a popup menu that is automatically shown when the arrow is
+     * pressed.<br> Note that setting an automatically managed popup menu
+     * prevents the firing of action events from the arrow.
+     *
+     * @param arrowPopupMenu the popup menu to show, or null to remove the popup
+     * menu.
      */
     public void setArrowPopupMenu(JPopupMenu arrowPopupMenu) {
         this.arrowPopupMenu = arrowPopupMenu;
@@ -385,9 +409,14 @@ public class JComboButton extends JToggleButton {
 
     /**
      * Get the popup menu that is currently associated to the arrow.
+     *
      * @return the popup menu, or null of no popup menu is set for the arrow.
      */
     public JPopupMenu getArrowPopupMenu() {
         return arrowPopupMenu;
+    }
+
+    public void setIsImageLayout(boolean isImageLayout) {
+        this.isImageLayout = isImageLayout;
     }
 }

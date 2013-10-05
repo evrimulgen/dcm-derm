@@ -35,11 +35,9 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
 package in.raster.mayam.util.core;
 
 import java.io.IOException;
-
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.net.Association;
@@ -68,5 +66,4 @@ class StgCmtSCP extends DicomService implements NActionSCP {
         dcmrcv.onNActionRQ(as, rq, info);
         as.writeDimseRSP(pcid, rsp);
     }
-
 }

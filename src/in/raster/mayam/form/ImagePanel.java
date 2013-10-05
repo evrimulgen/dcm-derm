@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -40,254 +41,142 @@ package in.raster.mayam.form;
 
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
-import com.sun.pdfview.PagePanel;
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.ImageOrientation;
-import in.raster.mayam.delegate.LocalizerDelegate;
-import in.raster.mayam.delegate.SeriesChooserDelegate;
-import in.raster.mayam.delegate.SynchronizationDelegate;
-import in.raster.mayam.delegate.WindowingPanelLoader;
-import in.raster.mayam.model.Instance;
-import in.raster.mayam.model.PresetModel;
-import in.raster.mayam.model.ScoutLineInfoModel;
-import in.raster.mayam.model.Series;
-import in.raster.mayam.model.Study;
+import in.raster.mayam.delegates.ImageBuffer;
+import in.raster.mayam.delegates.ImageGenerator;
+import in.raster.mayam.delegates.ImageOrientation;
+import in.raster.mayam.delegates.LocalizerDelegate;
+import in.raster.mayam.delegates.SeriesChooserDelegate;
+import in.raster.mayam.listeners.PopupMenuListener;
+import in.raster.mayam.models.*;
 import in.raster.mayam.param.TextOverlayParam;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import in.raster.mayam.models.SeriesAnnotations;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.dcm4che.dict.Tags;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.io.DicomInputStream;
-import org.dcm4che.image.ColorModelFactory;
-import org.dcm4che.image.ColorModelParam;
-
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ByteLookupTable;
-import java.awt.image.LookupOp;
-import java.awt.image.ColorModel;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.swing.ImageIcon;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.MenuElement;
+import javax.swing.*;
 import org.dcm4che.data.Dataset;
+import org.dcm4che.dict.Tags;
+import org.dcm4che.image.ColorModelFactory;
+import org.dcm4che.image.ColorModelParam;
 import org.dcm4che.imageio.plugins.DcmMetadata;
+import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.image.OverlayUtils;
+import org.dcm4che2.io.DicomInputStream;
 
 /**
  *
- * @author  BabuHussain
- * @version 0.5 
+ * @author BabuHussain
+ * @version 0.5
  *
  */
-public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener,
-        MouseMotionListener, MouseListener {
+public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener, MouseMotionListener, MouseListener {
 
     private Canvas canvas;
     //Image manipulation Flags
-    public boolean isRotate = false;
-    public boolean flipHorizontalFlag = false;
-    public boolean flipVerticalFlag = false;
-    private boolean invertFlag = false;
-    private boolean newBufferedImage = false;
-    private boolean scaleFlag = false;
-    private boolean firstTime = true;
-    private boolean mousePressed = false;
-    private static boolean widowingFlag = false;
+    public boolean isRotate = false, flipHorizontalFlag = false, flipVerticalFlag = false;
+    private boolean invertFlag = false, scaleFlag = false, newBufferedImage = false;
     private static boolean probeFlag;
     private double scaleFactor = 1;
     public int rotateRightAngle = 0;
     private int rotateLeftAngle = 0;
     public static String tool = "windowing";
     //Windowing, Hu related variables
-    private int windowLevel;
-    private int windowWidth;
-    private int WC;
-    private int WW;
-    private String rescaleSlope;
-    private String rescaleIntercept;
-    private double pixelSpacingX;
-    private double pixelSpacingY;
+    private int windowLevel, windowWidth, WC, WW;
+    private String rescaleSlope, rescaleIntercept;
+    private double pixelSpacingX, pixelSpacingY;
     //Unique id variables
-    private String studyUID;
-    private String seriesUID;
-    private String instanceUID;
-    private String seriesNo;
-    private String modality;
-    private String studyDesc;
+    private String studyUID, seriesUID, instanceUID, modality, studyDesc;
     //ImageIO variables
-    private Image loadedImage;
-    private BufferedImage currentbufferedimage;
-    private BufferedImage image;
-    private ImageIcon imageIcon;
-    private ImageInputStream iis;
-    private Iterator iter;
-    private ImageReader reader;
+    private BufferedImage currentbufferedimage, image;
+    ImageReader reader = null;
     private Dataset dataset;
     //Mouse pointer variables
-    private int mouseLocX1;
-    private int mouseLocX2;
-    private int mouseLocY1;
-    private int mouseLocY2;
+    private int mouseLocX1, mouseLocX2, mouseLocY1, mouseLocY2;
     //ColorModel variables
     private ColorModelParam cmParam = null;
     private static final ColorModelFactory cmFactory = ColorModelFactory.getInstance();
     private ColorModel cm = null;
-    private int windowingMultiplier = 1;
+    private int windowingMultiplier = 1, pixelValue;
     private int[] pixelValueArray;
-    private int pixelValue;
-    private String hu = "";
-    private int originalWidth;
-    private int originalHeight;
-    private String dicomFileUrl;
+    private String hu = "", dicomFileUrl;
     //Multiframe image related variables
-    private int nFrames = 0;
-    private int currentFrame = 0;
-    private boolean mulitiFrame = false;
-    private int currentInstanceNo = 0;
-    private int totalInstance;
-    boolean canStart = true;
-    private ArrayList<Instance> instanceArray = null;
+    private int nFrames = 0, currentFrame = 0, currentInstanceNo = 0, totalInstance;
+    private boolean multiframe = false;
     //TextOverlay 
     private TextOverlayParam textOverlayParam;
-    private String[] aspectRatio;
     private float floatAspectRatio;
     //Scout Param
-    private String frameOfReferenceUID;
-    private String imagePosition;
-    private String imageOrientation;
-    private String[] imageType;
-    private String referencedSOPInstanceUID = "";
-    private String pixelSpacing;
-    private int row;
-    private int column;
-    private boolean isLocalizer = false;
-    private static boolean displayScout = false;
-    private int scoutLine1X1;
-    private int scoutLine1Y1;
-    private int scoutLine1X2;
-    private int scoutLine1Y2;
-    private int scoutLine2X1;
-    private int scoutLine2Y1;
-    private int scoutLine2X2;
-    private int scoutLine2Y2;
+    ScoutLineInfoModel currentScoutDetails;
     private String orientationLabel = "";
-    private int boundaryLine1X1;
-    private int boundaryLine1Y1;
-    private int boundaryLine1X2;
-    private int boundaryLine1Y2;
-    private int boundaryLine2X1;
-    private int boundaryLine2Y1;
-    private int boundaryLine2X2;
-    private int boundaryLine2Y2;
-    private int thumbWidth = 512;
-    private int thumbHeight = 512;
-    private int maxHeight = 512;
-    private int maxWidth = 512;
-    private double thumbRatio;
-    private int startX = 0;
-    private int startY = 0;
-    private double currentScaleFactor = 1;
-    private double initialPixelSpacingX;
-    private double initialPixelSpacingY;
-    private int axis1LeftX;
-    private int axis1LeftY;
-    private int axis1RightX;
-    private int axis1RightY;
-    private int axis1BottomX;
-    private int axis1BottomY;
-    private int axis1TopX;
-    private int axis1TopY;
-    private int axis2LeftX;
-    private int axis2LeftY;
-    private int axis2RightX;
-    private int axis2RightY;
-    private int axis2BottomX;
-    private int axis2BottomY;
-    private int axis2TopX;
-    private int axis2TopY;
-    private int axisLeftX;
-    private int axisLeftY;
-    private int axisRightX;
-    private int axisRightY;
-    private int axisBottomX;
-    private int axisBottomY;
-    private int axisTopX;
-    private int axisTopY;
-    private int instanceNumber;
-    private String sliceLocation;
+    private boolean isLocalizer = false, isEncapsulatedDocument = false;
+    private static boolean displayScout = false;
+    private int scoutLine1X1, scoutLine1Y1, scoutLine1X2, scoutLine1Y2, scoutLine2X1, scoutLine2Y1, scoutLine2X2, scoutLine2Y2;
+    private int boundaryLine1X1, boundaryLine1Y1, boundaryLine1X2, boundaryLine1Y2, boundaryLine2X1, boundaryLine2Y1, boundaryLine2X2, boundaryLine2Y2;
+    double slope1, slope2;
+    private int thumbWidth = 512, thumbHeight = 512, maxHeight = 512, maxWidth = 512;
+    private double thumbRatio, currentScaleFactor = 1;
+    private int startX = 0, startY = 0;
+    private int axis1LeftX, axis1LeftY, axis1RightX, axis1RightY, axis2LeftX, axis2LeftY, axis2RightX, axis2RightY, axisLeftX, axisLeftY, axisRightX, axisRightY;
+    private String sliceThickness;
     public static boolean synchornizeTiles = false;
-    public int syncStartInstance;
     private PDFFile curFile = null;
-    public PagePanel page = null;
     private int curpage = -1;
-    private boolean isEncapsulatedDocument = false;
-
-    public ImagePanel() {
-        initComponents();
-    }
+    public int imgHeight = 0, imgWidth = 0, layoutRows = 1, layoutColumns = 1;
+    private String instanceUidIfMultiframe = null;
+    long timeDelay = 0; //To synchronize the mouse scroll amount
+    public boolean borderAlreadyPresent = false; //To identify the yellow scout borders
+    ArrayList<String> instanceUidList;
+    String fileLocation;
+    SeriesAnnotations currentSeriesAnnotation = null;
+    ArrayList<String> fileUrlsifLink = null;
+    public boolean isLink = false;
+    ImageBuffer imgBuffer = null;
+    public ImageGenerator imageUpdator = null;
 
     /**
-     * Constructs the imagepanel by passing file url and outer canvas
+     * Constructs the image panel by passing file url and outer canvas
+     *
      * @param dicomFileUrl
      * @param canvas
      */
-    public ImagePanel(String dicomFileUrl, Canvas canvas) {
-        this.dicomFileUrl = dicomFileUrl;
+    public ImagePanel(File dicomFile, Canvas canvas) {
+        this.dicomFileUrl = dicomFile.getAbsolutePath();
         this.canvas = canvas;
-        readDicomFile(new File(dicomFileUrl));
-        retriveTagInfo();
+        readDicomFile(dicomFile);
+        retrieveTagInfo();
         initComponents();
         addlisteners();
         retrieveInstanceInformation();
         retrieveScoutParam();
-        setTotalInstacne();
+        setTotalInstance();
         retriveTextOverlayParam();
-        // designContext();
+        calculateHeightAndWidth();
+        centerImage();
+        instanceUidList = ApplicationContext.databaseRef.getInstanceUidList(studyUID, seriesUID);
+        getFilePathsifLink();
     }
 
-    /**
-     * Constructs the imagepanel by passing file url parameter
-     * @param dicomFileUrl
-     */
-    public ImagePanel(String dicomFileUrl) {
-        readDicomFile(new File(dicomFileUrl));
-        retriveTagInfo();
+    public ImagePanel(Canvas canvas) {
+        this.canvas = canvas;
         initComponents();
         addlisteners();
-        retrieveInstanceInformation();
-        retrieveScoutParam();
-        setTotalInstacne();
-        retriveTextOverlayParam();
-        
     }
 
     /**
-     * This routine used to retrive the text overlay related information from the dataset
+     * This routine used to retrieve the text overlay related information from
+     * the dataset
      */
     private void retriveTextOverlayParam() {
         textOverlayParam = new TextOverlayParam();
@@ -297,75 +186,55 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         textOverlayParam.setStudyDate(dataset.getString(Tags.StudyDate));
         textOverlayParam.setStudyDescription(dataset.getString(Tags.StudyDescription) != null ? dataset.getString(Tags.StudyDescription) : "");
         textOverlayParam.setSeriesDescription(dataset.getString(Tags.SeriesDescription) != null ? dataset.getString(Tags.SeriesDescription) : "");
-        textOverlayParam.setInstanceNumber(dataset.getString(Tags.InstanceNumber) != null ? dataset.getString(Tags.InstanceNumber) : "");
         textOverlayParam.setBodyPartExamined(dataset.getString(Tags.BodyPartExamined));
-        textOverlayParam.setSlicePosition(dataset.getString(Tags.SliceLocation));
+        textOverlayParam.setSlicePosition(currentScoutDetails.getSliceLocation());
         textOverlayParam.setPatientPosition(dataset.getString(Tags.PatientPosition));
         textOverlayParam.setInstitutionName(dataset.getString(Tags.InstitutionName));
         textOverlayParam.setWindowLevel(dataset.getString(Tags.WindowCenter) != null ? dataset.getString(Tags.WindowCenter) : "");
         textOverlayParam.setWindowWidth(dataset.getString(Tags.WindowWidth) != null ? dataset.getString(Tags.WindowWidth) : "");
         textOverlayParam.setCurrentInstance(currentInstanceNo);
-        textOverlayParam.setTotalInstance(Integer.toString(totalInstance));
-
+        textOverlayParam.setTotalInstance(String.valueOf(totalInstance));
+        if (!multiframe) {
+            textOverlayParam.setIsMultiframe(false);
+        } else {
+            textOverlayParam.setIsMultiframe(true);
+        }
     }
 
     /**
-     * This routine used to retrive some other tag information from the dataset
+     * This routine used to retrieve some other tag information from the dataset
      */
-    private void retriveTagInfo() {
-        studyUID = dataset.getString(Tags.StudyInstanceUID);
-        seriesUID = dataset.getString(Tags.SeriesInstanceUID);
-        instanceUID = dataset.getString(Tags.SOPInstanceUID);
-        modality = dataset.getString(Tags.Modality);
-        seriesNo = dataset.getString(Tags.SeriesNumber);
-        studyDesc = dataset.getString(Tags.StudyDescription);
-        rescaleSlope = dataset.getString(Tags.RescaleSlope);
-        rescaleIntercept = dataset.getString(Tags.RescaleIntercept);
-        aspectRatio = dataset.getStrings(Tags.PixelAspectRatio);
-        sliceLocation = (dataset.getString(Tag.SliceLocation) != null) ? dataset.getString(Tag.SliceLocation) : "";
+    private void retrieveTagInfo() {
         try {
-            currentInstanceNo = Integer.parseInt(dataset.getString(Tags.InstanceNumber));
-        } catch (NumberFormatException e) {
-            System.out.println("Instance Number format error ");
-            currentInstanceNo = 1;
+            studyUID = dataset.getString(Tags.StudyInstanceUID);
+            seriesUID = dataset.getString(Tags.SeriesInstanceUID);
+            instanceUID = dataset.getString(Tags.SOPInstanceUID);
+            modality = dataset.getString(Tags.Modality);
+            studyDesc = dataset.getString(Tags.StudyDescription);
+            rescaleSlope = dataset.getString(Tags.RescaleSlope);
+            rescaleIntercept = dataset.getString(Tags.RescaleIntercept);
+            sliceThickness = (dataset.getString(Tags.SliceThickness) != null) ? dataset.getString(Tags.SliceThickness) : "";
+            try {
+                imgHeight = dataset.getInteger(Tags.Rows);
+                imgWidth = dataset.getInteger(Tags.Columns);
+            } catch (Exception e) {
+                imgHeight = 512;
+                imgWidth = 512;
+            }
         } catch (NullPointerException e) {
-            System.out.println("Instance Number is null, set to 1");
-            currentInstanceNo = 1;
         }
     }
 
     private void retrieveScoutParam() {
-        try {
-            frameOfReferenceUID = dataset.getString(Tags.FrameOfReferenceUID) != null ? dataset.getString(Tags.FrameOfReferenceUID) : "";
-            imagePosition = dataset.getString(Tags.ImagePosition, 0) != null ? dataset.getString(Tags.ImagePosition, 0) + "\\" + dataset.getString(Tags.ImagePosition, 1) + "\\" + dataset.getString(Tags.ImagePosition, 2) : null;
-            imageOrientation = dataset.getString(Tags.ImageOrientation) != null ? dataset.getString(Tags.ImageOrientation, 0) + "\\" + dataset.getString(Tags.ImageOrientation, 1) + "\\" + dataset.getString(Tags.ImageOrientation, 2) + "\\" + dataset.getString(Tags.ImageOrientation, 3) + "\\" + dataset.getString(Tags.ImageOrientation, 4) + "\\" + dataset.getString(Tags.ImageOrientation, 5) : null;
-            imageType = dataset.getStrings(Tags.ImageType) != null ? dataset.getStrings(Tags.ImageType) : null;
-            pixelSpacing = dataset.getString(Tags.PixelSpacing) != null ? dataset.getString(Tags.PixelSpacing, 0) + "\\" + dataset.getString(Tags.PixelSpacing, 1) : null;
-            row = dataset.getString(Tags.Rows) != null ? Integer.parseInt(dataset.getString(Tags.Rows)) : 0;
-            column = dataset.getString(Tags.Columns) != null ? Integer.parseInt(dataset.getString(Tags.Columns)) : 0;
-            Dataset referencedImageSequence = dataset.getItem(Tag.ReferencedImageSequence) != null ? dataset.getItem(Tag.ReferencedImageSequence) : null;
-            if (imageType != null) {
-                if (imageType.length >= 3 && imageType[2].equalsIgnoreCase("LOCALIZER")) {
-                    isLocalizer = true;
-                } else {
-                    if (referencedImageSequence != null) {
-                        referencedSOPInstanceUID = referencedImageSequence.getString(Tag.ReferencedSOPInstanceUID);
-                    }
-                    isLocalizer = false;
-                }
-            }
-            findOrientation();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        currentScoutDetails = ApplicationContext.databaseRef.getScoutLineDetails(studyUID, seriesUID, instanceUID);
+        checkIsLocalizer();
+        findOrientation();
     }
 
     /**
-     * This routine used to retrive the instance related information
+     * This routine used to retrieve the instance related information
      */
     private void retrieveInstanceInformation() {
-
         String inverted = dataset.getString(Tags.PhotometricInterpretation, null);
         if ("MONOCHROME1".equals(inverted) || "MONOCHROME2".equals(inverted)) {
             cmParam = cmFactory.makeParam(dataset);
@@ -382,14 +251,9 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             int wMax = cMax - cMin;
             int w = wMax;
             try {
-                initialPixelSpacingY = pixelSpacingY = Double.parseDouble(dataset.getString(
-                        Tags.PixelSpacing, 0));
-                initialPixelSpacingX = pixelSpacingX = Double.parseDouble(dataset.getString(
-                        Tags.PixelSpacing, 1));
-
-            } catch (NullPointerException e) {
-                initialPixelSpacingX = 0;
-                initialPixelSpacingY = 0;
+                pixelSpacingY = Double.parseDouble(dataset.getString(Tags.PixelSpacing, 0));
+                pixelSpacingX = Double.parseDouble(dataset.getString(Tags.PixelSpacing, 1));
+            } catch (NullPointerException e) { //ignore
             }
             int nWindow = cmParam.getNumberOfWindows();
             if (nWindow > 0) {
@@ -400,149 +264,52 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
                 WC = windowLevel = c = (int) w / 2;
             }
         }
-    }
-
-    /**
-     *
-     * @return textoverlayParam-It return the text overlay param
-     */
-    public TextOverlayParam getTextOverlayParam() {
-        return textOverlayParam;
-    }
-
-    /**
-     *
-     * @param textOverlayParam-It sets the textOverlayParam
-     */
-    public void setTextOverlayParam(TextOverlayParam textOverlayParam) {
-        this.textOverlayParam = textOverlayParam;
-    }
-
-    /**
-     * This routine used to check the multiframe status
-     * @return
-     */
-    public boolean isMulitiFrame() {
-        return mulitiFrame;
-    }
-
-    /**
-     * This routine used to set the multiframe status
-     * @param mulitiFrame
-     */
-    public void setMulitiFrame(boolean mulitiFrame) {
-        this.mulitiFrame = mulitiFrame;
-    }
-
-    /**
-     * This routine used to return the dicom file url
-     * @return dicomFileUrl-It returns the dicom file url of the current image
-     */
-    public String getDicomFileUrl() {
-        return dicomFileUrl;
-    }
-
-    public int getnFrames() {
-        return nFrames;
-    }
-
-    public void setnFrames(int nFrames) {
-        this.nFrames = nFrames;
-    }
-
-    /**
-     * This routine used to set the dicom file url for the current image box
-     * @param dicomFileUrl-dicom file url
-     */
-    public void setDicomFileUrl(String dicomFileUrl) {
-        this.dicomFileUrl = dicomFileUrl;
-    }
-
-    /**
-     * This routine used to set the flag for panning
-     */
-    public void doPan() {
-        if (tool.equalsIgnoreCase("panning")) {
-            tool = "";
-        } else {
-            tool = "panning";
-        }
-    }
-
-    /**
-     * Tdhis routine used to return the canvas of the image box
-     * @return
-     */
-    public Canvas getCanvas() {
-        return canvas;
-    }
-
-    /**
-     * This routine used to get the study uid value for the current image box
-     * @return
-     */
-    public String getStudyUID() {
-        return studyUID;
-    }
-
-    /**
-     * This routine used to set teh study uid value for the current image box
-     * @param studyUID
-     */
-    public void setStudyUID(String studyUID) {
-        this.studyUID = studyUID;
+        windowChanged(windowLevel, windowWidth);
     }
 
     /**
      * This routine used to read the dicom file
+     *
      * @param selFile-This the file to be read
      */
     private void readDicomFile(File selFile) {
         try {
-            iis = ImageIO.createImageInputStream(selFile);
-            iter = ImageIO.getImageReadersByFormatName("DICOM");
+            fileLocation = selFile.getParent();
+            ImageInputStream iis = ImageIO.createImageInputStream(selFile);
+            Iterator iter = ImageIO.getImageReadersByFormatName("DICOM");
             reader = (ImageReader) iter.next();
-            this.reader.setInput(iis, false);
+            reader.setInput(iis, false);
+            DicomInputStream dis = new DicomInputStream(selFile);
+            DicomObject obj = dis.readDicomObject();
             dataset = ((DcmMetadata) reader.getStreamMetadata()).getDataset();
             try {
                 if (reader.getNumImages(true) > 0) {
                     currentbufferedimage = reader.read(0);
                     floatAspectRatio = reader.getAspectRatio(0);
+                    String overlayData = obj.getString(Tag.OverlayData);
+                    if (overlayData != null && overlayData.length() > 0) {
+                        BufferedImage overlayImg = OverlayUtils.extractOverlay(obj, Tag.OverlayData, reader, "FFFFFF");
+                        image = combineImages(currentbufferedimage, overlayImg);
+                    } else {
+                        image = currentbufferedimage;
+                    }
                 }
                 nFrames = reader.getNumImages(true);
                 if (nFrames - 1 > 0) {
-                    mulitiFrame = true;
-                    this.totalInstance = nFrames;
+                    multiframe = true;
+                    totalInstance = nFrames;
+                    instanceUidIfMultiframe = dataset.getString(Tags.SOPInstanceUID);
                 }
-                if (reader.getNumImages(true) > 0) {
-                    image=currentbufferedimage;
-//                    imageIcon = new ImageIcon();
-//                    imageIcon.setImage(currentbufferedimage);
-//                    loadedImage = imageIcon.getImage();
-//                    GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-//                    BufferedImage temp = gc.createCompatibleImage(loadedImage.getWidth(null), loadedImage.getHeight(null),Transparency.OPAQUE);
-//                    Graphics2D g2 = temp.createGraphics();
-//                    if (!in.raster.mayam.facade.Platform.getCurrentPlatform().equals(in.raster.mayam.facade.Platform.MAC))
-//                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-//                    g2.drawImage(loadedImage, 0, 0, null);
-//                    g2.dispose();
-//                    image=temp;
-                    //image = new BufferedImage(loadedImage.getWidth(null), loadedImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
-                    //Graphics2D g2 = image.createGraphics();
-                    //g2.drawImage(loadedImage, 0, 0, null);
-                }
-                if (dataset.getString(Tags.SOPClassUID)!=null&&dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+                if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
                     readDicom(selFile);
                 }
-                System.gc();
                 repaint();
             } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         } catch (Exception e) {
-            System.out.println("io exception");
+//            System.out.println("Exception in readDicomFile() : " + e.getMessage());
         }
-
     }
 
     public void readDicom(File file) {
@@ -553,7 +320,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             ByteBuffer byteBuffer = ByteBuffer.wrap(buf);
             openPDFByteBuffer(byteBuffer, null, null);
             isEncapsulatedDocument = true;
-            System.gc();
         } catch (IOException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
         }
@@ -566,12 +332,14 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         } catch (IOException ioe) {
             return;
         }
-        this.curFile = newfile;
+        curFile = newfile;
         forceGotoPage(0);
     }
     PDFPage pg = null;
 
     public void forceGotoPage(int pagenum) {
+        Image loadedImage = null;
+        ImageIcon imageIcon = null;
         if (pagenum <= 0) {
             pagenum = 0;
         } else if (pagenum >= curFile.getNumPages()) {
@@ -599,9 +367,10 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         Graphics2D g2 = currentbufferedimage.createGraphics();
         g2.drawImage(loadedImage, 0, 0, null);
         image = null;
-        System.gc();
     }
+
     public ArrayList createPDFArray() {
+        ImageIcon imageIcon = null;
         ArrayList<BufferedImage> temp = new ArrayList<BufferedImage>();
         for (int pagenum = 0; pagenum < curFile.getNumPages(); pagenum++) {
             PDFPage pdfPage = curFile.getPage(pagenum + 1);
@@ -628,10 +397,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         return temp;
     }
 
-    public boolean isIsEncapsulatedDocument() {
-        return isEncapsulatedDocument;
-    }
-
     private void calculateResolutionForPdfDicom(double imageWidthParam, double imageHeightParam) {
         thumbHeight = 512;
         thumbWidth = 512;
@@ -649,87 +414,30 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
     }
 
     public void showNextFrame() {
+        storeMultiframeAnnotation();
         currentFrame++;
         if (currentFrame == nFrames) {
             currentFrame = 0;
         }
         currentInstanceNo = currentFrame;
         totalInstance = nFrames;
-        try {
-            currentbufferedimage = reader.read(currentFrame);
-            convertToRGBImage();
-            repaint();
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setTotalInstance(Integer.toString(this.totalInstance));
-            Instance instance = instanceArray.get(0);
-            this.getCanvas().getLayeredCanvas().annotationPanel.setAnnotation(instance.getMultiframeAnnotation(currentInstanceNo));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Logger.getLogger(ImagePanel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        displayFrames();
     }
 
     public void showPreviousFrame() {
+        storeMultiframeAnnotation();
         if (currentFrame == 0) {
             currentFrame = nFrames;
         }
         currentFrame--;
         currentInstanceNo = currentFrame;
         totalInstance = nFrames;
-        try {
-            currentbufferedimage = reader.read(currentFrame);
-            convertToRGBImage();
-            repaint();
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setTotalInstance(Integer.toString(this.totalInstance));
-            Instance instance = instanceArray.get(0);
-            this.getCanvas().getLayeredCanvas().annotationPanel.setAnnotation(instance.getMultiframeAnnotation(currentInstanceNo));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(ImagePanel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    /**
-     * This routine used to set the image of this image box
-     * @param newImg
-     */
-    public void setImage(BufferedImage newImg) {
-        try {
-            newBufferedImage = true;
-            currentbufferedimage = newImg;
-            windowChanged(this.windowLevel, this.windowWidth);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * This routine used to retrive the buffered image of the current image box
-     * @return
-     */
-    public BufferedImage getCurrentbufferedimage() {
-        return currentbufferedimage;
-    }
-
-    /**
-     * This routine used to get the instance uid value for the current image box
-     * @return
-     */
-    public String getInstanceUID() {
-        return instanceUID;
-    }
-
-    /**
-     * This routine used to get the series instance uid value for the current image box
-     * @return
-     */
-    public String getSeriesUID() {
-        return seriesUID;
+        displayFrames();
     }
 
     /**
      * This routine used to apply the filter to the image box
+     *
      * @param op
      */
     private void filter(BufferedImageOp op) {
@@ -740,41 +448,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             repaint();
         }
     }
-    /*
-    private void convolve(float[] elements) {
-    Kernel kernel = new Kernel(3, 3, elements);
-    ConvolveOp op = new ConvolveOp(kernel);
-    filter(op);*
-    }
-
-    public void blur() {
-    float weight = 1.0f / 9.0f;
-    float[] elements = new float[9];
-    for (int i = 0; i < 9; i++) {
-    elements[i] = weight;
-    }
-    convolve(elements);
-    }
-
-    public void sharpen() {
-    float[] elements = {0.0f, -1.0f, 0.0f, -1.0f, 5.f, -1.0f, 0.0f, -1.0f,
-    0.0f};
-    convolve(elements);
-    }
-
-    public void edgeDetect() {
-    float[] elements = {0.0f, -1.0f, 0.0f, -1.0f, 4.f, -1.0f, 0.0f, -1.0f,
-    0.0f};
-    convolve(elements);
-    }
-
-    public void brighten() {
-    float a = 1.5f;
-    float b = -20.0f;
-    RescaleOp op = new RescaleOp(a, b, null);
-    filter(op);
-    }
-     */
 
     /**
      * This routine will be invoked to invert the image box
@@ -782,7 +455,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
     public void negative() {
         convertToRGBImage();
         if (invertFlag) {
-
             invertFlag = false;
             repaint();
         } else {
@@ -795,9 +467,7 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             filter(op);
             invertFlag = true;
         }
-        widowingFlag = false;
-        newBufferedImage = false;
-        this.getCanvas().repaint();
+        canvas.repaint();
 
     }
 
@@ -817,9 +487,7 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         } else if (rotateRightAngle == 270) {
             rotateLeftAngle = -90;
         }
-        widowingFlag = false;
-        newBufferedImage = false;
-        this.repaint();
+        repaint();
         repaintTextOverlay();
     }
 
@@ -839,30 +507,22 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         } else if (rotateLeftAngle == -270) {
             rotateRightAngle = 90;
         }
-        widowingFlag = false;
-        newBufferedImage = false;
-        this.repaint();
+        repaint();
         repaintTextOverlay();
-
     }
     /*
-    static AffineTransform mirrorHorizontalTransform;
-
-    static { // Create and initialize the AffineTransform
-    mirrorHorizontalTransform = AffineTransform.getTranslateInstance(512, 0);
-    mirrorHorizontalTransform.scale(-1.0, 1.0); // flip horizontally
-    }
-    static AffineTransform mirrorVerticalTransform;
-
-    static { // Create and initialize the AffineTransform
-    mirrorVerticalTransform = AffineTransform.getTranslateInstance(0, 512);
-    mirrorVerticalTransform.scale(1.0, -1.0); // flip horizontally
-    }
+     * static AffineTransform mirrorHorizontalTransform;
+     *
+     * static { // Create and initialize the AffineTransform
+     * mirrorHorizontalTransform = AffineTransform.getTranslateInstance(512, 0);
+     * mirrorHorizontalTransform.scale(-1.0, 1.0); // flip horizontally } static
+     * AffineTransform mirrorVerticalTransform;
+     *
+     * static { // Create and initialize the AffineTransform
+     * mirrorVerticalTransform = AffineTransform.getTranslateInstance(0, 512);
+     * mirrorVerticalTransform.scale(1.0, -1.0); // flip horizontally }
      */
 
-    /**
-     * This routine flips the image box horizontally
-     */
     public void flipHorizontal() {
         if ((rotateRightAngle == 90) || (rotateRightAngle == 270) || (rotateLeftAngle == -90) || (rotateLeftAngle == -270)) {
             flipV();
@@ -871,9 +531,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         }
     }
 
-    /**
-     * This routine flips the image box vertically
-     */
     public void flipVertical() {
         if ((rotateRightAngle == 90) || (rotateRightAngle == 270) || (rotateLeftAngle == -90) || (rotateLeftAngle == -270)) {
             flipH();
@@ -888,9 +545,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         } else {
             flipVerticalFlag = true;
         }
-        widowingFlag = false;
-        newBufferedImage = false;
-
     }
 
     private void flipH() {
@@ -899,276 +553,133 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         } else {
             flipHorizontalFlag = true;
         }
-        widowingFlag = false;
-        newBufferedImage = false;
     }
 
-    /**
-     * This routine used to reset the image box with the original buffered image
-     */
     public void reset() {
-        this.getCanvas().getLayeredCanvas().annotationPanel.resetAnnotation();
+        canvas.getLayeredCanvas().annotationPanel.resetAnnotation();
+        canvas.getLayeredCanvas().annotationPanel.clearAllMeasurement();
         windowLevel = (int) WC;
         windowWidth = (int) WW;
         windowChanged(windowLevel, windowWidth);
-        firstTime = true;
-        scaleFactor = 1;
-        scaleProcess();
-        this.getCanvas().getLayeredCanvas().annotationPanel.scaleProcess();
-        invertFlag = false;
-        flipHorizontalFlag = false;
-        flipVerticalFlag = false;
-        isRotate = false;
-        rotateLeftAngle = 0;
-        rotateRightAngle = 0;
-        currentInstanceNo = 0;
+        JPanel panel = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent());
+        if (!ApplicationContext.imgView.getImageToolbar().isImageLayout) {
+            setScaleFactor(((JPanel) panel.getComponent(0)).getWidth(), ((JPanel) panel.getComponent(0)).getHeight(), layoutColumns * layoutRows);
+        } else {
+            setScaleFactor(((JPanel) panel.getComponent(0)).getWidth() / layoutColumns, ((JPanel) panel.getComponent(0)).getHeight() / layoutRows, layoutColumns * layoutRows);
+        }
+        canvas.getLayeredCanvas().annotationPanel.scaleProcess();
+        canvas.getLayeredCanvas().annotationPanel.resizeHandler();
+        centerImage();
+        invertFlag = flipHorizontalFlag = flipVerticalFlag = isRotate = displayScout = synchornizeTiles = false;
+        rotateLeftAngle = rotateRightAngle = 0;
         canvas.setBackground(Color.BLACK);
         canvas.setForeground(Color.WHITE);
+        LocalizerDelegate.hideAllScoutLines();
+        canvas.getLayeredCanvas().annotationPanel.resetAnnotaionTools();
+        tool = "windowing";
+        canvas.getLayeredCanvas().annotationPanel.tool = "windowing";
+        ApplicationContext.imgView.getImageToolbar().deselectTools();
         repaint();
-        if (!firstTime) {
-            repaint();
-        }
-        selectFirstInstance();
-        this.getCanvas().getLayeredCanvas().annotationPanel.resetAnnotaionTools();
-        this.tool = "windowing";
     }
 
     public void resizeHandler() {
         repaint();
         centerImage();
-        this.canvas.setSelection();
+        canvas.setSelection(false);
     }
 
-    /**
-     * This routine used to reset the windowing values of the current image box
-     */
-    public void resetWindowing() {
-        windowLevel = (int) WC;
-        windowWidth = (int) WW;
-        windowChanged(windowLevel, windowWidth);
-    }
-
-    /**
-     * This routine used to select the first instance of series
-     */
-    public void selectFirstInstance() {
-        Iterator<Study> studyItr = MainScreen.studyList.iterator();
-        while (studyItr.hasNext()) {
-            Study study = studyItr.next();
-            if (study.getStudyInstanceUID().equalsIgnoreCase(ApplicationContext.imgPanel.getStudyUID())) {
-                ArrayList<Series> seriesList = (ArrayList<Series>) study.getSeriesList();
-                for (int i = 0; i < seriesList.size(); i++) {
-                    Series series = seriesList.get(i);
-                    if (series.getSeriesInstanceUID().equalsIgnoreCase(this.seriesUID)) {
-                        Instance instance = series.getImageList().get(0);
-                        setImage(instance.getPixelData());
-                        setInstanceInfo(instance);
-                        this.getCanvas().getLayeredCanvas().annotationPanel.setAnnotation(instance.getAnnotation());
-                    }
-                }
-            }
-        }
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setInstanceNumber("" + this.instanceNumber);
-    }
-
-    /**
-     * This routine used to set the windowing tool enabled
-     */
-    public void doWindowing() {
-        if (tool.equalsIgnoreCase("windowing")) {
-            tool = "";
-        } else {
-            tool = "windowing";
-        }
-    }
-
-    public void setWindowingToolsAsDefault() {
-        if (!(tool.equalsIgnoreCase("windowing"))) {
-            tool = "windowing";
-        }
-    }
-
-    public boolean isWindowingSelected() {
-        return (tool.equalsIgnoreCase("windowing"));
-    }
-
-    /**
-     * This routine used to get the dataset value of the current image box
-     * @return
-     */
-    public Dataset getDataset() {
-        return dataset;
-    }
-
-    /**
-     *  This routine used to set the dataset values of the current image box
-     * @param dataset
-     */
-    public void setDataset(Dataset dataset) {
-        this.dataset = dataset;
-    }
-
-    /**
-     * This routine used to check the horizontal flip flag for the current image box
-     * @return
-     */
-    public boolean isFlipHorizontalFlag() {
-        return flipHorizontalFlag;
-    }
-
-    /**
-     * This routine used to set the horizontal flip flag for the current image box
-     * @param flipHorizontalFlag
-     */
-    public void setFlipHorizontalFlag(boolean flipHorizontalFlag) {
-        this.flipHorizontalFlag = flipHorizontalFlag;
-    }
-
-    /**
-     * This routine used to check the vertical flip flag for the current image box
-     * @return
-     */
-    public boolean isFlipVerticalFlag() {
-        return flipVerticalFlag;
-    }
-
-    /**
-     * This routine used to set tej vertical flip flag for the current image box
-     * @param flipVerticalFlag
-     */
-    public void setFlipVerticalFlag(boolean flipVerticalFlag) {
-        this.flipVerticalFlag = flipVerticalFlag;
-    }
-
-    /**
-     * This routine used to check status of rotate of the image box
-     * @return
-     */
-    public boolean isIsRotate() {
-        return isRotate;
-    }
-
-    /**
-     * This routine used to set the rotate flag for the current image box
-     * @param isRotate
-     */
-    public void setIsRotate(boolean isRotate) {
-        this.isRotate = isRotate;
-    }
-
-    public int getRotateLeftAngle() {
-        return rotateLeftAngle;
-    }
-
-    public void setRotateLeftAngle(int rotateLeftAngle) {
-        this.rotateLeftAngle = rotateLeftAngle;
-    }
-
-    public int getRotateRightAngle() {
-        return rotateRightAngle;
-    }
-
-    public void setRotateRightAngle(int rotateRightAngle) {
-        this.rotateRightAngle = rotateRightAngle;
-    }
-
-    public double getScaleFactor() {
-        return scaleFactor;
-    }
-
-    public void setScaleFactor(double scaleFactor) {
-        this.scaleFactor = scaleFactor;
-    }
-
-    public boolean isScaleFlag() {
-        return scaleFlag;
-    }
-
-    public void setScaleFlag(boolean scaleFlag) {
-        this.scaleFlag = scaleFlag;
-    }
-    
     /**
      * This override routine used to paint the image box
+     *
      * @param gs
      */
     @Override
     public void paintComponent(Graphics gs) {
         Graphics2D g = (Graphics2D) gs;
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        //if (!in.raster.mayam.facade.Platform.getCurrentPlatform().equals(in.raster.mayam.facade.Platform.MAC))
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        if (isRotate) {
-            if (rotateRightAngle == 90) {
-                g.rotate(Math.PI / 2, this.getSize().width / 2, this.getSize().height / 2);
-            } else if (rotateRightAngle == 180) {
-                g.rotate(Math.PI, this.getSize().width / 2, this.getSize().height / 2);
-            } else if (rotateRightAngle == 270) {
-                g.rotate((Math.PI * 3) / 2, this.getSize().width / 2, this.getSize().height / 2);
-            }
-        }
-        if (flipHorizontalFlag) {
-            g.translate(this.getSize().width, 0);
-            g.scale(-1, 1);
-        }
-        if (flipVerticalFlag) {
-            g.translate(0, this.getSize().height);
-            g.scale(1, -1);
-        }
-        if (scaleFlag) {
-            g.scale(scaleFactor, scaleFactor);
-        }
-        if (image != null) {
-            if ((widowingFlag && invertFlag) || (newBufferedImage && invertFlag)) {
-                byte[] negative = new byte[256];
-                for (int i = 0; i < 256; i++) {
-                    negative[i] = (byte) (255 - i);
-                }
-                ByteLookupTable table = new ByteLookupTable(0, negative);
-                LookupOp op = new LookupOp(table, null);
-
-                convertToRGBImage();
-
-                BufferedImage filteredImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
-                op.filter(image, filteredImage);
-                image = filteredImage;
-            }
-            //if(!tool.equalsIgnoreCase("windowing") || !sizeSeted)
-                calculateNewHeightAndWidthBasedonAspectRatio();
-            //g.drawImage(image, startX, startY, thumbWidth, thumbHeight, null);
-                g.drawImage(WindowingPanelLoader.getFasterScaledInstance(image, thumbWidth, thumbHeight, 
-                    RenderingHints.VALUE_INTERPOLATION_BICUBIC, false), startX, startY, null);
-            if (displayScout) {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(Color.YELLOW);
-                if (orientationLabel.equalsIgnoreCase("SAGITTAL")) {
-                    g.drawLine((int) (boundaryLine1X1 * this.getCurrentScaleFactor() + startX), (int) (boundaryLine1Y1 * this.getCurrentScaleFactor() + startY), (int) (boundaryLine1X2 * this.getCurrentScaleFactor() + startX), (int) (boundaryLine1Y2 * this.getCurrentScaleFactor() + startY));
-                    g.drawLine((int) (boundaryLine2X1 * this.getCurrentScaleFactor() + startX), (int) (boundaryLine2Y1 * this.getCurrentScaleFactor() + startY), (int) (boundaryLine2X2 * this.getCurrentScaleFactor() + startX), (int) (boundaryLine2Y2 * this.getCurrentScaleFactor() + startY));
-                    g.setColor(Color.GREEN);
-                    g.drawLine((int) (scoutLine1X1 * this.getCurrentScaleFactor() + startX), (int) (scoutLine1Y1 * this.getCurrentScaleFactor() + startY), (int) (scoutLine1X2 * this.getCurrentScaleFactor() + startX), (int) (scoutLine1Y2 * this.getCurrentScaleFactor() + startY));
-                    g.drawLine((int) (scoutLine2X1 * this.getCurrentScaleFactor() + startX), (int) (scoutLine2Y1 * this.getCurrentScaleFactor() + startY), (int) (scoutLine2X2 * this.getCurrentScaleFactor() + startX), (int) (scoutLine2Y2 * this.getCurrentScaleFactor() + startY));
-                } else if (orientationLabel.equalsIgnoreCase("CORONAL")) {
-                    g.drawLine((int) (axis1LeftX * this.getCurrentScaleFactor() + startX), (int) (axis1LeftY * this.getCurrentScaleFactor() + startY), (int) (axis1RightX * this.getCurrentScaleFactor() + startX), (int) (axis1RightY * this.getCurrentScaleFactor() + startY));
-                    g.drawLine((int) (axis2LeftX * this.getCurrentScaleFactor() + startX), (int) (axis2LeftY * this.getCurrentScaleFactor() + startY), (int) (axis2RightX * this.getCurrentScaleFactor() + startX), (int) (axis2RightY * this.getCurrentScaleFactor() + startY));
-                    g.setColor(Color.GREEN);
-                    g.drawLine((int) (axisLeftX * this.getCurrentScaleFactor() + startX), (int) (axisLeftY * this.getCurrentScaleFactor() + startY), (int) (axisRightX * this.getCurrentScaleFactor() + startX), (int) (axisRightY * this.getCurrentScaleFactor() + startY));
+            g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+            if (isRotate) {
+                if (rotateRightAngle == 90) {
+                    g.rotate(Math.PI / 2, this.getSize().width / 2, this.getSize().height / 2);
+                } else if (rotateRightAngle == 180) {
+                    g.rotate(Math.PI, this.getSize().width / 2, this.getSize().height / 2);
+                } else if (rotateRightAngle == 270) {
+                    g.rotate((Math.PI * 3) / 2, this.getSize().width / 2, this.getSize().height / 2);
                 }
             }
+            if (flipHorizontalFlag) {
+                g.translate(this.getSize().width, 0);
+                g.scale(-1, 1);
+            }
+            if (flipVerticalFlag) {
+                g.translate(0, this.getSize().height);
+                g.scale(1, -1);
+            }
+            if (scaleFlag) {
+                g.scale(scaleFactor, scaleFactor);
+            }
+            if (image != null) {
+                if (newBufferedImage && invertFlag) {
+                    newBufferedImage = false;
+                    byte[] negative = new byte[256];
+                    for (int i = 0; i < 256; i++) {
+                        negative[i] = (byte) (255 - i);
+                    }
+                    ByteLookupTable table = new ByteLookupTable(0, negative);
+                    LookupOp op = new LookupOp(table, null);
+                    convertToRGBImage();
+                    BufferedImage filteredImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+                    op.filter(image, filteredImage);
+                    image = filteredImage;
+                    filteredImage = null;
+                }
+                g.drawImage(image, startX, startY, thumbWidth, thumbHeight, null);
+                if (ApplicationContext.layeredCanvas.imgpanel != null && !ApplicationContext.layeredCanvas.imgpanel.isLocalizer && displayScout && isLocalizer) {
+                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g.setColor(Color.YELLOW);
+                    if (orientationLabel.equalsIgnoreCase("SAGITTAL")) {
+                        if (modality.equals("CT") || slope1 == slope2) {
+                            g.drawLine((int) (boundaryLine1X1 * currentScaleFactor + startX), (int) (boundaryLine1Y1 * currentScaleFactor + startY), (int) (boundaryLine1X2 * currentScaleFactor + startX), (int) (boundaryLine1Y2 * currentScaleFactor + startY));
+                            g.drawLine((int) (boundaryLine2X1 * currentScaleFactor + startX), (int) (boundaryLine2Y1 * currentScaleFactor + startY), (int) (boundaryLine2X2 * currentScaleFactor + startX), (int) (boundaryLine2Y2 * currentScaleFactor + startY));
+                        }
+                        g.setColor(Color.GREEN);
+                        g.drawLine((int) (scoutLine1X1 * currentScaleFactor + startX), (int) (scoutLine1Y1 * currentScaleFactor + startY), (int) (scoutLine1X2 * currentScaleFactor + startX), (int) (scoutLine1Y2 * currentScaleFactor + startY));
+                        g.drawLine((int) (scoutLine2X1 * currentScaleFactor + startX), (int) (scoutLine2Y1 * currentScaleFactor + startY), (int) (scoutLine2X2 * currentScaleFactor + startX), (int) (scoutLine2Y2 * currentScaleFactor + startY));
+                    } else if (orientationLabel.equalsIgnoreCase("CORONAL")) {
+                        g.drawLine((int) (axis1LeftX * currentScaleFactor + startX), (int) (axis1LeftY * currentScaleFactor + startY), (int) (axis1RightX * currentScaleFactor + startX), (int) (axis1RightY * currentScaleFactor + startY));
+                        g.drawLine((int) (axis2LeftX * currentScaleFactor + startX), (int) (axis2LeftY * currentScaleFactor + startY), (int) (axis2RightX * currentScaleFactor + startX), (int) (axis2RightY * currentScaleFactor + startY));
+                        g.setColor(Color.GREEN);
+                        g.drawLine((int) (axisLeftX * currentScaleFactor + startX), (int) (axisLeftY * currentScaleFactor + startY), (int) (axisRightX * currentScaleFactor + startX), (int) (axisRightY * currentScaleFactor + startY));
+                    }
+                }
+            }
+            if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+                Image loadedImage = null;
+                calculateResolutionForPdfDicom(loadedImage.getWidth(null), loadedImage.getHeight(null));
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(curpage);
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setTotalInstance(Integer.toString(totalInstance));
+                g.drawImage(loadedImage, startX, startY, thumbWidth, thumbHeight, null);
+                ApplicationContext.imgView.getImageToolbar().hideAnnotationTools();
+            }
+        } catch (Exception ex) { //ignore
+        } finally {
+            g.dispose();
+//            g = null;
         }
-        if (dataset.getString(Tags.SOPClassUID)!=null&&dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
-            calculateResolutionForPdfDicom(loadedImage.getWidth(null), loadedImage.getHeight(null));
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(curpage);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setTotalInstance(Integer.toString(totalInstance));
-            g.drawImage(loadedImage, startX, startY, thumbWidth, thumbHeight, null);
-            ApplicationContext.imgView.getImageToolbar().hideAnnotationTools();
+    }
+
+    private void calculateHeightAndWidth() {
+        thumbHeight = thumbWidth = 512;
+        if (imgHeight < imgWidth) {
+            thumbHeight = Math.min(imgHeight, imgWidth) * maxWidth / Math.max(imgHeight, imgWidth);
+        } else {
+            thumbWidth = Math.min(imgHeight, imgWidth) * maxWidth / Math.max(imgHeight, imgWidth);
         }
-        if (firstTime) {
-            centerImage();
-            originalHeight = this.getSize().height;
-            originalWidth = this.getSize().width;
-            firstTime = false;
-        }
+        startX = (maxWidth - thumbWidth) / 2;
+        startY = (maxHeight - thumbHeight) / 2;
+        calculateCurrentScaleFactor();
     }
 
     public void setScoutCoordinates(int line1X1, int line1Y1, int line1X2, int line1Y2, int line2X1, int line2Y1, int line2X2, int line2Y2) {
@@ -1183,49 +694,13 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         scoutLine2Y2 = line2Y2;
         repaint();
     }
-    private boolean sizeSeted=false;
-    private void calculateNewHeightAndWidthBasedonAspectRatio() {
-//        thumbHeight = this.getCanvas().getLayeredCanvas().textOverlay.getHeight();
-//        thumbWidth = this.getCanvas().getLayeredCanvas().textOverlay.getWidth();
-//        maxHeight = thumbHeight;
-//        maxWidth = thumbWidth;
-        thumbRatio = thumbWidth / thumbHeight;
-        double imageWidth = image.getWidth();
-        double imageHeight = image.getHeight();
-        double imageRatio = (double) imageWidth / (double) imageHeight;
-        if (imageRatio < floatAspectRatio) {
-            imageHeight = (imageWidth + 0.00f) / floatAspectRatio;
-            pixelSpacingY = ((initialPixelSpacingY * image.getHeight()) / imageHeight);
-            pixelSpacing = pixelSpacingY + "\\" + pixelSpacingX;
-        } else {
-            imageWidth = (imageHeight + 0.00f) * floatAspectRatio;
-            pixelSpacingX = (initialPixelSpacingX * image.getWidth()) / imageWidth;
-            pixelSpacing = pixelSpacingY + "\\" + pixelSpacingX;
-        }
-        this.row = (int) Math.round(imageHeight);
-        this.column = (int) Math.round(imageWidth);
-        imageRatio = imageWidth / imageHeight;
-        if (thumbRatio < imageRatio) {
-            thumbHeight = (int) Math.round((thumbWidth + 0.00f) / imageRatio);
-        } else {
-            thumbWidth = (int) Math.round((thumbHeight + 0.00f) * imageRatio);
-        }
-        startX = (maxWidth - thumbWidth) / 2;
-        startY = (maxHeight - thumbHeight) / 2;
-//        if(thumbHeight>512){
-//            this.setSize(maxWidth, maxHeight);
-//            this.scaleFactor=getCurrentScaleFactor();
-//            sizeSeted=true;
-//        }
-        displayZoomLevel();
+
+    public void displayZoomLevel() {
+        int currentZoomLevel = (int) Math.round(scaleFactor * currentScaleFactor * 100);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setZoomLevel(ApplicationContext.currentBundle.getString("ImageView.textOverlay.zoomLabel.text") + currentZoomLevel + "%");
     }
 
-    private void displayZoomLevel() {
-        int currentZoomLevel = (int) Math.round(this.scaleFactor * currentScaleFactor * 100);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setZoomLevel(" Zoom: " + currentZoomLevel + "%");
-    }
-
-    public double getCurrentScaleFactor() {
+    public void calculateCurrentScaleFactor() {
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
         double imageRatio = imageWidth / imageHeight;
@@ -1235,7 +710,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             imageWidth = (imageHeight + 0.00f) * floatAspectRatio;
         }
         currentScaleFactor = (thumbHeight + 0.000f) / imageHeight;
-        return currentScaleFactor;
     }
 
     public void setScoutBorder1Coordinates(int line1X1, int line1Y1, int line1X2, int line1Y2) {
@@ -1243,6 +717,7 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         boundaryLine1X2 = line1X2;
         boundaryLine1Y1 = line1Y1;
         boundaryLine1Y2 = line1Y2;
+        slope1 = findSlope(boundaryLine1X1 * currentScaleFactor + startX, boundaryLine1Y1 * currentScaleFactor + startY, boundaryLine1X2 * currentScaleFactor + startX, boundaryLine1Y2 * currentScaleFactor + startY);
     }
 
     public void setScoutBorder2Coordinates(int line1X1, int line1Y1, int line1X2, int line1Y2) {
@@ -1250,6 +725,7 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         boundaryLine2X2 = line1X2;
         boundaryLine2Y1 = line1Y1;
         boundaryLine2Y2 = line1Y2;
+        slope2 = findSlope(boundaryLine2X1 * currentScaleFactor + startX, boundaryLine2Y1 * currentScaleFactor + startY, boundaryLine2X2 * currentScaleFactor + startX, boundaryLine2Y2 * currentScaleFactor + startY);
     }
 
     public void setAxis1Coordinates(int leftx, int lefty, int rightx, int righty, int topx, int topy, int bottomx, int bottomy) {
@@ -1257,10 +733,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         axis1LeftY = lefty;
         axis1RightX = rightx;
         axis1RightY = righty;
-        axis1TopX = topx;
-        axis1TopY = topy;
-        axis1BottomX = bottomx;
-        axis1BottomY = bottomy;
     }
 
     public void setAxis2Coordinates(int leftx, int lefty, int rightx, int righty, int topx, int topy, int bottomx, int bottomy) {
@@ -1268,10 +740,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         axis2LeftY = lefty;
         axis2RightX = rightx;
         axis2RightY = righty;
-        axis2TopX = topx;
-        axis2TopY = topy;
-        axis2BottomX = bottomx;
-        axis2BottomY = bottomy;
     }
 
     public void setAxisCoordinates(int leftx, int lefty, int rightx, int righty, int topx, int topy, int bottomx, int bottomy) {
@@ -1279,16 +747,12 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         axisLeftY = lefty;
         axisRightX = rightx;
         axisRightY = righty;
-        axisTopX = topx;
-        axisTopY = topy;
-        axisBottomX = bottomx;
-        axisBottomY = bottomy;
     }
 
     private void findOrientation() {
         String imageOrientationArray[];
-        if (imageOrientation != null) {
-            imageOrientationArray = imageOrientation.split("\\\\");
+        if (!currentScoutDetails.getImageOrientation().equalsIgnoreCase("null")) {
+            imageOrientationArray = currentScoutDetails.getImageOrientation().split("\\\\");
             float _imgRowCosx = Float.parseFloat(imageOrientationArray[0]);
             float _imgRowCosy = Float.parseFloat(imageOrientationArray[1]);
             float _imgRowCosz = Float.parseFloat(imageOrientationArray[2]);
@@ -1309,103 +773,42 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         String axis1 = ColumnRight.substring(0, 1);
         String axis2 = rowDown.substring(0, 1);
         if ((axis1 != null) && (axis2 != null)) {
-            if ((((axis1.equals("R")) || (axis1.equals("L")))) && (((axis2.equals("A")) || (axis2.equals("P"))))) {
+            if ((((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.right"))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.left"))))) && (((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.anterior").substring(0, 1))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.posterior").substring(0, 1)))))) {
                 label = "AXIAL";
-            } else if ((((axis2.equals("R")) || (axis2.equals("L")))) && (((axis1.equals("A")) || (axis1.equals("P"))))) {
+            } else if ((((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.right"))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.left"))))) && (((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.anterior").substring(0, 1))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.posterior").substring(0, 1)))))) {
                 label = "AXIAL";
-            } else if ((((axis1.equals("R")) || (axis1.equals("L")))) && (((axis2.equals("H")) || (axis2.equals("F"))))) {
+            } else if ((((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.right"))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.left"))))) && (((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.head").substring(0, 1))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.foot").substring(0, 1)))))) {
                 label = "CORONAL";
-            } else if ((((axis2.equals("R")) || (axis2.equals("L")))) && (((axis1.equals("H")) || (axis1.equals("F"))))) {
+            } else if ((((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.right"))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.left"))))) && (((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.head").substring(0, 1))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.foot").substring(0, 1)))))) {
                 label = "CORONAL";
-            } else if ((((axis1.equals("A")) || (axis1.equals("P")))) && (((axis2.equals("H")) || (axis2.equals("F"))))) {
+            } else if ((((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.anterior").substring(0, 1))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.posterior").substring(0, 1))))) && (((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.head").substring(0, 1))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.foot").substring(0, 1)))))) {
                 label = "SAGITTAL";
-            } else if ((((axis2.equals("A")) || (axis2.equals("P")))) && (((axis1.equals("H")) || (axis1.equals("F"))))) {
+            } else if ((((axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.anterior").substring(0, 1))) || (axis2.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.posterior").substring(0, 1))))) && (((axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.head").substring(0, 1))) || (axis1.equals(ApplicationContext.currentBundle.getString("ImageView.imageOrientation.foot").substring(0, 1)))))) {
                 label = "SAGITTAL";
             }
-
         } else {
             label = "OBLIQUE";
         }
-
         return label;
     }
 
-    private void setEnclosingSizes(int finalWidth, int finalHeight) {
-        this.getCanvas().getLayeredCanvas().getAnnotationPanel().setSize(finalWidth, finalHeight);
-        this.getCanvas().getLayeredCanvas().getAnnotationPanel().setBounds(xPosition, yPosition, this.getSize().width, this.getSize().height);
-    }
-
-    /**
-     * This routine used to zoom in the image box using the scale factor
-     */
-    public void doZoomIn() {
-        scaleFlag = true;
-        scaleFactor = scaleFactor + 0.5;
-        displayZoomLevel();
-        scaleProcess();
-        this.getCanvas().repaint();
-
-    }
-
     public void convertToRGBImage() {
-        //imageIcon = new ImageIcon();
+        Image loadedImage = null;
+        ImageIcon imageIcon = new ImageIcon();
         if (currentbufferedimage != null) {
-            //imageIcon.setImage(currentbufferedimage);
-            //loadedImage = imageIcon.getImage();
-            image=currentbufferedimage;
-//            GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-//            BufferedImage temp = gc.createCompatibleImage(loadedImage.getWidth(null), loadedImage.getHeight(null),Transparency.OPAQUE);
-//            Graphics2D g2 = temp.createGraphics();
-//            //if (!in.raster.mayam.facade.Platform.getCurrentPlatform().equals(in.raster.mayam.facade.Platform.MAC))
-//                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-//            g2.drawImage(loadedImage, 0, 0, temp.getWidth(), temp.getHeight(), null);
-//            g2.dispose();
-//            image = temp;
-            //image = new BufferedImage(loadedImage.getWidth(null), loadedImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
-            //Graphics2D g2 = image.createGraphics();
-            //g2.drawImage(loadedImage, 0, 0, null);
+            imageIcon.setImage(currentbufferedimage);
+            loadedImage = imageIcon.getImage();
+            image = new BufferedImage(loadedImage.getWidth(null), loadedImage.getHeight(null), BufferedImage.TYPE_INT_BGR);
+            Graphics2D g2 = image.createGraphics();
+            g2.drawImage(loadedImage, 0, 0, null);
         }
-    }
-
-    /**
-     * This routine used to zoom out the image box using the scale factor
-     */
-    public void doZoomOut() {
-        scaleFlag = true;
-        scaleFactor = scaleFactor - 0.5;
-        if (scaleFactor > 0) {
-            scaleProcess();
-        } else {
-            scaleFactor = 0.5;
-        }
-        displayZoomLevel();
-        this.getCanvas().repaint();
-    }
-
-    /**
-     * This routine used to enable the stack process
-     */
-    public void doStack() {
-        if (tool.equalsIgnoreCase("stack")) {
-            tool = "";
-        } else {
-            tool = "stack";
-        }
-    }
-
-    public boolean isStackSelected() {
-        return (tool.equalsIgnoreCase("stack"));
-    }
-
-    public void setToolsToNull() {
-        tool = "";
     }
 
     private void scaleProcess() {
         double currentWidth = this.getSize().width;
         double currentHeight = this.getSize().height;
-        double newWidth = originalWidth * scaleFactor;
-        double newHeight = originalHeight * scaleFactor;
+        double newWidth = maxWidth * scaleFactor;
+        double newHeight = maxHeight * scaleFactor;
         double widthDiff = newWidth - currentWidth;
         double heightDiff = newHeight - currentHeight;
         int currentX = this.getBounds().x;
@@ -1417,85 +820,46 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         repaint();
     }
 
-    public double getOriginalHeight() {
-        return originalHeight;
-    }
-
-    public void setOriginalHeight(int originalHeight) {
-        this.originalHeight = originalHeight;
-    }
-
-    public double getOriginalWidth() {
-        return originalWidth;
-    }
-
-    public void setOriginalWidth(int originalWidth) {
-        this.originalWidth = originalWidth;
-    }
-
-    private void moveComponent(int x, int y) {
-        this.setBounds(x, y, this.getSize().width, this.getSize().height);
-    }
-    int xPosition;
-    int yPosition;
-
     /**
-     * This routine used to calculate the x and y position of the image box to be placed in the
-     * outer canvas and set the bounds
+     * This routine used to calculate the x and y position of the image box to
+     * be placed in the outer canvas and set the bounds
      */
     private void centerImage() {
-        xPosition = (canvas.getSize().width - this.getSize().width) / 2;
-        yPosition = (canvas.getSize().height - this.getSize().height) / 2;
-        this.setBounds(xPosition, yPosition, this.getSize().width, this.getSize().height);
-
-    }
-
-    /**
-     * This routine erase the drawing in the outer canvas
-     */
-    private void clearCanvas() {
-        Graphics g = canvas.getGraphics();
-        Dimension d = canvas.getSize();
-        Color c = canvas.getBackground();
-        g.setColor(c);
-        g.fillRect(0, 0, d.width, d.height);
+        this.setBounds((canvas.getSize().width - this.getSize().width) / 2, (canvas.getSize().height - this.getSize().height) / 2, this.getSize().width, this.getSize().height);
     }
 
     /**
      * This method creates the color model based on the window level and width
      * and apply the values to the image box
+     *
      * @param windowCenter
      * @param windowWidth
      */
-    public void windowChanged(int windowCenter, int windowWidth) {
+    public void windowChanged(int windowCenter, int winWidth) {
         try {
-            widowingFlag = true;
             if (cmParam != null) {
-                cmParam = cmParam.update(windowCenter, windowWidth, cmParam.isInverse());
+                cmParam = cmParam.update(windowCenter, winWidth, cmParam.isInverse());
                 cm = cmFactory.getColorModel(cmParam);
                 currentbufferedimage = new BufferedImage(cm, currentbufferedimage.getRaster(), false, null);
-                this.windowLevel = windowCenter;
-                this.windowWidth = windowWidth;
+                windowLevel = windowCenter;
+                windowWidth = winWidth;
             }
             convertToRGBImage();
             repaint();
             changeTextOverlay();
-
-
-        } catch (Exception e) {
-            System.out.println("Windowing can't be applied");
+        } catch (Exception e) { //ignore
         }
     }
 
     public void repaintTextOverlay() {
-        this.getCanvas().getLayeredCanvas().textOverlay.repaint();
+        canvas.getLayeredCanvas().textOverlay.repaint();
     }
 
+    @Override
     public ColorModel getColorModel() {
-        if(cmParam!=null){
-        cmParam = cmParam.update(this.windowLevel,
-                this.windowWidth, cmParam.isInverse());
-        cm = cmFactory.getColorModel(cmParam);
+        if (cmParam != null) {
+            cmParam = cmParam.update(windowLevel, windowWidth, cmParam.isInverse());
+            cm = cmFactory.getColorModel(cmParam);
         }
         return cm;
     }
@@ -1504,36 +868,7 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
      * This routine used to change the text overlay of the image box
      */
     public void changeTextOverlay() {
-        this.getCanvas().getLayeredCanvas().textOverlay.setWindowingParameter(Integer.toString(this.windowLevel), Integer.toString(this.windowWidth));
-    }
-
-    /**
-     * This routine used to get the dataset object from the file specified
-     * @param filePath
-     * @return
-     */
-    public DicomObject getDatasetFromFile(String filePath) {
-
-        DicomInputStream dis = null;
-        DicomObject data = null;
-        try {
-            File parseFile = new File(filePath);
-            dis = new DicomInputStream(parseFile);
-            data = new BasicDicomObject();
-            data = dis.readDicomObject();
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            // Logger.getLogger(ModelUpdator.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                dis.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                //   Logger.getLogger(ModelUpdator.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return data;
+        canvas.getLayeredCanvas().textOverlay.setWindowingParameter(Integer.toString(windowLevel), Integer.toString(windowWidth));
     }
 
     private void addlisteners() {
@@ -1542,67 +877,20 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         addMouseWheelListener(this);
     }
 
-    /**
-     *
-     */
     public void probe() {
         if (!probeFlag) {
             probeFlag = true;
-            this.getCanvas().getLayeredCanvas().textOverlay.repaint();
+            canvas.getLayeredCanvas().textOverlay.repaint();
         } else {
             probeFlag = false;
-            this.getCanvas().getLayeredCanvas().textOverlay.repaint();
+            canvas.getLayeredCanvas().textOverlay.repaint();
         }
     }
 
-    public boolean isInvertFlag() {
-        return invertFlag;
-    }
-
-    public void setInvertFlag(boolean invertFlag) {
-        this.invertFlag = invertFlag;
-    }
-
-    public static boolean isProbeFlag() {
-        return probeFlag;
-    }
-
-    public double getPixelSpacingX() {
-        return pixelSpacingX;
-    }
-
-    public void setPixelSpacingX(double pixelSpacingX) {
-        this.pixelSpacingX = pixelSpacingX;
-    }
-
-    public double getPixelSpacingY() {
-        return pixelSpacingY;
-    }
-
-    public void setPixelSpacingY(double pixelSpacingY) {
-        this.pixelSpacingY = pixelSpacingY;
-    }
-
-    public int getWindowLevel() {
-        return windowLevel;
-    }
-
-    public void setWindowLevel(int windowLevel) {
-        this.windowLevel = windowLevel;
-    }
-
-    public int getWindowWidth() {
-        return windowWidth;
-    }
-
-    public void setWindowWidth(int windowWidth) {
-        this.windowWidth = windowWidth;
-    }
-
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -1610,7 +898,6 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         jPopupMenu1 = new javax.swing.JPopupMenu();
 
         setBackground(new java.awt.Color(0, 0, 0));
-        setComponentPopupMenu(jPopupMenu1);
         setDoubleBuffered(false);
         setFocusCycleRoot(true);
         setOpaque(false);
@@ -1624,311 +911,155 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
     }// </editor-fold>//GEN-END:initComponents
 
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
-        this.canvas.requestFocus();
+        canvas.requestFocus();
     }//GEN-LAST:event_formMouseClicked
-    private void setTotalInstacne() {
-        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-            if (!isMulitiFrame()) {
-                totalInstance = ApplicationContext.databaseRef.getSeriesLevelInstance(this.studyUID, this.seriesUID);
-                currentInstanceNo = 0;
-            } else {
-                totalInstance = nFrames;
-                currentInstanceNo = 0;
-            }
+    private void setTotalInstance() {
+        if (multiframe) {
+            totalInstance = nFrames;
         } else {
-            totalInstance = ApplicationContext.databaseRef.getSeriesLevelInstance(this.studyUID, this.seriesUID);
-            currentInstanceNo = 0;
+            totalInstance = ApplicationContext.databaseRef.getSeriesLevelInstance(studyUID, seriesUID);
         }
-        if (dataset.getString(Tags.SOPClassUID)!=null&&dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+        if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
             totalInstance = curFile.getNumPages();
-            currentInstanceNo = 0;
         }
+        currentInstanceNo = currentFrame = 0;
     }
 
+    @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         this.requestFocus();
-        this.canvas.setSelection();
-        this.storeAnnotation();
         int notches = e.getWheelRotation();
         if (notches < 0) {
             doPrevious();
         } else {
             doNext();
         }
-        if(e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-            
-        }
-    }
-
-    private void nextofEncapsulatedDocument() {
-        if (dataset.getString(Tags.SOPClassUID)!=null&&dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
-            forceGotoPage(curpage + 1);
-        }
-    }
-
-    private void previousofEncapsulatedDocument() {
-        if (dataset.getString(Tags.SOPClassUID)!=null&&dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
-            forceGotoPage(curpage - 1);
-        }
-    }
-
-    public void moveToNextInstance() {
-        this.storeAnnotation();
-        doNext();
-    }
-
-    public void moveToPreviousInstance() {
-        this.storeAnnotation();
-        doPrevious();
-
     }
 
     public void doPrevious() {
-        if (isEncapsulatedDocument) {
-            previousofEncapsulatedDocument();
-
-        } else if (ApplicationContext.databaseRef.getMultiframeStatus() && isMulitiFrame()) {
-            if (instanceArray == null) {
-                previousFrame();
-            } else {
-                showPreviousFrame();
+        JPanel panel = (JPanel) canvas.getLayeredCanvas().getParent();
+        if (panel.getComponentCount() > 1) {
+            if (System.currentTimeMillis() - timeDelay > panel.getComponentCount() * 10) {
+                reverseMultipleImages(panel);
+                timeDelay = System.currentTimeMillis();
+            }
+        } else if (multiframe) {
+            canvas.setSelection(false);
+            showPreviousFrame();
+        } else if (isEncapsulatedDocument) {
+            canvas.setSelection(false);
+            if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+                forceGotoPage(curpage - 1);
             }
         } else {
-            if (instanceArray == null) {
-                previousInstance();
-            } else {
-                selectPreviousInstance();
-            }
+            canvas.setSelection(false);
+            previous();
         }
     }
 
     public void doNext() {
-        if (isEncapsulatedDocument) {
-            nextofEncapsulatedDocument();
-
-        } else if (ApplicationContext.databaseRef.getMultiframeStatus() && isMulitiFrame()) {
-            if (instanceArray == null) {
-                nextFrame();
-            } else {
-                showNextFrame();
+        JPanel panel = (JPanel) canvas.getLayeredCanvas().getParent();
+        if (panel.getComponentCount() > 1) {
+            if (System.currentTimeMillis() - timeDelay > panel.getComponentCount() * 10) {
+                forwardMultipleImages(panel);
+                timeDelay = System.currentTimeMillis();
+            }
+        } else if (multiframe) {
+            canvas.setSelection(false);
+            showNextFrame();
+        } else if (isEncapsulatedDocument) {
+            canvas.setSelection(false);
+            if (dataset.getString(Tags.SOPClassUID) != null && dataset.getString(Tags.SOPClassUID).equalsIgnoreCase("1.2.840.10008.5.1.4.1.1.104.1")) {
+                forceGotoPage(curpage + 1);
             }
         } else {
-            if (instanceArray == null) {
-                nextInstance();
-            } else {
-                selectNextInstance();
-            }
+            canvas.setSelection(false);
+            next();
         }
     }
 
-    private void setInstanceArray() {
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(this.studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (mulitiFrame) {
-                        if (series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID) && series.getInstanceUID().equalsIgnoreCase(instanceUID)) {
-                            instanceArray = (ArrayList<Instance>) series.getImageList();
-                        } else {
-                            if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                for (Instance instance : series.getImageList()) {
-                                    if (instance.getSop_iuid().equalsIgnoreCase(this.instanceUID)) {
-                                        ArrayList<Instance> temp = new ArrayList<Instance>();
-                                        temp.add(instance);
-                                        instanceArray = temp;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void previousFrame() {
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(this.studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (mulitiFrame) {
-                        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                            if (series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID) && series.getInstanceUID().equalsIgnoreCase(instanceUID)) {
-                                instanceArray = (ArrayList<Instance>) series.getImageList();
-                                showPreviousFrame();
-                            }
-                        } else {
-                            if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                for (Instance instance : series.getImageList()) {
-                                    if (instance.getSop_iuid().equalsIgnoreCase(this.instanceUID)) {
-                                        ArrayList<Instance> temp = new ArrayList<Instance>();
-                                        temp.add(instance);
-                                        instanceArray = temp;
-                                    }
-                                }
-                            }
-                            showPreviousFrame();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void nextFrame() {
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (mulitiFrame) {
-                        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                            if (series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID) && series.getInstanceUID().equalsIgnoreCase(instanceUID)) {
-                                instanceArray = (ArrayList<Instance>) series.getImageList();
-                                showNextFrame();
-                            }
-                        } else {
-                            if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                for (Instance instance : series.getImageList()) {
-                                    if (instance.getSop_iuid().equalsIgnoreCase(this.instanceUID)) {
-                                        ArrayList<Instance> temp = new ArrayList<Instance>();
-                                        temp.add(instance);
-                                        instanceArray = temp;
-                                    }
-                                }
-                            }
-                            showNextFrame();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void storeAnnotation() {
-        Iterator<Study> studyItr = MainScreen.studyList.iterator();
-        while (studyItr.hasNext()) {
-            Study study = studyItr.next();
-            if (study.getStudyInstanceUID().equalsIgnoreCase(studyUID)) {
-                ArrayList<Series> seriesList = (ArrayList<Series>) study.getSeriesList();
-                Iterator<Series> seriesItr = seriesList.iterator();
-                while (seriesItr.hasNext()) {
-                    Series series = seriesItr.next();
-                    if (!ApplicationContext.databaseRef.getMultiframeStatus()) {
-                        if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                            Instance instance = series.getImageList().get(currentInstanceNo);
-                            instance.setAnnotation(this.getCanvas().getLayeredCanvas().annotationPanel.getAnnotation());
-                        }
-                    } else {
-                        if (!isMulitiFrame()) {
-                            if (!series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                Instance instance = series.getImageList().get(currentInstanceNo);
-                                instance.setAnnotation(this.getCanvas().getLayeredCanvas().annotationPanel.getAnnotation());
-                            }
-                        }//for multiframe instance setAnnotations should be there it can be of hash map with index values.
-                        else {
-                            if (series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID) && series.getInstanceUID().equalsIgnoreCase(instanceUID)) {
-                                Instance instance = series.getImageList().get(0);//becuase multiframe series contains single instance.
-                                instance.addMultiframeAnnotation(currentInstanceNo, this.getCanvas().getLayeredCanvas().annotationPanel.getAnnotation());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public String[] getInstancesFilePath() {
-        String[] s = null;
-        Iterator studyItr = MainScreen.studyList.iterator();
-        while (studyItr.hasNext()) {
-            Study study = (Study) studyItr.next();
-            if (study.getStudyInstanceUID().equalsIgnoreCase(ApplicationContext.imgPanel.getStudyUID())) {
-                ArrayList seriesList = (ArrayList) study.getSeriesList();
-                for (int i = 0; i < seriesList.size(); ++i) {
-                    Series series = (Series) seriesList.get(i);
-                    if (series.getSeriesInstanceUID().equalsIgnoreCase(this.seriesUID)) {
-                        s = new String[series.getImageList().size()];
-                        int x = 0;
-                        for (Iterator i$ = series.getImageList().iterator(); i$.hasNext();) {
-                            Instance instance = (Instance) i$.next();
-
-                            s[x] = instance.getFilepath();
-                            ++x;
-                        }
-                    }
-                }
-            }
-
-        }
-
-        return s;
-    }
-
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
+        canvas.setSelection(true);
         selectSeries(e);
     }
 
     private void selectSeries(MouseEvent e) {
-        this.canvas.setSelection();
         mouseLocX1 = e.getX();
         mouseLocY1 = e.getY();
-        mousePressed = true;
-        if (e.isPopupTrigger()) {
+        if (SwingUtilities.isRightMouseButton(e)) {
             designContext();
             jPopupMenu1.show(this, e.getX(), e.getY());
         }
     }
     private PopupMenuListener popupListener = new PopupMenuListener();
-    public void addContextItem(){
+
+    public void addContextItem() {
         MenuElement[] me = jPopupMenu1.getSubElements();
         JMenu menu;
         if (me.length > 0) {
-            ArrayList presetList = ApplicationContext.databaseRef.getPresetValueForModality(ApplicationContext.imgPanel.getModality());
-            if(presetList.size()>0){
-            menu = new JMenu("Window Width & Level");
-            //menu.setEnabled(false);
-            jPopupMenu1.addSeparator();
-            for (int i = 0; i < presetList.size(); i++) {
-                final PresetModel presetModel = (PresetModel) presetList.get(i);
-                if (!presetModel.getPresetName().equalsIgnoreCase("PRESETNAME")) {
-                    JMenuItem menu1 = new JMenuItem(presetModel.getPresetName());
-                    menu.add(menu1);
-                    menu1.addActionListener(new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {                           
-                            ApplicationContext.imgPanel.windowChanged(Integer.parseInt(presetModel.getWindowLevel()), 
-                                    Integer.parseInt(presetModel.getWindowWidth()));
-                        }
-                    });
+            ArrayList presetList = ApplicationContext.databaseRef.getPresetsForModality(ApplicationContext.layeredCanvas.imgpanel.getModality());
+            if (presetList.size() > 0) {
+                menu = new JMenu("Window Width & Level");
+                jPopupMenu1.addSeparator();
+                for (int i = 0; i < presetList.size(); i++) {
+                    final PresetModel presetModel = (PresetModel) presetList.get(i);
+                    if (!presetModel.getPresetName().equalsIgnoreCase("PRESETNAME")) {
+                        JMenuItem menu1 = new JMenuItem(presetModel.getPresetName());
+                        menu.add(menu1);
+                        menu1.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                JPanel currentPanel = (JPanel) ApplicationContext.layeredCanvas.getParent();
+                                try {
+                                    for (int i = 0; i < currentPanel.getComponentCount(); i++) {
+                                        ((LayeredCanvas) currentPanel.getComponent(i)).imgpanel.windowChanged(Integer.parseInt(presetModel.getWindowLevel()), Integer.parseInt(presetModel.getWindowWidth()));
+                                    }
+                                } catch (NullPointerException npe) {
+                                    //Null pointer exception occurs when there is no components in image layout
+                                }
+                            }
+                        });
+                    }
                 }
-            }
-            jPopupMenu1.add(menu);
+                jPopupMenu1.add(menu);
             }
         }
     }
+
+    @Override
     public void mouseReleased(MouseEvent e) {
-        selectSeries(e);
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         mouseLocX2 = e.getX();
         mouseLocY2 = e.getY();
 
         if (tool.equalsIgnoreCase("windowing")) {
-            if (canStart) {
-                canStart = false;
-                mouseDragWindowing(mouseLocX2, mouseLocY2);
-                canStart = true;
-            }
+            mouseDragWindowing(mouseLocX2, mouseLocY2);
         } else if (tool.equalsIgnoreCase("panning")) {
-            this.setLocation(this.getBounds().x + mouseLocX2 - mouseLocX1, this.getBounds().y + mouseLocY2 - mouseLocY1);
-            repaint();
-            this.getCanvas().repaint();
+            JPanel currentSeriesPanel = (JPanel) ApplicationContext.layeredCanvas.getParent();
+            for (int i = 0; i < currentSeriesPanel.getComponentCount(); i++) {
+                LayeredCanvas tempCanvas = (LayeredCanvas) currentSeriesPanel.getComponent(i);
+                if (tempCanvas.imgpanel != null) {
+                    tempCanvas.imgpanel.setLocation(this.getBounds().x + mouseLocX2 - mouseLocX1, this.getBounds().y + mouseLocY2 - mouseLocY1);
+                    tempCanvas.imgpanel.repaint();
+                    tempCanvas.canvas.repaint();
+                }
+            }
         } else if (tool.equalsIgnoreCase("stack")) {
             mouseDragStack(mouseLocX2, mouseLocY2);
         }
@@ -1944,7 +1075,10 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
             newWindowWidth = 1.0;
         }
         double newWindowLevel = windowLevel + mouseLocDiffY * 5;
-        windowChanged((int) newWindowLevel, (int) newWindowWidth);
+        JPanel currentSeriesPanel = (JPanel) ApplicationContext.layeredCanvas.getParent();
+        for (int i = 0; i < currentSeriesPanel.getComponentCount(); i++) {
+            ((LayeredCanvas) currentSeriesPanel.getComponent(i)).imgpanel.windowChanged((int) newWindowLevel, (int) newWindowWidth);
+        }
     }
 
     private void mouseDragStack(int mouseLocX2, int mouseLocY2) {
@@ -1952,323 +1086,40 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         if (mouseLocDiffY < -12) {
             mouseLocX1 = mouseLocX2;
             mouseLocY1 = mouseLocY2;
-            if (ApplicationContext.databaseRef.getMultiframeStatus() && isMulitiFrame()) {
-                if (instanceArray == null) {
-                    previousFrame();
-                } else {
-                    showPreviousFrame();
-                }
-            } else {
-                if (instanceArray == null) {
-                    previousInstance();
-                } else {
-                    selectPreviousInstance();
-                }
-            }
+            doPrevious();
         } else if (mouseLocDiffY > 12) {
             mouseLocX1 = mouseLocX2;
             mouseLocY1 = mouseLocY2;
-            if (ApplicationContext.databaseRef.getMultiframeStatus() && isMulitiFrame()) {
-                if (instanceArray == null) {
-                    nextFrame();
-                } else {
-                    showNextFrame();
-                }
-            } else {
-                if (instanceArray == null) {
-                    nextInstance();
-                } else {
-                    selectNextInstance();
-                }
-            }
+            doNext();
         }
     }
 
-    private void selectPreviousInstance() {
-        if (currentInstanceNo == 0) {
-            currentInstanceNo = totalInstance;
-        }
-        currentInstanceNo--;
-        Instance instance = instanceArray.get(currentInstanceNo);
-        if(instance!=null)
-            dicomFileUrl=instance.getFilepath();
-        if (instance.isMultiframe()) {
-            this.getCanvas().getLayeredCanvas().textOverlay.multiframeStatusDisplay(true);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setFramePosition((instance.getCurrentFrameNum() + 1) + "/" + instance.getTotalNumFrames());
-        } else {
-            this.getCanvas().getLayeredCanvas().textOverlay.multiframeStatusDisplay(false);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setFramePosition("");
-        }
-        setImage(instance.getPixelData());
-        setInstanceInfo(instance);
-        if (displayScout) {
-            findOrientation();
-            if (!this.isLocalizer) {
-                LocalizerDelegate localizer = new LocalizerDelegate();
-                localizer.drawScoutLineWithBorder();
-            }
-        }
-        this.getCanvas().getLayeredCanvas().annotationPanel.setAnnotation(instance.getAnnotation());
-        if (!ApplicationContext.databaseRef.getMultiframeStatus()) {
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(instance.getSeriesLevelIndex());
-        } else {
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-        }
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setInstanceNumber("" + this.instanceNumber);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(sliceLocation);
-        if (synchornizeTiles && !isMulitiFrame() && modality.startsWith("CT")) {
-            SynchronizationDelegate synchronizationDelegate = new SynchronizationDelegate();
-            synchronizationDelegate.doTileSync();
-        }
-    }
-
-    public void selectNextInstance() {
-        currentInstanceNo++;
-        if (currentInstanceNo == totalInstance) {
-            currentInstanceNo = 0;
-        }
-        Instance instance = instanceArray.get(currentInstanceNo);
-        if(instance!=null)
-            dicomFileUrl=instance.getFilepath();
-        if (instance.isMultiframe()) {
-            this.getCanvas().getLayeredCanvas().textOverlay.multiframeStatusDisplay(true);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setFramePosition((instance.getCurrentFrameNum() + 1) + "/" + instance.getTotalNumFrames());
-        } else {
-            this.getCanvas().getLayeredCanvas().textOverlay.multiframeStatusDisplay(false);
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setFramePosition("");
-        }
-        setImage(instance.getPixelData());
-        setInstanceInfo(instance);
-        if (displayScout) {
-            findOrientation();
-            if (!this.isLocalizer) {
-                LocalizerDelegate localizer = new LocalizerDelegate();
-                localizer.drawScoutLineWithBorder();
-            }
-        }
-        this.getCanvas().getLayeredCanvas().annotationPanel.setAnnotation(instance.getAnnotation());
-        //this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-        if (!ApplicationContext.databaseRef.getMultiframeStatus()) {
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(instance.getSeriesLevelIndex());
-        } else {
-            this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-        }
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setInstanceNumber("" + this.instanceNumber);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(sliceLocation);
-        if (synchornizeTiles && !isMulitiFrame() && modality.startsWith("CT")) {
-            SynchronizationDelegate synchronizationDelegate = new SynchronizationDelegate();
-            synchronizationDelegate.doTileSync();
-        }
-    }
-
-    public void setImage(String sliceLocation) {
+    public void setImage(String sliceLocation, boolean isForward) {
         /**
-         * This mehtod has been added for synchronized scroll it will not support for multiframe sync scroll. so that
-         * instance number can be set directly to instanceNumber and currentInstanceNo variable.
+         * This method has been added for synchronized scroll it will not
+         * support for multiframe sync scroll. so that instance number can be
+         * set directly to instanceNumber and currentInstanceNo variable.
          */
-        int instanceNo = ApplicationContext.databaseRef.getInstaneNumberBasedOnSliceLocation(studyUID, seriesUID, instanceUID, sliceLocation);
-        instanceNo--;
-        if (instanceNumber != -1) {
-            if (instanceNo > -1 && instanceNo < instanceArray.size()) {
-                setImage(instanceArray.get(instanceNo).getPixelData());
-                setInstanceInfo(instanceArray.get(instanceNo));
-                this.instanceNumber = instanceNo;
-                currentInstanceNo = instanceNo - 1;
-                updateTextoverlay();
-            }
-        }
-    }
-
-    public void setImage(int instanceNo) {
-        /**
-         * This mehtod has been added for synchronized scroll it will not support for multiframe sync scroll. so that
-         * instance number can be set directly to instanceNumber and currentInstanceNo variable.
-         */
-        if (instanceNo > -1 && instanceNo < instanceArray.size()) {
-            setImage(instanceArray.get(instanceNo).getPixelData());
-            setInstanceInfo(instanceArray.get(instanceNo));
-            this.instanceNumber = instanceNo + 1;
-            currentInstanceNo = instanceNo;
-            updateTextoverlay();
+        storeAnnotation();
+        String iuid = ApplicationContext.databaseRef.getInstanceUIDBasedOnSliceLocation(studyUID, seriesUID, sliceLocation, ApplicationContext.layeredCanvas.imgpanel.sliceThickness);
+        if (iuid != null) {
+            currentInstanceNo = instanceUidList.indexOf(iuid);
+            setImage(imgBuffer.get(currentInstanceNo, isForward));
         }
     }
 
     public void updateTextoverlay() {
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(this.currentInstanceNo);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setInstanceNumber("" + this.instanceNumber);
-        this.getCanvas().getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(sliceLocation);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(currentScoutDetails.getSliceLocation());
     }
 
-    public void setInstanceArryFromList() {
-        if (instanceArray == null) {
-            for (Study study : MainScreen.studyList) {
-                if (study.getStudyInstanceUID().equalsIgnoreCase(this.studyUID)) {
-                    for (Series series : study.getSeriesList()) {
-                        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                            if (!series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                totalInstance = series.getImageList().size();
-                                instanceArray = (ArrayList<Instance>) series.getImageList();
-                            }
-                        } else {
-                            if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                                totalInstance = series.getImageList().size();
-                                instanceArray = (ArrayList<Instance>) series.getImageList();
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-    public String getSliceLocation() {
-        return sliceLocation;
-    }
-
-    private void setInstanceInfo(Instance img) {
-        try {
-            this.instanceUID = img.getSop_iuid();
-            this.imagePosition = img.getImagePosition();
-            this.imageOrientation = img.getImageOrientation();
-            this.imageType = img.getImageType();
-            this.pixelSpacing = img.getPixelSpacing();
-            this.row = img.getRow();
-            this.column = img.getColumn();
-            this.frameOfReferenceUID = img.getFrameOfReferenceUID().equalsIgnoreCase("") ? "" : img.getFrameOfReferenceUID();
-            this.referencedSOPInstanceUID = img.getReferenceSOPInstanceUID().equalsIgnoreCase("") ? "" : img.getReferenceSOPInstanceUID();
-            this.instanceNumber = img.getInstanceNumber();
-            this.sliceLocation = img.getSliceLocation();
-        } catch (Exception e) {
-            System.out.println("[ImagePanel]" + e.getMessage());
-        }
-    }
-
-    public void previousInstance() {
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(this.studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                        if (!series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                            totalInstance = series.getImageList().size();
-                            instanceArray = (ArrayList<Instance>) series.getImageList();
-                            selectPreviousInstance();
-                        }
-                    } else {
-                        if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                            totalInstance = series.getImageList().size();
-                            instanceArray = (ArrayList<Instance>) series.getImageList();
-                            selectPreviousInstance();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void nextInstance() {
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                        if (!series.isMultiframe() && series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                            totalInstance = series.getImageList().size();
-                            instanceArray = (ArrayList<Instance>) series.getImageList();
-                            selectNextInstance();
-                        }
-                    } else {
-                        if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                            totalInstance = series.getImageList().size();
-                            instanceArray = (ArrayList<Instance>) series.getImageList();
-                            selectNextInstance();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public ScoutLineInfoModel[] getScoutBorder() {
-        ScoutLineInfoModel[] borderArray = null;
-        for (Study study : MainScreen.studyList) {
-            if (study.getStudyInstanceUID().equalsIgnoreCase(studyUID)) {
-                for (Series series : study.getSeriesList()) {
-                    if (series.getSeriesInstanceUID().equalsIgnoreCase(seriesUID)) {
-                        totalInstance = series.getImageList().size();
-                        instanceArray = (ArrayList<Instance>) series.getImageList();
-                        borderArray = prepareScoutBorder();
-                    }
-                }
-            }
-        }
-        return borderArray;
-    }
-
-    private ScoutLineInfoModel[] prepareScoutBorder() {
-        Instance firstInstance = instanceArray.get(0);
-        Instance lastInstance = instanceArray.get(this.totalInstance - 1);
-        ScoutLineInfoModel borderLine1 = new ScoutLineInfoModel();
-        ScoutLineInfoModel borderLine2 = new ScoutLineInfoModel();
-
-        borderLine1.setImagePosition(firstInstance.getImagePosition());
-        borderLine1.setImageOrientation(firstInstance.getImageOrientation());
-        borderLine1.setImagePixelSpacing(firstInstance.getPixelSpacing());
-        borderLine1.setImageRow(firstInstance.getRow());
-        borderLine1.setImageColumn(firstInstance.getColumn());
-        borderLine1.setImageFrameofReferenceUID(firstInstance.getFrameOfReferenceUID());
-        borderLine1.setImageReferenceSOPInstanceUID(firstInstance.getReferenceSOPInstanceUID());
-
-        borderLine2.setImagePosition(lastInstance.getImagePosition());
-        borderLine2.setImageOrientation(lastInstance.getImageOrientation());
-        borderLine2.setImagePixelSpacing(lastInstance.getPixelSpacing());
-        borderLine2.setImageRow(lastInstance.getRow());
-        borderLine2.setImageColumn(lastInstance.getColumn());
-        borderLine2.setImageFrameofReferenceUID(lastInstance.getFrameOfReferenceUID());
-        borderLine2.setImageReferenceSOPInstanceUID(lastInstance.getReferenceSOPInstanceUID());
-
-        ScoutLineInfoModel[] borderArray = new ScoutLineInfoModel[2];
-        borderArray[0] = borderLine1;
-        borderArray[1] = borderLine2;
-        return borderArray;
-    }
-
-    public int getTotalInstance() {
-        return totalInstance;
-    }
-
-    public void setTotalInstance(int totalInstance) {
-        this.totalInstance = totalInstance;
-    }
-
-    public int getCurrentInstanceNo() {
-        return currentInstanceNo;
-    }
-
-    public void setCurrentInstanceNo(int currentInstanceNo) {
-        this.currentInstanceNo = currentInstanceNo;
-    }
-
-    public static boolean isDisplayScout() {
-        return displayScout;
-    }
-
-    public static void setDisplayScout(boolean displayScout) {
-        ImagePanel.displayScout = displayScout;
-    }
-
-    private void clearProbeValues() {
-
-        Graphics g = this.getCanvas().getLayeredCanvas().textOverlay.getGraphics();
-        Color c = this.getCanvas().getLayeredCanvas().textOverlay.getBackground();
-        g.setColor(Color.white);
-        g.fillRect(0, this.getCanvas().getLayeredCanvas().textOverlay.getHeight() - 70, 200, 30);
+    public ScoutLineInfoModel[] prepareScoutBorder() {
+        return ApplicationContext.databaseRef.getFirstAndLastInstances(studyUID, seriesUID);
     }
 
     private String calculateHU(int x, int y) {
         try {
-            pixelValueArray = currentbufferedimage.getSampleModel().getPixel(
-                    x, y, (int[]) null,
-                    currentbufferedimage.getRaster().getDataBuffer());
+            pixelValueArray = currentbufferedimage.getSampleModel().getPixel(x, y, (int[]) null, currentbufferedimage.getRaster().getDataBuffer());
             pixelValue = pixelValueArray[0];
             try {
                 hu = Integer.toString(pixelValue * Integer.parseInt(rescaleSlope) + Integer.parseInt(rescaleIntercept));
@@ -2276,19 +1127,15 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
                 hu = Integer.toString(pixelValue * 1 - 1024);
             }
         } catch (Exception e) {
-            System.out.println("Array index out of bound exception");
         }
-        
         return hu;
     }
+
     public double calculateMean(int x, int y, int width, int height) {
         try {
             int sum = 0;
             int pixelCount = 0;
-            //System.out.println("Height, Width : "+height +" "+ width);
-            pixelValueArray = currentbufferedimage.getSampleModel().getPixels(
-                    x, y, width, height, (int[]) null,
-                    currentbufferedimage.getRaster().getDataBuffer());
+            pixelValueArray = currentbufferedimage.getSampleModel().getPixels(x, y, width, height, (int[]) null, currentbufferedimage.getRaster().getDataBuffer());
             for (int i = 0; i < pixelValueArray.length; i++) {
                 ++pixelCount;
                 int value;
@@ -2297,27 +1144,22 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
                 } catch (Exception e) {
                     value = pixelValueArray[i] * 1 - 1024;
                 }
-                //System.out.println("Value : "+ value);
                 sum += value;
             }
-            //System.out.println("Pixel Count : "+pixelCount);
             if (pixelCount == 0) {
                 return 0;
             }
             return (double) sum / pixelCount;
         } catch (Exception e) {
-            e.printStackTrace();
             return 0;
         }
     }
+
     public double calculateStandardDeviation(double mean, int x, int y, int width, int height) {
         try {
             double sum = 0;
             int pixelCount = 0;
-            //System.out.println("Height, Width : "+height +" "+ width);
-            pixelValueArray = currentbufferedimage.getSampleModel().getPixels(
-                    x, y, width, height, (int[]) null,
-                    currentbufferedimage.getRaster().getDataBuffer());
+            pixelValueArray = currentbufferedimage.getSampleModel().getPixels(x, y, width, height, (int[]) null, currentbufferedimage.getRaster().getDataBuffer());
             for (int i = 0; i < pixelValueArray.length; i++) {
                 ++pixelCount;
                 int value;
@@ -2329,104 +1171,36 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
                 double deviation = value - mean;
                 sum += deviation * deviation;
             }
-            //System.out.println("Pixel Count : "+pixelCount);
             if (pixelCount == 0) {
                 return 0;
             }
             return Math.sqrt(sum / pixelCount);
         } catch (Exception e) {
-            e.printStackTrace();
             return 0;
         }
     }
 
-    public int[] getPixels(int x, int y, int w, int h) {
-        return currentbufferedimage.getSampleModel().getPixels(x, y, w, h, (int[]) null, currentbufferedimage.getRaster().getDataBuffer());
-    }
-
+    @Override
     public void mouseMoved(MouseEvent e) {
         mouseLocX2 = e.getX();
         mouseLocY2 = e.getY();
         if (probeFlag) {
             String probeParameter[] = new String[3];
-            probeParameter[0] = Integer.toString((int) Math.round(mouseLocX2 / this.scaleFactor));
-            probeParameter[1] = Integer.toString((int) Math.round(mouseLocY2 / this.scaleFactor));
-            probeParameter[2] = calculateHU((int) Math.round(mouseLocX2 / this.scaleFactor), (int) Math.round(mouseLocY2 / this.scaleFactor));
-            this.getCanvas().getLayeredCanvas().textOverlay.setProbeParameters(probeParameter);
+            probeParameter[0] = Integer.toString((int) Math.round(mouseLocX2 / scaleFactor));
+            probeParameter[1] = Integer.toString((int) Math.round(mouseLocY2 / scaleFactor));
+            probeParameter[2] = calculateHU((int) Math.round(mouseLocX2 / scaleFactor), (int) Math.round(mouseLocY2 / scaleFactor));
+            canvas.getLayeredCanvas().textOverlay.setProbeParameters(probeParameter);
+            probeParameter = null;
         }
-    }
-
-    public float getRescaleIntercept() {
-        if (rescaleIntercept != null && !rescaleIntercept.equalsIgnoreCase("")) {
-            return Float.parseFloat(rescaleIntercept);
-        } else {
-            return 0.0f;
-        }
-    }
-
-    public void setRescaleIntercept(String rescaleIntercept) {
-        this.rescaleIntercept = rescaleIntercept;
-    }
-
-    public float getRescaleSlope() {
-        if (rescaleSlope != null && !rescaleSlope.equalsIgnoreCase("")) {
-            return Float.parseFloat(rescaleSlope);
-        } else {
-            return 0.0f;
-        }
-    }
-
-    public void setRescaleSlope(String rescaleSlope) {
-        this.rescaleSlope = rescaleSlope;
-    }
-
-    public String getModality() {
-        return modality;
-    }
-
-    public void setModality(String modality) {
-        this.modality = modality;
-    }
-
-    public boolean isLocalizer() {
-        return isLocalizer;
-    }
-
-    public String getFrameOfReferenceUID() {
-        return frameOfReferenceUID;
-    }
-
-    public String getImageOrientation() {
-        return imageOrientation;
-    }
-
-    public String getImagePosition() {
-        return imagePosition;
-    }
-
-    public String getPixelSpacing() {
-        return pixelSpacing;
-    }
-
-    public int getColumn() {
-        return column;
-    }
-
-    public int getRow() {
-        return row;
-    }
-
-    public String getReferencedSOPInstanceUID() {
-        return referencedSOPInstanceUID;
     }
 
     private void designContext() {
-        ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList(this.studyUID);
+        ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList_SepMulti(studyUID);
         JMenu menu;
-        if ((this.studyDesc == null) || (this.studyDesc.equalsIgnoreCase(""))) {
-            menu = new JMenu(this.studyUID);
+        if ((studyDesc == null) || (studyDesc.equalsIgnoreCase(""))) {
+            menu = new JMenu(studyUID);
         } else {
-            menu = new JMenu(this.studyDesc);
+            menu = new JMenu(studyDesc);
         }
         JMenu menu1 = new JMenu("Multiframe(s)");
         for (final Series series : seriesList) {
@@ -2451,12 +1225,11 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
                 menu.add(menu1);
             }
             menuitem.addActionListener(new java.awt.event.ActionListener() {
-
                 public void actionPerformed(ActionEvent arg0) {
-                    if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                        changeSeries(arg0, series.getStudyInstanceUID(), series.getSeriesInstanceUID(), series.isMultiframe(), series.getInstanceUID());
+                    if (ApplicationContext.selectedPanel.getComponentCount() == 1) {
+                        changeSeries(series.getStudyInstanceUID(), series.getSeriesInstanceUID(), null, 0);
                     } else {
-                        changeSeries(arg0, series.getStudyInstanceUID(), series.getSeriesInstanceUID());
+                        changeSeries(series.getStudyInstanceUID(), series.getSeriesInstanceUID(), null, 0, ApplicationContext.selectedPanel);
                     }
                 }
             });
@@ -2466,112 +1239,813 @@ public class ImagePanel extends javax.swing.JPanel implements MouseWheelListener
         addContextItem();
         jPopupMenu1.addSeparator();
         jPopupMenu1.add(menu);
-
-        createOtherPatientStudiesMenu(jPopupMenu1);
-        this.setComponentPopupMenu(jPopupMenu1);
-    }
-    JMenu studyMenu = null;
-
-    public void createOtherPatientStudiesMenu(JPopupMenu mainMenu) {
-
-        if (canvas.getLayeredCanvas().getComparedWithStudies() != null) {
-            //Other Studies
-            mainMenu.addSeparator();
-            for (String s : canvas.getLayeredCanvas().getComparedWithStudies()) {
-                if (!s.equalsIgnoreCase(this.studyUID)) {
-                    studyMenu = new JMenu(ApplicationContext.databaseRef.getPatientNameBasedonStudyUID(s));
-                    ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList(s);
-                    JMenu menu1 = new JMenu("Multiframe(s)");
-                    for (final Series series : seriesList) {
-                        JMenuItem menuitem = null;
-                        if (series.isMultiframe()) {
-                            if (Integer.parseInt(series.getImageList().get(0).getInstance_no()) < 10) {
-                                menuitem = new JMenuItem(series.getImageList().get(0).getInstance_no() + "   - Frames  " + series.getImageList().get(0).getTotalNumFrames());
-                            } else {
-                                menuitem = new JMenuItem(series.getImageList().get(0).getInstance_no() + " - Frames  " + series.getImageList().get(0).getTotalNumFrames());
-                            }
-                            menu1.add(menuitem);
-                        } else if (!series.getSeriesDesc().equalsIgnoreCase("null")) {
-                            menuitem = new JMenuItem(series.getSeriesDesc());
-                        } else if (!series.getBodyPartExamined().equalsIgnoreCase("null")) {
-                            menuitem = new JMenuItem(series.getBodyPartExamined());
-                        } else {
-                            menuitem = new JMenuItem(series.getSeriesInstanceUID());
-                        }
-                        if (!series.isMultiframe()) {
-                            studyMenu.add(menuitem);
-                        } else {
-                            studyMenu.add(menu1);
-                        }
-                        menuitem.addActionListener(new java.awt.event.ActionListener() {
-
-                            public void actionPerformed(ActionEvent arg0) {
-                                if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                                    changeSeries(arg0, series.getStudyInstanceUID(), series.getSeriesInstanceUID(), series.isMultiframe(), series.getInstanceUID());
-                                } else {
-                                    changeSeries(arg0, series.getStudyInstanceUID(), series.getSeriesInstanceUID());
-                                }
-                            }
-                        });
-                    }
-
-                    mainMenu.add(studyMenu);
-                }
-            }
-
-        }
-    }
-
-    public boolean isInstanceArray() {
-        if (this.instanceArray != null) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static boolean isSynchornizeTiles() {
-        return synchornizeTiles;
     }
 
     public void doSynchronize() {
-        if (synchornizeTiles) {
+        if (synchornizeTiles || ((JPanel) ((JPanel) canvas.getLayeredCanvas().getParent()).getParent()).getComponentCount() == 1 || !modality.contains("CT")) {
             synchornizeTiles = false;
         } else {
             synchornizeTiles = true;
-            syncStartInstance = this.currentInstanceNo;
-            SynchronizationDelegate.setSyncStartInstanceInAllTiles();
+            selectTiles();
         }
-    }
-
-    public boolean canBeProcessed() {
-        boolean temp = false;
-        if (modality.startsWith("CT")) {
-            temp = true;
-        }
-        return temp;
-    }
-
-    public int getSyncDifference() {
-        return currentInstanceNo - syncStartInstance;
-    }
-
-    public void updateSyncStartInstance() {
-        syncStartInstance = this.currentInstanceNo;
-    }
-
-    public int getSyncStartInstance() {
-        return syncStartInstance;
-    }
-
-    private void changeSeries(ActionEvent e, String studyUID, String seriesUID) {
-        SeriesChooserDelegate seriesChooser = new SeriesChooserDelegate(studyUID, seriesUID, this.getCanvas().getLayeredCanvas());
-    }
-
-    private void changeSeries(ActionEvent e, String studyUID, String seriesUID, boolean multiframe, String instanceUID) {
-        SeriesChooserDelegate seriesChooser = new SeriesChooserDelegate(studyUID, seriesUID, multiframe, instanceUID, this.getCanvas().getLayeredCanvas());
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPopupMenu jPopupMenu1;
     // End of variables declaration//GEN-END:variables
+
+    public void setScaleFactor(float parentWidth, float parentHeight, int noOfComponents) {
+        JPanel panel = (JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent();
+        if (noOfComponents == 1) {
+            if (parentWidth > imgWidth) {
+                zoom((maxWidth / maxHeight) + (maxWidth / parentWidth));
+            } else {
+                zoom(panel.getComponentCount() + (parentHeight / parentWidth));
+            }
+        } else if (noOfComponents == 2) {
+            zoom(maxWidth / maxHeight);
+        } else {
+            if (parentHeight <= parentWidth) {
+                zoom(parentHeight / maxHeight);
+            } else {
+                zoom(parentWidth / maxWidth);
+            }
+        }
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setImageSize((imgHeight + "x" + imgWidth));
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setViewSize(((int) parentWidth + "x" + (int) parentHeight));
+    }
+
+    public void zoom(double scalefactor) {
+        scaleFlag = true;
+        scaleFactor = scalefactor;
+        displayZoomLevel();
+        scaleProcess();
+        canvas.repaint();
+    }
+
+    //To change the series by choosing from the preview panel
+    public void changeSeries(String studyUID, String seriesUID, String sopUid, int instanceNo) {
+        if (!multiframe) {
+            storeAnnotation();
+        } else {
+            storeMultiframeAnnotation();
+        }
+        SeriesChooserDelegate seriesChooserDelegate = new SeriesChooserDelegate(studyUID, seriesUID, sopUid, canvas.getLayeredCanvas(), instanceNo);
+    }
+
+    //To change series in case of image layout
+    public void changeSeries(String studyUID, String seriesUID, String sopUid, int instanceNumber, JPanel panel) {
+        SeriesChooserDelegate seriesChooserDelegate = new SeriesChooserDelegate(studyUID, seriesUID, sopUid, instanceNumber, panel);
+    }
+
+    public void displayFrames() {
+        try {
+            currentbufferedimage = reader.read(currentFrame);
+            convertToRGBImage();
+            calculateHeightAndWidth();
+            repaint();
+            canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+            canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setTotalInstance(Integer.toString(totalInstance));
+            canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getMultiframeAnnotation(currentInstanceNo));
+        } catch (Exception ex) {
+            Logger.getLogger(ImagePanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void forwardMultipleImages(JPanel panel) {
+        int lastInstanceNumber = ((LayeredCanvas) panel.getComponent(0)).imgpanel.currentInstanceNo;
+        int tiles = panel.getComponentCount();
+        if (totalInstance > ApplicationContext.imgBuffer.getDefaultBufferSize()) {
+            ApplicationContext.imgBuffer.clearSubMap(lastInstanceNumber - tiles, lastInstanceNumber);
+            ApplicationContext.imgBuffer.clearElementsForward(lastInstanceNumber + tiles + tiles);//Useful to remove the unwanted images exist in buffer because of loop back
+            ApplicationContext.imageUpdator.terminateThread();
+            ApplicationContext.imageUpdator = new ImageGenerator(ApplicationContext.imgBuffer, ApplicationContext.imgBuffer.getImagePanelRef(), false);
+            if (lastInstanceNumber + tiles + tiles + 1 <= totalInstance) {
+                ApplicationContext.imageUpdator.setParameters(lastInstanceNumber + tiles + tiles, lastInstanceNumber + tiles + tiles + tiles, true);
+            } else if (ApplicationContext.imgBuffer.getFirstKey() != 0) {//Avoid multiple time updation of same images on loop back
+                ApplicationContext.imageUpdator.setParameters(0, tiles + tiles, true);
+            } else {
+                ApplicationContext.imageUpdator.setParameters(ApplicationContext.imgBuffer.getLowerKey(tiles + tiles), ApplicationContext.imgBuffer.getLowerKey(tiles + tiles) + (ApplicationContext.imgBuffer.getDefaultBufferSize() - ApplicationContext.imgBuffer.getCurrentBufferSize()), true);
+            }
+            ApplicationContext.imageUpdator.start();
+        }
+        lastInstanceNumber += tiles + 1;
+        if (lastInstanceNumber > ((LayeredCanvas) panel.getComponent(0)).imgpanel.totalInstance) {
+            displayImages(panel, 0, false);
+        } else {
+            int x = lastInstanceNumber % tiles;
+            if (x > 0) {
+                displayImages(panel, lastInstanceNumber - x, false);
+            } else {
+                displayImages(panel, lastInstanceNumber - tiles, false);
+            }
+        }
+        canvas.setSelection(false);
+    }
+
+    public void reverseMultipleImages(JPanel panel) {
+        int lastInstanceNumber = ((LayeredCanvas) panel.getComponent(0)).imgpanel.currentInstanceNo;
+        int tiles = panel.getComponentCount();
+        if (totalInstance > ApplicationContext.imgBuffer.getDefaultBufferSize()) {
+            ApplicationContext.imgBuffer.clearSubMap(lastInstanceNumber + tiles, lastInstanceNumber + tiles + tiles);
+            ApplicationContext.imgBuffer.clearElementsBackward(lastInstanceNumber - tiles - tiles);
+            ApplicationContext.imageUpdator.terminateThread();
+            ApplicationContext.imageUpdator = new ImageGenerator(ApplicationContext.imgBuffer, ApplicationContext.imgBuffer.getImagePanelRef(), false);
+            if (lastInstanceNumber - (tiles + tiles) >= 0) {
+                ApplicationContext.imageUpdator.setParameters(lastInstanceNumber - tiles, lastInstanceNumber - (tiles + tiles), false);
+            } else if (ApplicationContext.imgBuffer.getLastKey() + 1 != totalInstance) {
+                ApplicationContext.imageUpdator.setParameters(totalInstance - 1, totalInstance - (totalInstance % tiles), false);
+            } else {
+                ApplicationContext.imageUpdator.setParameters(totalInstance - (totalInstance % tiles) - 1, totalInstance - (totalInstance % tiles) - tiles, false);
+            }
+            ApplicationContext.imageUpdator.start();
+        }
+        if (lastInstanceNumber == 0) {
+            displayImages(panel, totalInstance - (totalInstance % tiles), false);
+        } else {
+            int x = lastInstanceNumber % tiles;
+            if (x > 0) {
+                displayImages(panel, lastInstanceNumber - x, false);
+            } else {
+                displayImages(panel, lastInstanceNumber - tiles, false);
+            }
+        }
+        canvas.setSelection(false);
+    }
+
+    public void setVisibility(LayeredCanvas tempCanvas, boolean visibility) {
+        if (tempCanvas.imgpanel != null) {
+            tempCanvas.imgpanel.setVisible(visibility);
+            tempCanvas.textOverlay.setVisible(visibility);
+            tempCanvas.annotationPanel.setVisible(visibility);
+            tempCanvas.setVisible(visibility);
+            tempCanvas.repaint();
+        }
+    }
+
+    //To render the overlay data in image
+    private BufferedImage combineImages(BufferedImage currentbufferedimage, BufferedImage overlayImg) {
+        Graphics2D g2d = currentbufferedimage.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.drawImage(overlayImg, 0, 0, null);
+        g2d.dispose();
+        return currentbufferedimage;
+    }
+
+    //Displays set of images when moving forward,backward,thumbnail click of same series
+    public void displayImages(JPanel panel, int instanceNumber, boolean waitForImages) {
+        if (((LayeredCanvas) panel.getComponent(0)).imgpanel.totalInstance != instanceNumber) {
+            for (int i = 0; i < panel.getComponentCount(); i++) {
+                if (instanceNumber < ((LayeredCanvas) panel.getComponent(0)).imgpanel.totalInstance) {
+                    if (panel.getComponent(i) instanceof LayeredCanvas) {
+                        LayeredCanvas tempCanvas = ((LayeredCanvas) panel.getComponent(i));
+                        if (tempCanvas.imgpanel != null && tempCanvas.imgpanel.seriesUID.equals(seriesUID)) {
+                            tempCanvas.imgpanel.currentInstanceNo = instanceNumber;
+                            if (!waitForImages) {
+                                tempCanvas.imgpanel.displayImage(ApplicationContext.imgBuffer.getImmediately(instanceNumber));
+                            } else {
+                                tempCanvas.imgpanel.displayImage(ApplicationContext.imgBuffer.get(instanceNumber));
+                            }
+
+                            tempCanvas.imgpanel.repaint();
+                            instanceNumber++;
+                            setVisibility(tempCanvas, true);
+                        } else {
+                            tempCanvas.createSubComponents(fileLocation + File.separator + instanceUidList.get(instanceNumber), 0, true);
+                            tempCanvas.imgpanel.setCurrentInstanceNo(instanceNumber);
+                            tempCanvas.textOverlay.getTextOverlayParam().setCurrentInstance(instanceNumber);
+                            tempCanvas.textOverlay.multiframeStatusDisplay(tempCanvas.imgpanel.isMultiFrame());
+                            tempCanvas.imgpanel.setCurrentSeriesAnnotation();
+                            instanceNumber++;
+                            setVisibility(tempCanvas, true);
+                        }
+                    }
+                } else {
+                    LayeredCanvas tempCanvas = ((LayeredCanvas) panel.getComponent(i));
+                    setVisibility(tempCanvas, false);
+                }
+            }
+        }
+        ApplicationContext.setImageIdentification();
+    }
+
+    public void selectImage(int instanceNumber) {
+        storeAnnotation();
+        currentInstanceNo = instanceNumber;
+        if (imgBuffer.getDefaultBufferSize() < totalInstance) {
+            setImage(readDicomFile(currentInstanceNo));
+            imgBuffer.clearBuffer();
+            imageUpdator.terminateThread();
+            imageUpdator = new ImageGenerator(imgBuffer, this, false);
+            imageUpdator.setParameters(currentInstanceNo - 15, currentInstanceNo + 10, true);
+            imageUpdator.start();
+        } else {
+            setImage(imgBuffer.get(currentInstanceNo, true));
+        }
+        if (displayScout) {
+            LocalizerDelegate localizerDelegate = null;
+            if (currentInstanceNo > 1) {
+                localizerDelegate = new LocalizerDelegate(true);
+            } else {
+                localizerDelegate = new LocalizerDelegate(false);
+            }
+            localizerDelegate.start();
+        }
+        if (synchornizeTiles && modality.contains("CT") && !multiframe) {
+            selectTiles();
+        }
+        canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getInstanceAnnotation(currentInstanceNo));
+    }
+
+    public void doTileSync(boolean isForward) {
+        JPanel outerComponent = (JPanel) ((JPanel) ApplicationContext.layeredCanvas.imgpanel.getCanvas().getLayeredCanvas().getParent()).getParent();
+        for (int i = 0; i < outerComponent.getComponentCount(); i++) {
+            LayeredCanvas layeredCanvas = (LayeredCanvas) ((JPanel) outerComponent.getComponent(i)).getComponent(0);
+            ImagePanel imgPanel = layeredCanvas.imgpanel;
+            if (ApplicationContext.layeredCanvas.imgpanel != imgPanel) {
+                try {
+                    imgPanel.setImage(ApplicationContext.layeredCanvas.imgpanel.getSliceLocation(), isForward);
+                } catch (NullPointerException npe) {
+                    //ignore : Null pointer exception occurs when there is no canvas
+                }
+            }
+        }
+    }
+
+    public void checkIsLocalizer() {
+        if (currentScoutDetails.getImageType().equalsIgnoreCase("Localizer")) {
+            isLocalizer = true;
+            if (displayScout) {
+                JPanel panel = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent());
+                for (int j = 0; j < panel.getComponentCount(); j++) {
+                    try {
+                        LayeredCanvas temp = ((LayeredCanvas) ((JPanel) panel.getComponent(j)).getComponent(0));
+                        if (temp.imgpanel != null) {
+                            temp.imgpanel.repaint();
+                        }
+                    } catch (Exception e) {
+//                        System.out.println("Exception in checkIsLocalizer() : " + e.getMessage());
+                    }
+                }
+            }
+        } else {
+            isLocalizer = false;
+        }
+    }
+
+    public double findSlope(double x1, double y1, double x2, double y2) {
+        try {
+            double slope = (y2 - y1) / (x2 - x1);
+            return slope;
+        } catch (ArithmeticException ex) {
+            return 0;
+        }
+    }
+
+    public BufferedImage readDicomFile(int i) {
+        BufferedImage tempImage = null;
+        ImageInputStream iis = null;
+        File currentFile = null;
+        try {
+            if (!isLink) {
+                currentFile = new File(fileLocation + File.separator + instanceUidList.get(i));
+            } else {
+                currentFile = new File(fileUrlsifLink.get(i));
+            }
+            iis = ImageIO.createImageInputStream(currentFile);
+            Iterator iter = ImageIO.getImageReadersByFormatName("DICOM");
+            reader = (ImageReader) iter.next();
+            reader.setInput(iis, false);
+            tempImage = reader.read(0);
+            DicomInputStream dis = new DicomInputStream(currentFile);
+            DicomObject obj = dis.readDicomObject();
+            String overlayData = obj.getString(Tag.OverlayData);
+            if (overlayData != null && overlayData.length() > 0) {
+                tempImage = combineImages(tempImage, OverlayUtils.extractOverlay(obj, Tag.OverlayData, reader, "FFFFFF"));
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(ImagePanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return tempImage;
+    }
+
+    public synchronized void next() {
+        storeAnnotation();
+        if (currentInstanceNo + 1 < totalInstance) {
+            currentInstanceNo++;
+            setImage(imgBuffer.get(currentInstanceNo, true));
+            if (displayScout) {
+                LocalizerDelegate localizerDelegate = null;
+                if (currentInstanceNo > 1) {
+                    localizerDelegate = new LocalizerDelegate(true);
+                } else {
+                    localizerDelegate = new LocalizerDelegate(false);
+                }
+                localizerDelegate.start();
+            }
+            if (!multiframe && synchornizeTiles && modality.startsWith("CT")) {
+                doTileSync(true);
+            }
+        } else {
+            if (ApplicationContext.databaseRef.getLoopbackStatus()) {
+                if (totalInstance > imgBuffer.getDefaultBufferSize()) {
+                    imgBuffer.clearBuffer();
+                    imageUpdator.terminateThread();
+                    imageUpdator = new ImageGenerator(imgBuffer, this, false);
+                    imageUpdator.setParameters(0, 25, true);
+                    imageUpdator.start();
+                }
+                currentInstanceNo = -1;
+                if (synchornizeTiles) {
+                    updateTiles(true);
+                }
+            } else {
+                currentInstanceNo = totalInstance;
+            }
+        }
+    }
+
+    public synchronized void previous() {
+        storeAnnotation();
+        if (currentInstanceNo - 1 >= 0) {
+            currentInstanceNo--;
+            setImage(imgBuffer.get(currentInstanceNo, false));
+            if (displayScout) {
+                LocalizerDelegate localizerDelegate = null;
+                if (currentInstanceNo > 1) {
+                    localizerDelegate = new LocalizerDelegate(true);
+                } else {
+                    localizerDelegate = new LocalizerDelegate(false);
+                }
+                localizerDelegate.start();
+            }
+            if (!multiframe && synchornizeTiles && modality.startsWith("CT")) {
+                doTileSync(false);
+            }
+        } else {
+            if (ApplicationContext.databaseRef.getLoopbackStatus()) {
+                if (totalInstance > imgBuffer.getDefaultBufferSize()) {
+                    imgBuffer.clearBuffer();
+                    imageUpdator.terminateThread();
+                    imageUpdator = new ImageGenerator(imgBuffer, this, false);
+                    imageUpdator.setParameters(totalInstance - 1, totalInstance - 25, false);
+                    imageUpdator.start();
+                }
+                currentInstanceNo = totalInstance;
+                if (synchornizeTiles) {
+                    updateTiles(false);
+                }
+            } else {
+                currentInstanceNo = 0;
+            }
+        }
+    }
+
+    private void setImage(BufferedImage tempImage) {
+        try {
+            if (tempImage != null) {
+                currentbufferedimage = tempImage;
+                currentScoutDetails = ApplicationContext.databaseRef.getScoutLineDetails(studyUID, seriesUID, instanceUidList.get(currentInstanceNo));
+                checkIsLocalizer();
+                try {
+                    if (cm != null) {
+                        currentbufferedimage = new BufferedImage(cm, currentbufferedimage.getRaster(), false, null);
+                    }
+                } catch (Exception e) {
+//                    System.out.println("Exception in setImage() : " + currentInstanceNo);
+                }
+                image = currentbufferedimage;
+                newBufferedImage = true;
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(currentScoutDetails.getSliceLocation());
+                canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getInstanceAnnotation(currentInstanceNo));
+                ApplicationContext.setImageIdentification();
+                repaint();
+            }
+        } catch (NullPointerException ex) {
+//            System.out.println("Null in setImage() : " + currentInstanceNo);
+        }
+    }
+
+    public void startImageBuffering(int startFrom) {  //Starts the producer with the specified value
+        if (!multiframe) {
+            currentInstanceNo = startFrom;
+            imgBuffer = new ImageBuffer(this);
+            imageUpdator = new ImageGenerator(imgBuffer, this, false);
+            if (imgBuffer.getDefaultBufferSize() < totalInstance) {
+                imageUpdator.setParameters(startFrom, startFrom + 25, true);
+            } else {
+                imageUpdator.setParameters(0, totalInstance, true);
+            }
+            imageUpdator.start();
+        }
+    }
+
+    public void updateCurrentInstance() {
+        currentScoutDetails = ApplicationContext.databaseRef.getScoutLineDetails(studyUID, seriesUID, instanceUidList.get(currentInstanceNo));
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(currentScoutDetails.getSliceLocation());
+        ApplicationContext.setImageIdentification();
+    }
+
+    private void updateTiles(boolean isForward) { //Updates the other tiles when the tile to be synchronized reaches the last instance
+        JPanel outerComponent = (JPanel) ((JPanel) ApplicationContext.layeredCanvas.getParent()).getParent();
+        for (int i = 0; i < outerComponent.getComponentCount(); i++) {
+            LayeredCanvas layeredCanvas = (LayeredCanvas) ((JPanel) outerComponent.getComponent(i)).getComponent(0);
+            ImagePanel imgPanel = layeredCanvas.imgpanel;
+            if (ApplicationContext.layeredCanvas.imgpanel != imgPanel) {
+                try {
+                    imgPanel.imgBuffer.clearBuffer();
+                    imgPanel.imageUpdator.terminateThread();
+                    imgPanel.imageUpdator = new ImageGenerator(imgPanel.imgBuffer, imgPanel, false);
+                    if (isForward) {
+                        imgPanel.imageUpdator.setParameters(0, 25, isForward);
+                    } else {
+                        imgPanel.imageUpdator.setParameters(imgPanel.totalInstance - 1, imgPanel.totalInstance - 25, isForward);
+                    }
+                    imgPanel.imageUpdator.start();
+                } catch (NullPointerException npe) {
+                    //ignore : Null pointer exception occurs when there is no canvas
+                }
+            }
+        }
+    }
+
+    private synchronized void selectTiles() { //Selects the instance on tiles when a thumbnail click occurs on synchronization or synchronization starts from middle
+        JPanel outerComponent = (JPanel) ((JPanel) ApplicationContext.layeredCanvas.getParent()).getParent();
+        for (int i = 0; i < outerComponent.getComponentCount(); i++) {
+            LayeredCanvas layeredCanvas = (LayeredCanvas) ((JPanel) outerComponent.getComponent(i)).getComponent(0);
+            ImagePanel imgPanel = layeredCanvas.imgpanel;
+            if (ApplicationContext.layeredCanvas.imgpanel != imgPanel) {
+                String iuid = ApplicationContext.databaseRef.getInstanceUIDBasedOnSliceLocation(studyUID, imgPanel.seriesUID, ApplicationContext.layeredCanvas.imgpanel.getSliceLocation(), ApplicationContext.layeredCanvas.imgpanel.sliceThickness);
+                if (iuid != null) {
+                    int index = imgPanel.instanceUidList.indexOf(iuid);
+                    if (!imgPanel.imgBuffer.isImageExists(index)) {
+                        imgPanel.imgBuffer.clearBuffer();
+                        imgPanel.imageUpdator.terminateThread();
+                        imgPanel.imageUpdator = new ImageGenerator(imgPanel.imgBuffer, imgPanel, false);
+                        imgPanel.imageUpdator.setParameters(index - 1, index + 24, true);
+                        imgPanel.imageUpdator.start();
+                        imgPanel.currentInstanceNo = index;
+                        imgPanel.setImage(imgPanel.imgBuffer.get(imgPanel.currentInstanceNo));
+                    } else {
+                        imgPanel.currentInstanceNo = index;
+                        imgPanel.setImage(imgPanel.imgBuffer.get(imgPanel.currentInstanceNo));
+                    }
+                }
+            }
+        }
+    }
+
+    public void storeAnnotation() { //Adds new instance's annotaion
+        try {
+            currentSeriesAnnotation.addAnnotation(currentInstanceNo, canvas.getLayeredCanvas().annotationPanel.getAnnotation());
+        } catch (NullPointerException ex) {
+            //ignore
+        }
+    }
+
+    public void storeMultiframeAnnotation() { //Add new frame's annotation
+        currentSeriesAnnotation.addMultiframeAnnotation(currentInstanceNo, canvas.getLayeredCanvas().annotationPanel.getAnnotation());
+    }
+
+    public void setCurrentSeriesAnnotation() { //Sets the annotation for first time
+        currentSeriesAnnotation = ApplicationContext.imgView.selectedSeriesDisplays.get(ApplicationContext.imgView.selectedStudy).getStudyAnnotation().getSeriesAnnotation(seriesUID);
+        if (currentSeriesAnnotation == null) {
+            currentSeriesAnnotation = new SeriesAnnotations(seriesUID);
+            ApplicationContext.imgView.selectedSeriesDisplays.get(ApplicationContext.imgView.selectedStudy).getStudyAnnotation().putSeriesAnnotation(seriesUID, currentSeriesAnnotation);
+        }
+        if (!multiframe) {
+            canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getInstanceAnnotation(currentInstanceNo));
+        } else {
+            if (!currentSeriesAnnotation.isMultiframeAnnotationsExist()) {
+                currentSeriesAnnotation.initializeMultiframeAnnotations();
+            }
+            canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getMultiframeAnnotation(currentInstanceNo));
+        }
+    }
+
+    public void removeAllAnnotations() {
+        if (!multiframe) {
+            currentSeriesAnnotation.removeInstanceAnnotation(currentInstanceNo);
+        } else {
+            currentSeriesAnnotation.removeMultiframeAnnotation(currentInstanceNo);
+        }
+    }
+
+    public void getFilePathsifLink() {
+        if (ApplicationContext.databaseRef.isLink(studyUID)) {
+            fileUrlsifLink = ApplicationContext.databaseRef.getInstancesLocation(studyUID, seriesUID);
+            isLink = true;
+        }
+    }
+
+    public void setImage(int instanceNumber) {
+        currentInstanceNo = instanceNumber;
+        currentbufferedimage = ApplicationContext.imgBuffer.get(currentInstanceNo);
+        windowChanged(windowLevel, windowWidth);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+        canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(ApplicationContext.databaseRef.getSlicePosition(studyUID, seriesUID, instanceUidList.get(currentInstanceNo)));
+        multiframe = canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().isMultiframe();
+        canvas.getLayeredCanvas().textOverlay.multiframeStatusDisplay(multiframe);
+        instanceUID = instanceUidList.get(currentInstanceNo);
+        dicomFileUrl = fileLocation + File.separator + instanceUID;
+        centerImage();
+    }
+
+    public void displayImage(BufferedImage tempImage) {
+        try {
+            if (tempImage != null) {
+                currentbufferedimage = tempImage;
+                try {
+                    if (cm != null) {
+                        currentbufferedimage = new BufferedImage(cm, currentbufferedimage.getRaster(), false, null);
+                    }
+                } catch (Exception e) {
+                    //ignore
+                }
+                image = currentbufferedimage;
+                newBufferedImage = true;
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setCurrentInstance(currentInstanceNo);
+                canvas.getLayeredCanvas().textOverlay.getTextOverlayParam().setSlicePosition(ApplicationContext.databaseRef.getSlicePosition(studyUID, seriesUID, instanceUidList.get(currentInstanceNo)));
+                canvas.getLayeredCanvas().annotationPanel.setAnnotation(currentSeriesAnnotation.getInstanceAnnotation(currentInstanceNo));
+                instanceUID = instanceUidList.get(currentInstanceNo);
+                repaint();
+            }
+        } catch (NullPointerException ex) {
+//            System.out.println("Null in setImageLayoutImage() : " + currentInstanceNo);
+        }
+    }
+
+    public void doPan() {
+        if (tool.equalsIgnoreCase("panning")) {
+            tool = "";
+        } else {
+            tool = "panning";
+        }
+    }
+
+    public void doWindowing() {
+        if (tool.equalsIgnoreCase("windowing")) {
+            tool = "";
+        } else {
+            tool = "windowing";
+        }
+    }
+
+    public void doZoomIn() {
+        scaleFlag = true;
+        scaleFactor = scaleFactor + 0.5;
+        displayZoomLevel();
+        scaleProcess();
+        canvas.repaint();
+    }
+
+    public void doZoomOut() {
+        scaleFlag = true;
+        scaleFactor = scaleFactor - 0.5;
+        if (scaleFactor > 0) {
+            scaleProcess();
+        } else {
+            scaleFactor = 0.5;
+        }
+        displayZoomLevel();
+        canvas.repaint();
+    }
+
+    public void doStack() {
+        if (tool.equalsIgnoreCase("stack")) {
+            tool = "";
+        } else {
+            tool = "stack";
+        }
+    }
+
+    public void setImageInfo(double pixelSpacingX, double pixelSpacingY, String studyUid, String seriesUid, String fileLocation, SeriesAnnotations currentSeriesAnnotation, ArrayList<String> instanceUidList, ColorModelParam cmParam, ColorModel cm, int windowLevel, int windowWidth, String modality, String studyDesc) {
+        this.pixelSpacingX = pixelSpacingX;
+        this.pixelSpacingY = pixelSpacingY;
+        this.studyUID = studyUid;
+        this.seriesUID = seriesUid;
+        this.fileLocation = fileLocation;
+        this.currentSeriesAnnotation = currentSeriesAnnotation;
+        this.instanceUidList = instanceUidList;
+        this.totalInstance = instanceUidList.size();
+        this.cmParam = cmParam;
+        this.cm = cm;
+        this.windowLevel = WC = windowLevel;
+        this.windowWidth = WW = windowWidth;
+        this.modality = modality;
+        this.studyDesc = studyDesc;
+    }
+
+    public TextOverlayParam getTextOverlayParam() {
+        return textOverlayParam;
+    }
+
+    public void setTextOverlayParam(TextOverlayParam textOverlayParam) {
+        this.textOverlayParam = textOverlayParam;
+    }
+
+    public boolean isMultiFrame() {
+        return multiframe;
+    }
+
+    public String getDicomFileUrl() {
+        return dicomFileUrl;
+    }
+
+    public Canvas getCanvas() {
+        return canvas;
+    }
+
+    public String getStudyUID() {
+        return studyUID;
+    }
+
+    public boolean isEncapsulatedDocument() {
+        return isEncapsulatedDocument;
+    }
+
+    public BufferedImage getCurrentbufferedimage() {
+        return currentbufferedimage;
+    }
+
+    public String getInstanceUID() {
+        return instanceUID;
+    }
+
+    public String getSeriesUID() {
+        return seriesUID;
+    }
+
+    public void setWindowingToolsAsDefault() {
+        if (!(tool.equalsIgnoreCase("windowing"))) {
+            tool = "windowing";
+        }
+    }
+
+    public boolean isWindowingSelected() {
+        return (tool.equalsIgnoreCase("windowing"));
+    }
+
+    public boolean isFlipHorizontalFlag() {
+        return flipHorizontalFlag;
+    }
+
+    public boolean isFlipVerticalFlag() {
+        return flipVerticalFlag;
+    }
+
+    public boolean isIsRotate() {
+        return isRotate;
+    }
+
+    public int getRotateLeftAngle() {
+        return rotateLeftAngle;
+    }
+
+    public int getRotateRightAngle() {
+        return rotateRightAngle;
+    }
+
+    public double getScaleFactor() {
+        return scaleFactor;
+    }
+
+    public boolean isScaleFlag() {
+        return scaleFlag;
+    }
+
+    public static boolean isProbeFlag() {
+        return probeFlag;
+    }
+
+    public double getCurrentScaleFactor() {
+        return currentScaleFactor;
+    }
+
+    public boolean isStackSelected() {
+        return (tool.equalsIgnoreCase("stack"));
+    }
+
+    public void setToolsToNull() {
+        tool = "";
+    }
+
+    public boolean isInvertFlag() {
+        return invertFlag;
+    }
+
+    public double getPixelSpacingX() {
+        return pixelSpacingX;
+    }
+
+    public double getPixelSpacingY() {
+        return pixelSpacingY;
+    }
+
+    public int getWindowLevel() {
+        return windowLevel;
+    }
+
+    public int getWindowWidth() {
+        return windowWidth;
+    }
+
+    public String getSliceLocation() {
+        return currentScoutDetails.getSliceLocation();
+    }
+
+    public int getTotalInstance() {
+        return totalInstance;
+    }
+
+    public void setCurrentInstanceNo(int currentInstanceNo) {
+        this.currentInstanceNo = currentInstanceNo;
+    }
+
+    public static boolean isDisplayScout() {
+        return displayScout;
+    }
+
+    public static void setDisplayScout(boolean displayScout) {
+        ImagePanel.displayScout = displayScout;
+    }
+
+    public int getCurrentInstanceNo() {
+        return currentInstanceNo;
+    }
+
+    public String getModality() {
+        return modality;
+    }
+
+    public void setModality(String modality) {
+        this.modality = modality;
+    }
+
+    public boolean isLocalizer() {
+        return isLocalizer;
+    }
+
+    public String getFrameOfReferenceUID() {
+        if (currentScoutDetails != null) {
+            return currentScoutDetails.getImageFrameofReferenceUID();
+        }
+        return null;
+    }
+
+    public String getImageOrientation() {
+        if (currentScoutDetails != null) {
+            return currentScoutDetails.getImageOrientation();
+        }
+        return null;
+    }
+
+    public String getReferencedSOPInstanceUID() {
+        if (currentScoutDetails != null) {
+            return currentScoutDetails.getImageReferenceSOPInstanceUID();
+        }
+        return null;
+    }
+
+    public String getInstanceUidIfMultiframe() {
+        return instanceUidIfMultiframe;
+    }
+
+    public ScoutLineInfoModel getCurrentScoutDetails() {
+        return currentScoutDetails;
+    }
+
+    public void setCurrentScoutDetails(ScoutLineInfoModel currentScoutDetails) {
+        this.currentScoutDetails = currentScoutDetails;
+    }
+
+    public SeriesAnnotations getCurrentSeriesAnnotation() {
+        return currentSeriesAnnotation;
+    }
+
+    public ArrayList<String> getInstanceUidList() {
+        return instanceUidList;
+    }
+
+    public String getFileLocation() {
+        return fileLocation;
+    }
+
+    public ColorModelParam getCmParam() {
+        return cmParam;
+    }
+
+    public ColorModel getCm() {
+        return cm;
+    }
+
+    public Dataset getDataset() {
+        return dataset;
+    }
+
+    public String getStudyDesc() {
+        return studyDesc;
+    }
 }

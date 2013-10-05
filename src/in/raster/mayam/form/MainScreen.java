@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -39,1139 +40,295 @@
 package in.raster.mayam.form;
 
 import com.nilo.plaf.nimrod.NimRODLookAndFeel;
-import com.pixelmed.dicom.AttributeList;
-import com.pixelmed.dicom.DicomException;
-import com.pixelmed.dicom.TagFromName;
-import com.pixelmed.display.SourceImage;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
-import dcm.derm.human.viewer.BodyJFrame;
-import dcm.derm.human.viewer.BodyManager;
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.ImportDcmDirDelegate;
-import in.raster.mayam.delegate.InputArgumentsParser;
-import in.raster.mayam.delegate.ReceiveDelegate;
-import in.raster.mayam.delegate.SendingDelegate;
-import in.raster.mayam.delegate.SeriesThumbUpdator;
-import in.raster.mayam.delegate.ShowComparisonViewerDelegate;
-import in.raster.mayam.delegate.ShowViewerDelegate;
-import in.raster.mayam.delegate.StudyListUpdator;
-import in.raster.mayam.delegate.WadoRetrieveDelegate;
-import in.raster.mayam.form.dialog.About;
-import in.raster.mayam.form.dialog.ConfirmDelete;
-import in.raster.mayam.form.dialog.ExportLocationChooser;
-import in.raster.mayam.form.dialog.FileChooserDialog;
-import in.raster.mayam.form.dialog.ServerListDialog;
-import in.raster.mayam.form.dialog.SettingsDialog;
-import in.raster.mayam.model.AEModel;
-import in.raster.mayam.model.InputArgumentValues;
-import in.raster.mayam.model.ServerModel;
-import in.raster.mayam.model.Study;
-import in.raster.mayam.model.table.StudyListModel;
-import in.raster.mayam.model.table.renderer.CellRenderer;
-import in.raster.mayam.util.DicomTags;
-import in.raster.mayam.util.DicomTagsReader;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
+import in.raster.mayam.delegates.CreateButtonsDelegate;
+import in.raster.mayam.delegates.InputArgumentsParser;
+import in.raster.mayam.delegates.ReceiveDelegate;
+import in.raster.mayam.delegates.SendingDelegate;
+import in.raster.mayam.delegates.WadoRetrieveDelegate;
+import in.raster.mayam.facade.ApplicationFacade;
+import in.raster.mayam.form.dialogs.FileChooserDialog;
+import in.raster.mayam.form.dialogs.ServerListDialog;
+import in.raster.mayam.listeners.*;
+import in.raster.mayam.models.*;
+import in.raster.mayam.models.table.renderer.IconRenderer;
+import in.raster.mayam.models.treetable.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingUtilities;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-
+import javax.swing.table.TableColumnModel;
 
 /**
  *
- * @author  BabuHussain
- * @version 0.5
- *
+ * @author Devishree
+ * @version 2.0
  */
 public class MainScreen extends javax.swing.JFrame {
 
-    /** Creates new form MainScreen */
-    private MainScreen() {
-        setAppLocale();
+    private ReceiveDelegate receiveDelegate = null;
+    public CreateButtonsDelegate createButtonsDelegate = null;
+    public SettingsForm settingsForm = null;
+    //Variables    
+    ArrayList<String> serverLabels = new ArrayList<String>();
+    ArrayList<StudySeriesMatch> studySeriesMatchs;
+    JPopupMenu preferencesPopup;
+    JMenuItem preferencesItem, resetItem, importItem;
+    JMenuItem sendStudyItem; //MDIAZ
+    //Listeners
+    QueryButtonListener queryButtonListener = null;
+    ServerTabChangeListener serverTabChangeListener = null;
+    int progressValue = 0;
+
+    /**
+     * Creates new form MainScreen
+     */
+    public MainScreen() {
+        ApplicationContext.setAppLocale();
         initComponents();
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         initAppDefaults();
     }
-       
-    private void initAppDefaults() {
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        ApplicationContext.mainScreen = this;
-        checkLogFileExist();
-        //initDB();
-        initQR();
-        startListening();
-        showLocalDBStorage();
-        showThumbnails();
-        initNetworkQueue();
-        initSendingProgress();
-        setTheme();
-        ImportDcmDirDelegate.findAndLoadDcmDirFiles();
-        loadStudiesBasedOnInputParameter();
-        setPreferredTableColumnWidths(studyListTable,new double[]{0.1,0.3,0.1,0.1,0.1,0.2,0.05,0.05});
-    }
-
-    private void setTheme() {
-        systemLFmenu.setText(System.getProperty("os.name"));
-        String activeTheme = ApplicationContext.databaseRef.getActiveTheme();
-        if (activeTheme.equalsIgnoreCase("Nimrod")) {
-            setNimrodTheme();
-        } else if (activeTheme.equalsIgnoreCase("Motif")) {
-            setMotifTheme();
-        } else if (activeTheme.equalsIgnoreCase("System")) {
-            setSystemTheme();
-        }
-    }
-
-    public void loadStudiesBasedOnInputParameter() {
-        InputArgumentValues inputArgumentValues = InputArgumentsParser.inputArgumentValues;
-        if (inputArgumentValues.getAeTitle() != null && inputArgumentValues.getPort() != 0 && inputArgumentValues.getHostName() != null && inputArgumentValues.getWadoContext() != null && inputArgumentValues.getWadoPort() != 0 && inputArgumentValues.getWadoProtocol() != null) {
-            ServerModel serverModel = new ServerModel();
-            serverModel.setAeTitle(inputArgumentValues.getAeTitle());
-            serverModel.setHostName(inputArgumentValues.getHostName());
-            serverModel.setPort(inputArgumentValues.getPort());
-            serverModel.setWadoContextPath(inputArgumentValues.getWadoContext());
-            serverModel.setWadoPort(inputArgumentValues.getWadoPort());
-            serverModel.setWadoProtocol(inputArgumentValues.getWadoProtocol());
-            WadoRetrieveDelegate wadoRetrieveDelegate = new WadoRetrieveDelegate();
-            wadoRetrieveDelegate.retrieveStudy(serverModel);
-        }
-    }
 
     /**
-     * This routine used to initialize the sending progress
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    private void initSendingProgress() {
-        SendingProgress sendingProgress = new SendingProgress();
-        ApplicationContext.sendingProgress = sendingProgress;
-    }
-
-    /**
-     * This routine used to initialize the query
-     */
-    private void initQR() {
-        queryRetrieve = new QueryRetrieve();
-        queryRetrieve.setLocationRelativeTo(this);
-        createDicomFrame = new CreateDicomFrame(this);
-        createDicomFrame.setLocationRelativeTo(this);
-        hl7QueryRetrieve = new HL7QueryRetrieve(createDicomFrame);
-        hl7QueryRetrieve.setLocationRelativeTo(createDicomFrame);
-    }
-    /**
-     * This routine used to set the app specific locale
-     */
-    public void setAppLocale(){
-        ApplicationContext.setAppLocale();
-    }
-
-    /**
-     * This routine used to initialize the network queue
-     */
-    public void initNetworkQueue() {
-        sndRcvFrm = new SendReceiveFrame();
-        sndRcvFrm.setLocationRelativeTo(this);
-        sndRcvFrm.setVisible(false);
-    }
-
-    /**
-     * This routine used to initialize the database
-     */
-    public void initDB() {
-        ApplicationContext.openOrCreateDB();
-    }
-
-    /**
-     * This routine used to find out whether log file exist or not in the application
-     */
-    public void checkLogFileExist() {
-        ApplicationContext.createLogFile();
-    }
-
-    /**
-     * This routine used to start the receiver
-     */
-    private void startListening() {
-        try {
-            startReceiver();
-            System.out.println("Start Server listening on port " + receiveDelegate.getPort());
-        } catch (Exception e) {
-            ApplicationContext.writeLog(e.toString());
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-
-    /**
-     * This routine used to start the receiver
-     */
-    public void startReceiver() throws Exception {
-        receiveDelegate = new ReceiveDelegate();
-        receiveDelegate.start();
-    }
-
-    /**
-     * This routine used to stop the receiver
-     */
-    public void stopReceiver() {
-        receiveDelegate.stop();
-    }
-
-    /**
-     * This routine is used to restart the receiver
-     */
-    public void restartReceiver() {
-        try {
-            stopReceiver();
-            System.out.println("Stop Server listening on port " + receiveDelegate.getPort());
-            startReceiver();
-            System.out.println("Start Server listening on port " + receiveDelegate.getPort());
-        } catch (Exception e) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-
-    /**
-     * This routine is used to update the local database storage
-     */
-    public static void showLocalDBStorage() {
-        refreshLocalDBStorage();
-        if (studyListTable.getRowCount() > 0) {
-            studyListTable.setRowSelectionInterval(0, 0);
-        }
-    }
-
-    /**
-     * This routine used to refresh the local database study list.
-     */
-    public synchronized static void refreshLocalDBStorage() {
-        int i = 0;
-        if (studyListTable.getRowCount() > 2) {
-            i = studyListTable.getSelectedRow();
-        }
-        StudyListModel studyListModel = new StudyListModel();
-        studyListModel.setData(ApplicationContext.databaseRef.listAllStudiesOfDB());
-        studyListTable.setModel((TableModel) studyListModel);
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(studyListModel);
-        studyListTable.setRowSorter(sorter);
-        if (studyListTable.getRowCount() > 0) {
-            if (i < studyListTable.getRowCount()) {
-                studyListTable.setRowSelectionInterval(i, i);
-            } else {
-                studyListTable.setRowSelectionInterval(i - 1, i - 1);
-            }
-        }
-    }
-
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
-     */
+    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        container = new javax.swing.JPanel();
-        contentArea = new javax.swing.JPanel();
-        localDatabaseLabel = new javax.swing.JLabel();
-        jSplitPane1 = new javax.swing.JSplitPane();
-        studyTableScroll = new javax.swing.JScrollPane();
-        studyListTable = new javax.swing.JTable();
-        studyAndSeriesDisplayPanel = new javax.swing.JPanel();
-        windowingPanelCanvas = new javax.swing.JPanel();
-        thumbnailScroll = new javax.swing.JScrollPane();
-        thumbnailDisplay = new javax.swing.JPanel();
-        seriesLabel = new javax.swing.JLabel();
-        headerPanel = new javax.swing.JPanel();
-        importButton = new javax.swing.JButton();
-        exportButton = new javax.swing.JButton();
-        cdImportButton = new javax.swing.JButton();
-        deleteButton = new javax.swing.JButton();
-        metaDataButton = new javax.swing.JButton();
-        sendButton = new javax.swing.JButton();
-        queryRetrieveButton = new javax.swing.JButton();
-        viewerButton = new javax.swing.JButton();
-        queueButton = new javax.swing.JButton();
-        humanButton = new javax.swing.JButton();
-        menuBar = new javax.swing.JMenuBar();
-        fileMenu = new javax.swing.JMenu();
-        importMenuItem = new javax.swing.JMenuItem();
-        exportMenuItem = new javax.swing.JMenuItem();
-        jSeparator2 = new javax.swing.JSeparator();
-        deleteExamMenuItem = new javax.swing.JMenuItem();
-        anonymizeMenuItem = new javax.swing.JMenuItem();
-        jSeparator3 = new javax.swing.JSeparator();
-        resetMenuItem = new javax.swing.JMenuItem();
-        jSeparator4 = new javax.swing.JSeparator();
-        exitMenuItem = new javax.swing.JMenuItem();
-        toolsMenu = new javax.swing.JMenu();
-        preferenceMenuItem = new javax.swing.JMenuItem();
-        networkMenu = new javax.swing.JMenu();
-        queueMenuItem = new javax.swing.JMenuItem();
-        sendMenuItem = new javax.swing.JMenuItem();
-        QRMenuItem1 = new javax.swing.JMenuItem();
-        themeMenu = new javax.swing.JMenu();
-        nimrodLFMenu = new javax.swing.JMenuItem();
-        motifLFMenu = new javax.swing.JMenuItem();
-        systemLFmenu = new javax.swing.JMenuItem();
-        helpMenu = new javax.swing.JMenu();
-        userManualItem = new javax.swing.JMenuItem();
-        aboutMenuItem = new javax.swing.JMenuItem();
+        buttonsToolbar = new javax.swing.JPanel();
+        serverTab = new javax.swing.JTabbedPane();
+        settingsButton = new javax.swing.JButton();
+        queryInfoLabel = new javax.swing.JLabel();
+        progressBar = new javax.swing.JProgressBar();
+        progressLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
-        setTitle(bundle.getString("MainScreen.title_1")); // NOI18N
+        setTitle(ApplicationContext.currentBundle.getString("MainScreen.title.text")); // NOI18N
         setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/in/raster/mayam/form/images/fav_mayam.png")));
-
-        localDatabaseLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
-        localDatabaseLabel.setText(bundle.getString("MainScreen.localDatabaseLabel.text_1")); // NOI18N
-
-        jSplitPane1.setDividerLocation(256);
-        jSplitPane1.setDividerSize(4);
-        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-
-        studyListTable.setForeground(new java.awt.Color(252, 138, 0));
-        studyListTable.setModel(new StudyListModel());
-        studyListTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-        studyListTable.setDefaultRenderer(Object.class, new CellRenderer());
-        studyListTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                studyListTableMouseClicked(evt);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
-        studyListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
-        studyListTable.getTableHeader().setFont(new Font("Lucida Grande",Font.BOLD,12));
-        studyListTable.setRowHeight(25);
-        studyListTable.getTableHeader().setForeground(new Color(255,138,0));
-        studyListTable.getTableHeader().setBackground(new Color(0,0,0));
-        studyTableScroll.setViewportView(studyListTable);
 
-        jSplitPane1.setTopComponent(studyTableScroll);
+        buttonsToolbar.setPreferredSize(new java.awt.Dimension(1000, 40));
 
-        windowingPanelCanvas.setBackground(new java.awt.Color(0, 0, 0));
-        windowingPanelCanvas.setAutoscrolls(true);
-        windowingPanelCanvas.setPreferredSize(new java.awt.Dimension(50, 50));
-
-        org.jdesktop.layout.GroupLayout windowingPanelCanvasLayout = new org.jdesktop.layout.GroupLayout(windowingPanelCanvas);
-        windowingPanelCanvas.setLayout(windowingPanelCanvasLayout);
-        windowingPanelCanvasLayout.setHorizontalGroup(
-            windowingPanelCanvasLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 916, Short.MAX_VALUE)
+        javax.swing.GroupLayout buttonsToolbarLayout = new javax.swing.GroupLayout(buttonsToolbar);
+        buttonsToolbar.setLayout(buttonsToolbarLayout);
+        buttonsToolbarLayout.setHorizontalGroup(
+            buttonsToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        windowingPanelCanvasLayout.setVerticalGroup(
-            windowingPanelCanvasLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 521, Short.MAX_VALUE)
+        buttonsToolbarLayout.setVerticalGroup(
+            buttonsToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 52, Short.MAX_VALUE)
         );
 
-        thumbnailScroll.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        thumbnailScroll.getVerticalScrollBar().setUnitIncrement(24);
-
-        thumbnailDisplay.setAutoscrolls(true);
-        thumbnailDisplay.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        thumbnailDisplay.setMaximumSize(new java.awt.Dimension(1000, 1000));
-        thumbnailDisplay.setMinimumSize(new java.awt.Dimension(13, 2));
-        thumbnailScroll.setViewportView(thumbnailDisplay);
-
-        seriesLabel.setBackground(new java.awt.Color(0, 0, 0));
-        seriesLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
-        seriesLabel.setForeground(new java.awt.Color(255, 138, 0));
-        seriesLabel.setText(bundle.getString("MainScreen.seriesLabel.text_1")); // NOI18N
-        seriesLabel.setOpaque(true);
-
-        org.jdesktop.layout.GroupLayout studyAndSeriesDisplayPanelLayout = new org.jdesktop.layout.GroupLayout(studyAndSeriesDisplayPanel);
-        studyAndSeriesDisplayPanel.setLayout(studyAndSeriesDisplayPanelLayout);
-        studyAndSeriesDisplayPanelLayout.setHorizontalGroup(
-            studyAndSeriesDisplayPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(studyAndSeriesDisplayPanelLayout.createSequentialGroup()
-                .add(studyAndSeriesDisplayPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(thumbnailScroll, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, seriesLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(windowingPanelCanvas, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 916, Short.MAX_VALUE))
-        );
-        studyAndSeriesDisplayPanelLayout.setVerticalGroup(
-            studyAndSeriesDisplayPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(studyAndSeriesDisplayPanelLayout.createSequentialGroup()
-                .add(seriesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(thumbnailScroll, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 496, Short.MAX_VALUE))
-            .add(windowingPanelCanvas, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
-        );
-
-        jSplitPane1.setRightComponent(studyAndSeriesDisplayPanel);
-
-        org.jdesktop.layout.GroupLayout contentAreaLayout = new org.jdesktop.layout.GroupLayout(contentArea);
-        contentArea.setLayout(contentAreaLayout);
-        contentAreaLayout.setHorizontalGroup(
-            contentAreaLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(contentAreaLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(contentAreaLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1)
-                    .add(localDatabaseLabel))
-                .addContainerGap())
-        );
-        contentAreaLayout.setVerticalGroup(
-            contentAreaLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(contentAreaLayout.createSequentialGroup()
-                .add(localDatabaseLabel)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE))
-        );
-
-        headerPanel.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(13, 13, 13)));
-
-        importButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/import.png"))); // NOI18N
-        importButton.setText(bundle.getString("MainScreen.importButton.text_1")); // NOI18N
-        importButton.setBorderPainted(false);
-        importButton.setContentAreaFilled(false);
-        importButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        importButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/import1.png"))); // NOI18N
-        importButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        importButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importButtonActionPerformed(evt);
+        settingsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/setting-org.png"))); // NOI18N
+        settingsButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        settingsButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        settingsButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        settingsButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                settingsButtonMousePressed(evt);
             }
         });
 
-        exportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/export_study.png"))); // NOI18N
-        exportButton.setText(bundle.getString("MainScreen.exportButton.text_1")); // NOI18N
-        exportButton.setBorderPainted(false);
-        exportButton.setContentAreaFilled(false);
-        exportButton.setDefaultCapable(false);
-        exportButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        exportButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/export_study1.png"))); // NOI18N
-        exportButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        exportButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportButtonActionPerformed(evt);
-            }
-        });
+        queryInfoLabel.setText(ApplicationContext.currentBundle.getString("MainScreen.studiesFoundLabel.text")); // NOI18N
 
-        cdImportButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        cdImportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/cd_import.png"))); // NOI18N
-        cdImportButton.setText(bundle.getString("MainScreen.cdImportButton.text_1")); // NOI18N
-        cdImportButton.setBorderPainted(false);
-        cdImportButton.setContentAreaFilled(false);
-        cdImportButton.setDefaultCapable(false);
-        cdImportButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cdImportButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/cd_import1.png"))); // NOI18N
-        cdImportButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cdImportButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cdImportButtonActionPerformed(evt);
-            }
-        });
+        progressLabel.setFont(ApplicationContext.labelFont);
+        progressLabel.setText(ApplicationContext.currentBundle.getString("MainScreen.downloadingLabel.text")); // NOI18N
 
-        deleteButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/delete_study.png"))); // NOI18N
-        deleteButton.setText(bundle.getString("MainScreen.deleteButton.text_1")); // NOI18N
-        deleteButton.setBorderPainted(false);
-        deleteButton.setContentAreaFilled(false);
-        deleteButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        deleteButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/delete_study1.png"))); // NOI18N
-        deleteButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteButtonActionPerformed(evt);
-            }
-        });
-
-        metaDataButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        metaDataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/metadata_mainpage.png"))); // NOI18N
-        metaDataButton.setText(bundle.getString("MainScreen.metaDataButton.text_1")); // NOI18N
-        metaDataButton.setBorderPainted(false);
-        metaDataButton.setContentAreaFilled(false);
-        metaDataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        metaDataButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        metaDataButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/metadata_mainpage1.png"))); // NOI18N
-        metaDataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        metaDataButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                metaDataButtonActionPerformed(evt);
-            }
-        });
-
-        sendButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        sendButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/send.png"))); // NOI18N
-        sendButton.setText(bundle.getString("MainScreen.sendButton.text_1")); // NOI18N
-        sendButton.setBorderPainted(false);
-        sendButton.setContentAreaFilled(false);
-        sendButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        sendButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        sendButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/send1.png"))); // NOI18N
-        sendButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        sendButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sendButtonActionPerformed(evt);
-            }
-        });
-
-        queryRetrieveButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        queryRetrieveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/query.png"))); // NOI18N
-        queryRetrieveButton.setText(bundle.getString("MainScreen.queryRetrieveButton.text_1")); // NOI18N
-        queryRetrieveButton.setBorderPainted(false);
-        queryRetrieveButton.setContentAreaFilled(false);
-        queryRetrieveButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        queryRetrieveButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        queryRetrieveButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/query1.png"))); // NOI18N
-        queryRetrieveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        queryRetrieveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queryRetrieveButtonActionPerformed(evt);
-            }
-        });
-
-        viewerButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        viewerButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/viewer.png"))); // NOI18N
-        viewerButton.setText(bundle.getString("MainScreen.viewerButton.text_1")); // NOI18N
-        viewerButton.setBorderPainted(false);
-        viewerButton.setContentAreaFilled(false);
-        viewerButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        viewerButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        viewerButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/viewer1.png"))); // NOI18N
-        viewerButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        viewerButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewerButtonActionPerformed(evt);
-            }
-        });
-
-        queueButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        queueButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/queue.png"))); // NOI18N
-        queueButton.setText(bundle.getString("MainScreen.queueButton.text_1")); // NOI18N
-        queueButton.setBorderPainted(false);
-        queueButton.setContentAreaFilled(false);
-        queueButton.setFocusPainted(false);
-        queueButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        queueButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        queueButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/queue1.png"))); // NOI18N
-        queueButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        queueButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queueButtonActionPerformed(evt);
-            }
-        });
-
-        humanButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
-        humanButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body1.png"))); // NOI18N
-        humanButton.setText(bundle.getString("MainScreen.humanButton.text")); // NOI18N
-        humanButton.setBorderPainted(false);
-        humanButton.setContentAreaFilled(false);
-        humanButton.setFocusPainted(false);
-        humanButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        humanButton.setIconTextGap(11);
-        humanButton.setMaximumSize(new java.awt.Dimension(69, 59));
-        humanButton.setMinimumSize(new java.awt.Dimension(69, 59));
-        humanButton.setPreferredSize(new java.awt.Dimension(52, 50));
-        humanButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/body2.png"))); // NOI18N
-        humanButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        humanButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                humanButtonActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout headerPanelLayout = new org.jdesktop.layout.GroupLayout(headerPanel);
-        headerPanel.setLayout(headerPanelLayout);
-        headerPanelLayout.setHorizontalGroup(
-            headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(headerPanelLayout.createSequentialGroup()
-                .add(5, 5, 5)
-                .add(importButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(exportButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 85, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cdImportButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 52, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(deleteButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(metaDataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(sendButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 69, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(queryRetrieveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(viewerButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 77, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(queueButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 72, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(humanButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        headerPanelLayout.linkSize(new java.awt.Component[] {cdImportButton, deleteButton, exportButton, importButton, metaDataButton, queryRetrieveButton, queueButton, sendButton, viewerButton}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
-
-        headerPanelLayout.setVerticalGroup(
-            headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(headerPanelLayout.createSequentialGroup()
-                .add(5, 5, 5)
-                .add(headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(humanButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(headerPanelLayout.createSequentialGroup()
-                        .add(headerPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(queueButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(viewerButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(queryRetrieveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(sendButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(metaDataButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(deleteButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(cdImportButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(exportButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(importButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-
-        headerPanelLayout.linkSize(new java.awt.Component[] {cdImportButton, deleteButton, exportButton, importButton, metaDataButton, queryRetrieveButton, queueButton, sendButton, viewerButton}, org.jdesktop.layout.GroupLayout.VERTICAL);
-
-        org.jdesktop.layout.GroupLayout containerLayout = new org.jdesktop.layout.GroupLayout(container);
-        container.setLayout(containerLayout);
-        containerLayout.setHorizontalGroup(
-            containerLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(headerPanel, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(contentArea, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        containerLayout.setVerticalGroup(
-            containerLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(containerLayout.createSequentialGroup()
-                .add(headerPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(contentArea, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        fileMenu.setText(bundle.getString("MainScreen.fileMenu.text_1")); // NOI18N
-
-        importMenuItem.setText(bundle.getString("MainScreen.importMenuItem.text_1")); // NOI18N
-        importMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(importMenuItem);
-
-        exportMenuItem.setText(bundle.getString("MainScreen.exportMenuItem.text_1")); // NOI18N
-        exportMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(exportMenuItem);
-        fileMenu.add(jSeparator2);
-
-        deleteExamMenuItem.setText(bundle.getString("MainScreen.deleteExamMenuItem.text_1")); // NOI18N
-        deleteExamMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteExamMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(deleteExamMenuItem);
-
-        anonymizeMenuItem.setText(bundle.getString("MainScreen.anonymizeMenuItem.text_1")); // NOI18N
-        anonymizeMenuItem.setEnabled(false);
-        fileMenu.add(anonymizeMenuItem);
-        fileMenu.add(jSeparator3);
-
-        resetMenuItem.setText(bundle.getString("MainScreen.resetMenuItem.text_1")); // NOI18N
-        resetMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                resetMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(resetMenuItem);
-        fileMenu.add(jSeparator4);
-
-        exitMenuItem.setText(bundle.getString("MainScreen.exitMenuItem.text_1")); // NOI18N
-        exitMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exitMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(exitMenuItem);
-
-        menuBar.add(fileMenu);
-
-        toolsMenu.setText(bundle.getString("MainScreen.toolsMenu.text_1")); // NOI18N
-
-        preferenceMenuItem.setText(bundle.getString("MainScreen.preferenceMenuItem.text_1")); // NOI18N
-        preferenceMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                preferenceMenuItemActionPerformed(evt);
-            }
-        });
-        toolsMenu.add(preferenceMenuItem);
-
-        menuBar.add(toolsMenu);
-
-        networkMenu.setText(bundle.getString("MainScreen.networkMenu.text_1")); // NOI18N
-
-        queueMenuItem.setText(bundle.getString("MainScreen.queueMenuItem.text_1")); // NOI18N
-        queueMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queueMenuItemActionPerformed(evt);
-            }
-        });
-        networkMenu.add(queueMenuItem);
-
-        sendMenuItem.setText(bundle.getString("MainScreen.sendMenuItem.text_1")); // NOI18N
-        sendMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sendMenuItemActionPerformed(evt);
-            }
-        });
-        networkMenu.add(sendMenuItem);
-
-        QRMenuItem1.setText(bundle.getString("MainScreen.QRMenuItem1.text_1")); // NOI18N
-        QRMenuItem1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                QRMenuItem1ActionPerformed(evt);
-            }
-        });
-        networkMenu.add(QRMenuItem1);
-
-        menuBar.add(networkMenu);
-
-        themeMenu.setText(bundle.getString("MainScreen.themeMenu.text_1")); // NOI18N
-
-        nimrodLFMenu.setText(bundle.getString("MainScreen.nimrodLFMenu.text_1")); // NOI18N
-        nimrodLFMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nimrodLFMenuActionPerformed(evt);
-            }
-        });
-        themeMenu.add(nimrodLFMenu);
-
-        motifLFMenu.setText(bundle.getString("MainScreen.motifLFMenu.text_1")); // NOI18N
-        motifLFMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                motifLFMenuActionPerformed(evt);
-            }
-        });
-        themeMenu.add(motifLFMenu);
-
-        systemLFmenu.setText(bundle.getString("MainScreen.systemLFmenu.text_1")); // NOI18N
-        systemLFmenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                systemLFmenuActionPerformed(evt);
-            }
-        });
-        themeMenu.add(systemLFmenu);
-
-        menuBar.add(themeMenu);
-
-        helpMenu.setText(bundle.getString("MainScreen.helpMenu.text_1")); // NOI18N
-
-        userManualItem.setText(bundle.getString("MainScreen.userManualItem.text_1")); // NOI18N
-        helpMenu.add(userManualItem);
-
-        aboutMenuItem.setText(bundle.getString("MainScreen.aboutMenuItem.text_1")); // NOI18N
-        aboutMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                aboutMenuItemActionPerformed(evt);
-            }
-        });
-        helpMenu.add(aboutMenuItem);
-
-        menuBar.add(helpMenu);
-
-        setJMenuBar(menuBar);
-
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(container, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(serverTab)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(settingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(buttonsToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, 931, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(135, 270, Short.MAX_VALUE)
+                        .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 343, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(queryInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(container, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(buttonsToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(settingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 426, Short.MAX_VALUE))
+                    .addComponent(serverTab))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(queryInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(progressLabel))
+                .addContainerGap())
         );
+
+        queryInfoLabel.setFont(ApplicationContext.labelFont);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
-        importHandler();
-    }//GEN-LAST:event_importButtonActionPerformed
-    private void importHandler() {
-        Object[] options = {ApplicationContext.resBundle.getString("MainScreen.importHandler.text_1"),
-            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_2"),
-            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_3")};
-        int n = JOptionPane.showOptionDialog(this,
-            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_4"), 
-            ApplicationContext.resBundle.getString("MainScreen.importHandler.text_5"),
-        JOptionPane.YES_NO_CANCEL_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null,
-        options,
-        options[2]);
-        switch(n) {
-            case 0: createDicomFrame.reset();
-                    createDicomFrame.setVisible(true);
-                    break;
-            case 1: //Codigo original:
-                    FileChooserDialog fcd = new FileChooserDialog(this, true);
-                    fcd.setLocationRelativeTo(this);
-                    fcd.setVisible(true);
-                    break;
-            case 2: break;    
-        } 
-    }
-    
-    private void queryRetrieveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryRetrieveButtonActionPerformed
-        queryRetrieve.setVisible(true);
-    }//GEN-LAST:event_queryRetrieveButtonActionPerformed
+    private void settingsButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsButtonMousePressed
+        preferencesPopup.show(this, settingsButton.getX(), settingsButton.getY() + 50);
+    }//GEN-LAST:event_settingsButtonMousePressed
 
-    private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
-        exportHandler();
-    }//GEN-LAST:event_exportButtonActionPerformed
-    private void exportHandler() {
-        if (studyListTable.getSelectedRow() != -1) {
-            int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-            String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-            ExportLocationChooser jpegChooser = new ExportLocationChooser(ApplicationContext.imgView, true);
-            jpegChooser.setLocationRelativeTo(this);
-            jpegChooser.setSeriesOrInstanceLevel(false);
-            jpegChooser.setStudyUID(siuid);
-            jpegChooser.setVisible(true);
-        }
-    }
-    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        if (studyListTable.getSelectedRow() != -1) {
-            ConfirmDelete confirmDelete = new ConfirmDelete(this, true);
-            confirmDelete.setLocationRelativeTo(this);
-            confirmDelete.setVisible(true);
-        }
-        removeThumbnailComponents();
-        removeWindowingImage();
-        showThumbnails();
-    }//GEN-LAST:event_deleteButtonActionPerformed
-    private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
-        doSend();
-    }//GEN-LAST:event_sendButtonActionPerformed
-    private void viewerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewerButtonActionPerformed
-        if (studyListTable.getSelectedRow() != -1) {
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+        ApplicationContext.databaseRef.deleteLinkStudies();
+        ApplicationContext.deleteDir(new File(ApplicationContext.getAppDirectory() + File.separator + "Thumbnails"));
+    }//GEN-LAST:event_formWindowClosing
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel buttonsToolbar;
+    private javax.swing.JProgressBar progressBar;
+    private javax.swing.JLabel progressLabel;
+    private javax.swing.JLabel queryInfoLabel;
+    private javax.swing.JTabbedPane serverTab;
+    private javax.swing.JButton settingsButton;
+    // End of variables declaration//GEN-END:variables
 
-            int index[] = studyListTable.getSelectedRows();
-            if (index.length > 1) {
-                String[] studies = new String[index.length];
-                for (int j = 0; j < index.length; j++) {
-                    index[j] = studyListTable.convertRowIndexToModel(index[j]);
-                }
-                for (int tempI = 0; tempI < index.length; tempI++) {
-                    studies[tempI] = ((StudyListModel) studyListTable.getModel()).getValueAt(index[tempI], 8);
-                }
-                ArrayList tempRef1 = ApplicationContext.databaseRef.getFirstInstanceListFromMultipleStudies(studies);
-
-                openComparisonView(index.length, studies, tempRef1);
-                for (String studyUID : studies) {
-                    StudyListUpdator studyListUpdator = new StudyListUpdator();
-                    studyListUpdator.addStudyToStudyList(studyUID, studyList, ((File) tempRef1.get(0)).getAbsolutePath());
-                }
-
-            } else {
-
-
-                int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-                String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-                String modalitiesInStudy = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 6);
-                //System.out.println(modalitiesInStudy);
-                int rowColumnArray[] = new int[2];
-                try {
-                    rowColumnArray = ApplicationContext.databaseRef.getRowColumnBasedStudyUID(siuid);
-                } catch (Exception e) {
-                    rowColumnArray[0] = 1;
-                    rowColumnArray[1] = 1;
-                }
-                ArrayList tempRef = ApplicationContext.databaseRef.getUrlBasedOnStudyIUID(siuid);
-                openImageView(siuid, tempRef, rowColumnArray[0], rowColumnArray[1],modalitiesInStudy);
-                StudyListUpdator studyListUpdator = new StudyListUpdator();
-                studyListUpdator.addStudyToStudyList(siuid, studyList, ((File) tempRef.get(0)).getAbsolutePath());
-            }
-        }
-    }//GEN-LAST:event_viewerButtonActionPerformed
-    /**
-     * This routine used to process the exit menu
-     * @param evt
-     */
-    private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
-        System.exit(2);
-    }//GEN-LAST:event_exitMenuItemActionPerformed
-    private void queueButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queueButtonActionPerformed
-        sndRcvFrm.setLocationRelativeTo(this);
-        sndRcvFrm.setVisible(true);
-    }//GEN-LAST:event_queueButtonActionPerformed
-    private void preferenceMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_preferenceMenuItemActionPerformed
-        showPreference();
-    }//GEN-LAST:event_preferenceMenuItemActionPerformed
-    /**
-     * This routine used to show the preference dialogue
-     */
-    private void showPreference() {
-        settingsDialog = new SettingsDialog(this, true);
-        settingsDialog.setLocationRelativeTo(this);
-        settingsDialog.setVisible(true);
-    }
-
-    private void doSend() {
-        String forwardAET = "";
-        String forwardHost = "";
-        int forwardPort;
-        ServerListDialog configuredServer = new ServerListDialog(this, true);
-        configuredServer.setLocationRelativeTo(this);
-        configuredServer.setVisible(true);
-        if (configuredServer.getAe() != null) {
-            AEModel ae = configuredServer.getAe();
-            forwardAET = ae.getAeTitle();
-            forwardHost = ae.getHostName();
-            forwardPort = ae.getPort();
-            if (studyListTable.getSelectedRow() != -1) {
-                int index[] = studyListTable.getSelectedRows();
-                for (int j = 0; j < index.length; j++) {
-                    index[j] = studyListTable.convertRowIndexToModel(index[j]);
-                }
-                for (int tempI = 0; tempI < index.length; tempI++) {
-                    String studyIUID = (String) studyListTable.getModel().getValueAt(index[tempI], 8);
-                    SendingDelegate sendingDelegate = new SendingDelegate(studyIUID, ae);
-                }
-            }
-        }
-    }
-
-    public SettingsDialog getPreference() {
-        return settingsDialog;
-    }
-
-    /**
-     * This routine used to get the query screen
-     * @return
-     */
-    public QueryRetrieve getQueryScreen() {
-        return this.queryRetrieve;
-    }
-    
-    public HL7QueryRetrieve getHL7QueryScreen() {
-        return this.hl7QueryRetrieve;
-    }
-
-    /**
-     * This routine is used to process the mouse event for the study list table
-     * @param evt
-     */
-    private void studyListTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_studyListTableMouseClicked
-        if (evt.getClickCount() == 2) {
-            if (studyListTable.getSelectedRow() != -1) {
-                int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-                String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-                String modalitiesInStudy = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 6);
-                int rowColumnArray[] = ApplicationContext.databaseRef.getRowColumnBasedStudyUID(siuid);
-                ArrayList tempRef = ApplicationContext.databaseRef.getUrlBasedOnStudyIUID(siuid);
-                openImageView(siuid, tempRef, rowColumnArray[0], rowColumnArray[1],modalitiesInStudy);
-                StudyListUpdator studyListUpdator = new StudyListUpdator();
-                studyListUpdator.addStudyToStudyList(siuid, studyList, ((File) tempRef.get(0)).getAbsolutePath());
-            }
-        } else {
-            showThumbnails();
-        }
-    }//GEN-LAST:event_studyListTableMouseClicked
-    private void metaDataButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metaDataButtonActionPerformed
-        try {
-            if (studyListTable.getSelectedRow() != -1) {
-                int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-                String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-                ArrayList<DicomTags> dcmTags = DicomTagsReader.getTags(new File(this.canvas.getFilePath()));
-                dicomTagsViewer.setDataModelOnTable(dcmTags);
-                dicomTagsViewer.setLocationRelativeTo(this);
-                dicomTagsViewer.setVisible(true);
-            }
-        } catch (Exception e) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }//GEN-LAST:event_metaDataButtonActionPerformed
-    private void aboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutMenuItemActionPerformed
-        About about = new About(null, true);
-        about.setLocationRelativeTo(this);
-        about.setVisible(true);
-    }//GEN-LAST:event_aboutMenuItemActionPerformed
-    private void importMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importMenuItemActionPerformed
-        importHandler();
-    }//GEN-LAST:event_importMenuItemActionPerformed
-    private void exportMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportMenuItemActionPerformed
-        exportHandler();
-    }//GEN-LAST:event_exportMenuItemActionPerformed
-    private void queueMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queueMenuItemActionPerformed
-        sndRcvFrm.setLocationRelativeTo(this);
-        sndRcvFrm.setVisible(true);
-    }//GEN-LAST:event_queueMenuItemActionPerformed
-
-    private void resetMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetMenuItemActionPerformed
-        int resetDB = 0;
-        resetDB = JOptionPane.showConfirmDialog(this, "Are you sure want to reset the database", "Confirmation Dialog", JOptionPane.YES_NO_OPTION);
-        if (resetDB == 0) {
-            ApplicationContext.databaseRef.rebuild();
-            MainScreen.showLocalDBStorage();
-            removeThumbnailComponents();
-            removeWindowingImage();
-        }
-    }//GEN-LAST:event_resetMenuItemActionPerformed
-    private void deleteExamMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteExamMenuItemActionPerformed
-        if (studyListTable.getSelectedRow() != -1) {
-            ConfirmDelete confirmDelete = new ConfirmDelete(this, true);
-            confirmDelete.setLocationRelativeTo(this);
-            confirmDelete.setVisible(true);
-        }
-        removeThumbnailComponents();
-        removeWindowingImage();
-        showThumbnails();
-    }//GEN-LAST:event_deleteExamMenuItemActionPerformed
-    /**
-     * This routine used to remove the windowing image panel
-     */
-    private void removeWindowingImage() {
-        for (int i = windowingPanelCanvas.getComponentCount() - 1; i >= 0; i--) {
-            windowingPanelCanvas.remove(i);
-        }
-        windowingPanelCanvas.repaint();
-    }
-
-    /***
-     * This is cd import action handler used to import the dicom files.
-     * @param evt
-     */
-    private void cdImportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cdImportButtonActionPerformed
-        ImportDcmDirDelegate importDcmDirDelegate = new ImportDcmDirDelegate();
-        importDcmDirDelegate.setCopyAsLink(true);
-        importDcmDirDelegate.findAndRun();
-    }//GEN-LAST:event_cdImportButtonActionPerformed
-
-    private void systemLFmenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_systemLFmenuActionPerformed
-        setSystemTheme();
-        updateThemeStatus("System");
-    }//GEN-LAST:event_systemLFmenuActionPerformed
-
-    private void motifLFMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_motifLFMenuActionPerformed
-        setMotifTheme();
-        updateThemeStatus("Motif");
-    }//GEN-LAST:event_motifLFMenuActionPerformed
-
-    private void nimrodLFMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nimrodLFMenuActionPerformed
-        setNimrodTheme();
-        updateThemeStatus("Nimrod");
-
-    }//GEN-LAST:event_nimrodLFMenuActionPerformed
-
-    private void sendMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendMenuItemActionPerformed
-        doSend();
-    }//GEN-LAST:event_sendMenuItemActionPerformed
-
-    private void QRMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_QRMenuItem1ActionPerformed
-        queryRetrieve.setVisible(true);
-    }//GEN-LAST:event_QRMenuItem1ActionPerformed
-
-    private void humanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_humanButtonActionPerformed
-        if (studyListTable.getSelectedRow() != -1) {
-            try {
-//              int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-//              String siuid = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-                AttributeList list = new AttributeList();
-                list.read(new File(this.canvas.getFilePath()));
-                
-                final SourceImage srcImg = new SourceImage(list);
-                /*java.awt.image.BufferedImage bi = img.getBufferedImage(3);
-                javax.swing.JFrame frame = new javax.swing.JFrame();
-                frame.getContentPane().setLayout(new java.awt.FlowLayout());
-                frame.getContentPane().add(new javax.swing.JLabel(new javax.swing.ImageIcon(bi)));
-                frame.pack();
-                frame.setVisible(true);
-                System.out.println("**** Nro de buf images: "+img.getNumberOfBufferedImages());
-                System.out.println("**** Nro de frames: "+img.getNumberOfFrames());*/
-               
-                
-                /** Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
-                 * o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
-                 */
-                
-                //System.out.println("SOP: " + list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]);
-                //System.out.println(list.get(TagFromName.PatientSex));
-                //System.out.println("Sex: " + list.get(TagFromName.PatientSex).getOriginalStringValues()[0]);
-                final String sopInstanceUID =  list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]; 
-                final boolean exists = ApplicationContext.databaseRef.checkRecordExists(
-                    ApplicationContext.databaseRef.coordTable, ApplicationContext.databaseRef.coordTablePK,
-                       sopInstanceUID);
-                
-                /** Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
-                 * desde BD segun SOPInstanceUID del archivo
-                 * abrir dialogo para registrar puntos. 
-                 * Elegir segun sexo: F Female
-                 *                    M Male
-                 *                    O Other
-                 *                    U Unknown
-                 *                    A Ambiguous
-                 *                    N Not applicable
-                 * Si no es F ni M abre selector de genero
-                 */
-                String[] sValues = list.get(TagFromName.PatientSex).getOriginalStringValues();
-                final String sex; 
-                if (sValues != null && (BodyJFrame.male.equals(sValues[0])
-                        || BodyJFrame.female.equals(sValues[0]))) {
-                    sex = sValues[0];
-                }
-                else {
-                    sex = showSexChooser();
-                }
-                
-                if(sex == null) { 
-                    return; //si se cancela el selector de genero
-                }
-                
-                BodyManager.getInstance().reset();
-                java.awt.EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
-                        BodyManager.getInstance().deleteObservers();
-                        BodyManager.getInstance().addObserver(frame);
-                        frame.setVisible(true);
+    private void initAppDefaults() {
+        ApplicationContext.mainScreenObj = this;
+        ApplicationContext.listenerDetails = ApplicationContext.databaseRef.getListenerDetails();
+        ApplicationContext.activeTheme = ApplicationContext.databaseRef.getActiveTheme();
+        startListening();
+        loadStudiesBasedOnInputParameter();
+        if (!ApplicationContext.isJnlp) {
+            settingsForm = new SettingsForm();
+            createServers();
+            createPreferences();
+            setTheme();
+            queryButtonListener = new QueryButtonListener(serverTab);
+            serverTab.addMouseListener(new ServerTabListener(serverTab));
+            serverTabChangeListener = new ServerTabChangeListener(serverTab);
+            serverTab.addChangeListener(serverTabChangeListener);
+            createButtonsDelegate = new CreateButtonsDelegate(buttonsToolbar, CursorController.createListener(this, queryButtonListener));
+            createButtonsDelegate.loadButtons();
+            ApplicationContext.currentTreeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getSelectedComponent()).getRightComponent()).getComponent(0)).getComponent(0));
+            addKeyEventDispatcher();
+            queryInfoLabel.setText("");
+            loadlocalStudies();
+            hideProgressBar();
+            addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent ce) {
+                    createButtonsDelegate.loadButtons();
+                    if (getWidth() < 1000) {
+                        setSize(1000, getHeight());
                     }
-                });
-            } catch (IOException ex) {
-                Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (DicomException ex) {
-                Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        }
+
+    }
+
+    public void startListening() {
+        receiveDelegate = new ReceiveDelegate();
+        try {
+            receiveDelegate.start();
+            System.out.println("Start Server listening on port " + receiveDelegate.getPort());
+        } catch (Exception ex) {
+            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void stopReceiver() {
+        System.out.println("Stop server listening on port " + receiveDelegate.getPort());
+        receiveDelegate.stop();
+    }
+
+    public void createServers() {
+        serverTab.setFont(ApplicationContext.textFont);
+        serverTab.add(ApplicationContext.currentBundle.getString("MainScreen.local.text"), constructSplitPaneWithPreview());
+        serverLabels = ApplicationContext.databaseRef.getAllServerNames();
+        for (int i = 0; i < serverLabels.size(); i++) {
+            if (!serverLabels.get(i).equals("Description")) {
+                addNewTab(serverLabels.get(i));
             }
         }
-    }//GEN-LAST:event_humanButtonActionPerformed
+    }
 
-    private void setNimrodTheme() {
+    public void addNewTab(String serverName) {
+        JSplitPane parentSpliPane;
+        SearchFilterForm searchFilterForm = new SearchFilterForm();
+        searchFilterForm.setMinimumSize(new Dimension(900, 150));
+        if (ApplicationContext.databaseRef.isPreviewsEnabled(serverName)) {
+            JSplitPane splitPane = constructSplitPaneWithPreview();
+            parentSpliPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchFilterForm, splitPane);
+            setSplitPaneProperties(parentSpliPane, 150, 15);
+        } else {
+            TreeTable treeTab = new TreeTable();
+            treeTab.addMouseListener(new TreeTableMouseListener(treeTab));
+            parentSpliPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchFilterForm, new JScrollPane(treeTab));
+            setSplitPaneProperties(parentSpliPane, 150, 15);
+        }
+        serverTab.add(serverName, parentSpliPane);
+    }
+
+    public JSplitPane constructSplitPaneWithPreview() {
+        ImagePreviewPanel imagePreviewPanel = new ImagePreviewPanel();
+        TreeTable treeTab = new TreeTable();
+        treeTab.addMouseListener(new TreeTableMouseListener(treeTab, imagePreviewPanel));
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePreviewPanel, new JScrollPane(treeTab));
+        setSplitPaneProperties(splitPane, 270, 15);
+        imagePreviewPanel.setMinimumSize(new Dimension(270, 0));
+        return splitPane;
+    }
+
+    public void setSplitPaneProperties(JSplitPane splitPane, int dividerLocation, int dividerSize) {
+        splitPane.setDividerLocation(dividerLocation);
+        splitPane.setDividerSize(dividerSize);
+        splitPane.setOneTouchExpandable(true);
+    }
+
+    public void setTheme() {
+        if (ApplicationContext.activeTheme.equals("Nimrod")) {
+            setNimRodTheme();
+        } else if (ApplicationContext.activeTheme.equals("Motif")) {
+            setMotifTheme();
+        } else {
+            setSystemTheme();
+        }
+    }
+
+    private void setNimRodTheme() {
         try {
             UIManager.setLookAndFeel(new NimRODLookAndFeel());
             UIDefaults uIDefaults = UIManager.getDefaults();
-            uIDefaults.put("Menu.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("MenuItem.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("Menu.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("MenuItem.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("Button.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("Label.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("RadioButton.font", new Font("Lucida Grande", Font.BOLD, 12));
-            uIDefaults.put("CheckBox.font", new Font("Lucida Grande", Font.BOLD, 12));
-
+            uIDefaults.put("Menu.font", ApplicationContext.textFont);
+            uIDefaults.put("MenuItem.font", ApplicationContext.textFont);
+            uIDefaults.put("Button.font", ApplicationContext.textFont);
+            uIDefaults.put("Label.font", ApplicationContext.textFont);
+            uIDefaults.put("RadioButton.font", ApplicationContext.textFont);
+            uIDefaults.put("CheckBox.font", ApplicationContext.textFont);
+            uIDefaults.put("TabbedPane.tabInsets", new Insets(5, 5, 5, 5));
+            uIDefaults.put("TabbedPane.selectedTabPadInsets", new Insets(5, 7, 5, 7));
+            uIDefaults.put("OptionPane.messageFont", ApplicationContext.labelFont);
+            uIDefaults.put("ToolTip.font", ApplicationContext.labelFont);
             updateComponentsTreeUI();
         } catch (UnsupportedLookAndFeelException ex) {
             Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
@@ -1204,225 +361,409 @@ public class MainScreen extends javax.swing.JFrame {
 
     private void updateComponentsTreeUI() {
         SwingUtilities.updateComponentTreeUI(this);
-        SwingUtilities.updateComponentTreeUI(queryRetrieve);
-        SwingUtilities.updateComponentTreeUI(hl7QueryRetrieve); //Derm CAD
-        SwingUtilities.updateComponentTreeUI(createDicomFrame);
-        if (ApplicationContext.imageViewExist()) {
+        if (settingsForm != null && preferencesPopup != null) {
+            SwingUtilities.updateComponentTreeUI(settingsForm);
+            SwingUtilities.updateComponentTreeUI(preferencesPopup);
+        }
+        if (ApplicationContext.isImageViewExist()) {
             SwingUtilities.updateComponentTreeUI(ApplicationContext.imgView);
         }
-        SwingUtilities.updateComponentTreeUI(sndRcvFrm);
-        SwingUtilities.updateComponentTreeUI(dicomTagsViewer);
-    }
-
-    private void updateThemeStatus(String themeName) {
-        ApplicationContext.databaseRef.updateThemeStatus(themeName);
-    }
-    SeriesThumbUpdator thumbUpdator;
-
-    public void showThumbnails() {
-        try {
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            if (studyListTable.getSelectedRow() != -1) {
-                if (thumbUpdator != null) {
-                    thumbUpdator.setCanRun(false);
-                    removeThumbnailComponents();
+        //To update the theme to ImagePreviewPanel,SearchFilterForm,TreeTable
+        for (int i = 0; i < serverTab.getTabCount(); i++) {
+            if (i != 0) {
+                SwingUtilities.updateComponentTreeUI((SearchFilterForm) ((JSplitPane) serverTab.getComponentAt(i)).getTopComponent());
+                if (((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent() instanceof JScrollPane) {
+                    SwingUtilities.updateComponentTreeUI(((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getComponent(0)).getComponent(0)));
+                } else {
+                    SwingUtilities.updateComponentTreeUI(((ImagePreviewPanel) ((JSplitPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getLeftComponent()));
+                    SwingUtilities.updateComponentTreeUI(((ImagePreviewPanel) ((JSplitPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getLeftComponent()).parent);
+                    SwingUtilities.updateComponentTreeUI(((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getRightComponent()).getComponent(0)).getComponent(0)));
                 }
-                int selection = studyListTable.convertRowIndexToModel(studyListTable.getSelectedRow());
-                String studyUID = ((StudyListModel) studyListTable.getModel()).getValueAt(selection, 8);
-                selectedStudy = studyUID;
-                thumbUpdator = new SeriesThumbUpdator(studyUID);
+            } else {
+                SwingUtilities.updateComponentTreeUI(((ImagePreviewPanel) ((JSplitPane) serverTab.getComponentAt(i)).getLeftComponent()));
+                SwingUtilities.updateComponentTreeUI(((ImagePreviewPanel) ((JSplitPane) serverTab.getComponentAt(i)).getLeftComponent()).parent);
+                SwingUtilities.updateComponentTreeUI(((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(i)).getRightComponent()).getComponent(0)).getComponent(0)));
             }
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
         }
     }
 
-    public void openImageView(String studyUID, ArrayList tempRef, int gridRowCount, int gridColCount,String modalitiesInStudy) {
-        if (!ApplicationContext.imageViewExist()) {
-            ApplicationContext.createImageView();
+    public void setStudiesFound(String text) {
+        queryInfoLabel.setText(text);
+    }
+
+    public synchronized void loadlocalStudies() {
+        DataNode root = null;
+        studySeriesMatchs = new ArrayList<StudySeriesMatch>();
+        ArrayList<StudyModel> studies = ApplicationContext.databaseRef.listAllLocalStudies();
+        if (!studies.isEmpty()) {
+            for (int i = 0; i < studies.size(); i++) {
+                ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList_SepMulti(studies.get(i).getStudyUID());
+                StudySeriesMatch studySeriesMatch = new StudySeriesMatch(studies.get(i).getStudyUID(), seriesList);
+                studySeriesMatchs.add(studySeriesMatch);
+            }
+            root = ApplicationContext.communicationDelegate.constructTreeTableData(studySeriesMatchs, studies, "", "", "", "", "", "", "");
         }
-        ShowViewerDelegate showViewer = new ShowViewerDelegate(studyUID, tempRef, gridRowCount, gridColCount, modalitiesInStudy);
+        setTreeTableModel(root);
     }
 
-    public void openComparisonView(int numberOfStudies, String[] studies, ArrayList tempRef) {
-        if (!ApplicationContext.imageViewExist()) {
-            ApplicationContext.createImageView();
+    public String getCurrentServer() {
+        return serverTab.getTitleAt(serverTab.getSelectedIndex());
+    }
+
+    public void addOrEditServer(String prevName, String currentName) {
+        boolean serverFound = false;
+        for (int i = 0; i < serverTab.getTabCount(); i++) {
+            if (serverTab.getTitleAt(i).equals(prevName)) {
+                serverTab.setTitleAt(i, currentName);
+                serverFound = true;
+                break;
+            }
         }
-        ShowComparisonViewerDelegate showComparisonViewerDelegate = new ShowComparisonViewerDelegate(numberOfStudies, studies, tempRef);
-    }
-
-    private void removeThumbnailComponents() {
-        for (int i = thumbnailDisplay.getComponentCount() - 1; i >= 0; i--) {
-            SeriesPanel thumbImage = (SeriesPanel) thumbnailDisplay.getComponent(i);
-            thumbImage.clearAllMemoryReference();
-            thumbnailDisplay.remove(thumbImage);
-            thumbImage = null;
+        if (!serverFound) {
+            addNewTab(currentName);
         }
-        thumbnailDisplay.repaint();
     }
-    /**
-     * This routine used to set column widths using percentages
-     * @param table , percentages
-     */
-    private static void setPreferredTableColumnWidths(JTable table, double[] percentages){
-        Dimension tableDim = table.getSize();
-        double total = 0;
-        for(int i = 0; i < table.getColumnModel().getColumnCount(); i++) 
-          total += percentages[i]; 
 
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        for(int i = 0; i < table.getColumnModel().getColumnCount(); i++){ 
-          TableColumn column = table.getColumnModel().getColumn(i);
-          column.setPreferredWidth((int) Math.round(tableDim.width * (percentages[i] / total)));
-          //table.doLayout();
+    public void removeTab(String serverName) {
+        for (int i = 1; i < serverTab.getTabCount(); i++) {
+            if (serverTab.getTitleAt(i).equals(serverName)) {
+                serverTab.remove(i);
+                break;
+            }
         }
-        table.doLayout();
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-    }
-    /**
-     * Getter method for thumbnailDisplay.
-     * @return
-     */
-    public JPanel getThumbnailDisplay() {
-        return thumbnailDisplay;
     }
 
-    public JScrollPane getThumbnailScroll() {
-        return this.thumbnailScroll;
+    public void setTreeTableModel(DataNode root) {
+        AbstractTreeTableModel treeModel = new DataModel(root);
+        ApplicationContext.currentTreeTable.setTreeTableModel(treeModel);
+        ApplicationContext.currentTreeTable.setDefaultRenderer(Object.class, new IconRenderer(ApplicationContext.currentTreeTable));
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(0).setMaxWidth(20);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(1).setMaxWidth(20);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(3).setMinWidth(120);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(6).setMinWidth(40);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(7).setMinWidth(150);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(8).setMaxWidth(70);
+        ApplicationContext.currentTreeTable.getColumnModel().getColumn(9).setMaxWidth(60);
+        ApplicationContext.currentTreeTable.getTableHeader().setReorderingAllowed(false);
     }
 
-    /**
-     * Getter method for windowingPanelCanvas.
-     * @return
-     */
-    public JPanel getWindowingPanelCanvas() {
-        return windowingPanelCanvas;
+    public ImagePreviewPanel getCurrentImagePreviewPanel() {
+        if (serverTab.getSelectedIndex() == 0) {
+            return ((ImagePreviewPanel) ((JSplitPane) serverTab.getSelectedComponent()).getLeftComponent());
+        }
+        return null;
     }
 
-    /**
-     * Setter method for the instance of WindowingLayeredCanvas.
-     * @param canvas
-     */
-    public void setCanvas(WindowingLayeredCanvas canvas) {
-        this.canvas = canvas;
+    public void removeAllPreviewsOfImagePreviewPanel() {
+        try {
+            ((ImagePreviewPanel) ((JSplitPane) ((JSplitPane) serverTab.getSelectedComponent()).getRightComponent()).getLeftComponent()).resetImagePreviewPanel();
+        } catch (ClassCastException cce) {
+            //ignore
+        }
     }
 
-    /**
-     * Setter method for the instance of WindowingLayeredCanvas.
-     * @param canvas
-     */
-    public WindowingLayeredCanvas getCanvas() {
-        return canvas;
-    }
-    
-    public void reInitComponents(){
-        mainScreenObj.getContentPane().removeAll();
-        initComponents();
-        initQR();
-        restartReceiver();
-        showLocalDBStorage();
-        showThumbnails();
-        initNetworkQueue();
-        initSendingProgress();
+    //ProgressBar Updations
+    public void initializeProgressBar(int maxValue) {
+        progressBar.setMaximum(progressBar.getMaximum() + maxValue);
+        if (!progressBar.isVisible()) {
+            progressBar.setIndeterminate(false);
+            progressBar.setVisible(true);
+            progressLabel.setVisible(true);
+        }
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
+    public void incrementProgressValue() {
+        progressValue += 1;
+        progressBar.setValue(progressValue);
+        progressBar.setStringPainted(true);
+    }
 
-            public void run() {
-                new MainScreen().setVisible(true);
+    public void increaseProgressValue() { // To increase the progress value during the thumbnails construction
+        if (progressValue < progressBar.getMaximum()) {
+            progressValue++;
+            progressBar.setValue(progressValue);
+            progressBar.setStringPainted(true);
+        }
+    }
+
+    public void hideProgressBar() {
+        progressBar.setVisible(false);
+        progressLabel.setVisible(false);
+        progressBar.setMaximum(0);
+        progressValue = 0;
+        progressBar.setValue(progressValue);
+        progressLabel.setText("");
+    }
+
+    public void setProgressbarVisibility(boolean visibility) {
+        progressBar.setVisible(visibility);
+        progressLabel.setVisible(visibility);
+    }
+
+    public int getCurrentProgressValue() {
+        return progressBar.getValue();
+    }
+
+    public void setProgressIndeterminate() {
+        progressBar.setIndeterminate(true);
+    }
+
+    public void setProgressText(String text) {
+        progressLabel.setText(text);
+    }
+
+    public void showProgress() {
+        progressLabel.setVisible(true);
+        progressBar.setValue(1);
+        progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+    }
+
+    public String getProgressText() {
+        return progressLabel.getText();
+    }
+
+    //To launch From JNLP
+    private void loadStudiesBasedOnInputParameter() {
+        InputArgumentValues inputArgumentValues = InputArgumentsParser.inputArgumentValues;
+        if (inputArgumentValues != null && inputArgumentValues.getAeTitle() != null && inputArgumentValues.getPort() != 0 && inputArgumentValues.getHostName() != null && inputArgumentValues.getWadoContext() != null && inputArgumentValues.getWadoPort() != 0 && inputArgumentValues.getWadoProtocol() != null) {
+            setTheme();
+            ApplicationContext.isJnlp = true;
+            if (ApplicationContext.communicationDelegate.verifyServer(ApplicationContext.communicationDelegate.constructURL(inputArgumentValues.getAeTitle(), inputArgumentValues.getHostName(), inputArgumentValues.getPort()))) {
+                ServerModel serverModel = new ServerModel();
+                serverModel.setAeTitle(inputArgumentValues.getAeTitle());
+                serverModel.setHostName(inputArgumentValues.getHostName());
+                serverModel.setPort(inputArgumentValues.getPort());
+                serverModel.setWadoContextPath(inputArgumentValues.getWadoContext());
+                serverModel.setWadoPort(inputArgumentValues.getWadoPort());
+                serverModel.setWadoProtocol(inputArgumentValues.getWadoProtocol());
+                WadoRetrieveDelegate wadoRetrieveDelegate = new WadoRetrieveDelegate();
+                wadoRetrieveDelegate.retrieveStudy(serverModel);
+            } else {
+                ApplicationFacade.exitApp("Server Unreachable");
+            }
+        }
+    }
+
+    //To filter the studies
+    public void loadMatchingStudies() {
+        String pid = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 2)).trim();
+        String pname = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 3)).trim();
+        String dob = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 4)).trim();
+        String accNo = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 5)).trim();
+        String studyDate = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 6)).trim();
+        String studyDesc = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 7)).trim();
+        String modality = String.valueOf(ApplicationContext.currentTreeTable.getValueAt(ApplicationContext.currentTreeTable.getSelectedRow(), 8)).trim();
+        ArrayList<StudySeriesMatch> studySeriesList = new ArrayList<StudySeriesMatch>();
+        ArrayList<StudyModel> studies = ApplicationContext.databaseRef.listStudies("%" + pname.toUpperCase() + "%", "%" + pid.toUpperCase() + "%", "%" + dob + "%", "%" + accNo.toUpperCase() + "%", "%" + studyDate + "%", "%" + studyDesc.toUpperCase() + "%", "%" + modality.toUpperCase() + "%");
+        if (!studies.isEmpty()) {
+            for (int i = 0; i < studies.size(); i++) {
+                ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList(studies.get(i).getStudyUID());
+                studySeriesList.add(new StudySeriesMatch(studies.get(i).getStudyUID(), seriesList));
+            }
+        }
+        setTreeTableModel(ApplicationContext.communicationDelegate.constructTreeTableData(studySeriesList, studies, pid, pname, dob, accNo, studyDate, studyDesc, modality));
+    }
+
+    public void addKeyEventDispatcher() {
+        KeyEventDispatcher keyEventDispatcher = new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getID() == KeyEvent.KEY_TYPED && ApplicationContext.isLocal && ApplicationContext.mainScreenObj.isFocused()) {
+                    keyEventProcessor(e);
+                }
+                boolean discardEvent = false;
+                return discardEvent;
+            }
+        };
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyEventDispatcher);
+    }
+
+    private void keyEventProcessor(KeyEvent e) {
+        if (ApplicationContext.currentTreeTable.getSelectedRow() == 0 && ApplicationContext.mainScreenObj.isFocused()) {
+            int row = ApplicationContext.currentTreeTable.getSelectedRow();
+            int column = ApplicationContext.currentTreeTable.getSelectedColumn();
+            if (e.getKeyChar() == KeyEvent.VK_DELETE) {
+                ApplicationContext.currentTreeTable.setValueAt("", row, column);
+            } else if (e.getKeyChar() == KeyEvent.VK_BACK_SPACE) {
+                String str = (String) ApplicationContext.currentTreeTable.getValueAt(row, column);
+                try {
+                    ApplicationContext.currentTreeTable.setValueAt(str.substring(0, str.length() - 1), row, column);
+                } catch (StringIndexOutOfBoundsException sioobe) {
+                }
+            } else {
+                ApplicationContext.currentTreeTable.setValueAt((String) ApplicationContext.currentTreeTable.getValueAt(row, column) + e.getKeyChar(), row, column);
+            }
+            ApplicationContext.mainScreenObj.loadMatchingStudies();
+            ApplicationContext.currentTreeTable.changeSelection(row, column, false, false);
+        }
+    }
+
+    public void applyLocaleChange() {
+        ApplicationContext.applyLocaleChange();
+        this.setTitle(ApplicationContext.currentBundle.getString("MainScreen.title.text"));
+        serverTab.setTitleAt(0, ApplicationContext.currentBundle.getString("MainScreen.local.text"));
+        TreeTable treeTable;
+        SearchFilterForm filterForm = null;
+        for (int i = 0; i < serverTab.getTabCount(); i++) {
+            if (i != 0) {
+                filterForm = (SearchFilterForm) ((JSplitPane) serverTab.getComponentAt(i)).getTopComponent();
+                if (((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent() instanceof JScrollPane) {
+                    treeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getComponent(0)).getComponent(0));
+                } else {
+                    treeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getRightComponent()).getComponent(0)).getComponent(0));
+                }
+            } else {
+                treeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(i)).getBottomComponent()).getComponent(0)).getComponent(0));
+            }
+            JTableHeader tableHeader = treeTable.getTableHeader();
+            TableColumnModel columnModel = tableHeader.getColumnModel();
+            if (columnModel.getColumnCount() > 0) {
+                TableColumn idColumn = columnModel.getColumn(2);
+                idColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.patientIdColumn.text"));
+                TableColumn nameColumn = columnModel.getColumn(3);
+                nameColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.patientNameColumn.text"));
+                TableColumn dobColumn = columnModel.getColumn(4);
+                dobColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.dobColumn.text"));
+                TableColumn accNoColumn = columnModel.getColumn(5);
+                accNoColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.accessionNoColumn.text"));
+                TableColumn studyDateColumn = columnModel.getColumn(6);
+                studyDateColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.studyDateColumn.text"));
+                TableColumn studyDescColumn = columnModel.getColumn(7);
+                studyDescColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.studyDescColumn.text"));
+                TableColumn modalityColumn = columnModel.getColumn(8);
+                modalityColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.modalityColumn.text"));
+                TableColumn imagesColumn = columnModel.getColumn(9);
+                imagesColumn.setHeaderValue(ApplicationContext.currentBundle.getString("MainScreen.imagesColumn.text"));
+                tableHeader.validate();
+                tableHeader.repaint();
+            }
+            if (filterForm != null) {
+                filterForm.applyLocaleChange();
+            }
+        }
+        if (!queryInfoLabel.getText().equals("")) {
+            queryInfoLabel.setText(ApplicationContext.currentBundle.getString("MainScreen.studiesFoundLabel.text") + queryInfoLabel.getText().split(":")[1]);
+        }
+        progressLabel.setText(ApplicationContext.currentBundle.getString("MainScreen.downloadingLabel.text"));
+        settingsForm.applyLocaleChange();
+        if (ApplicationContext.isImageViewExist()) {
+            ApplicationContext.imgView.applyLocale();
+        }
+        preferencesItem.setText(ApplicationContext.currentBundle.getString("MainScreen.settingsMenuItem.text"));
+        resetItem.setText(ApplicationContext.currentBundle.getString("MainScreen.resetLocalDbMenuItem.text"));
+        importItem.setText(ApplicationContext.currentBundle.getString("MainScreen.importMenuItem.text"));
+    }
+
+    private void createPreferences() {
+        Font textFont = new Font("Lucida Grande", Font.BOLD, 15);
+        preferencesPopup = new JPopupMenu();
+        preferencesItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.settingsMenuItem.text"));
+        preferencesItem.setFont(textFont);
+        preferencesItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                settingsForm.setSelectedTab();
+                settingsForm.setLocationRelativeTo(ApplicationContext.mainScreenObj);
+                settingsForm.setVisible(true);
             }
         });
-    }
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenuItem QRMenuItem1;
-    private javax.swing.JMenuItem aboutMenuItem;
-    private javax.swing.JMenuItem anonymizeMenuItem;
-    private javax.swing.JButton cdImportButton;
-    private javax.swing.JPanel container;
-    private javax.swing.JPanel contentArea;
-    private javax.swing.JButton deleteButton;
-    private javax.swing.JMenuItem deleteExamMenuItem;
-    private javax.swing.JMenuItem exitMenuItem;
-    private javax.swing.JButton exportButton;
-    private javax.swing.JMenuItem exportMenuItem;
-    private javax.swing.JMenu fileMenu;
-    private javax.swing.JPanel headerPanel;
-    private javax.swing.JMenu helpMenu;
-    private javax.swing.JButton humanButton;
-    private javax.swing.JButton importButton;
-    private javax.swing.JMenuItem importMenuItem;
-    private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JSeparator jSeparator4;
-    private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JLabel localDatabaseLabel;
-    private javax.swing.JMenuBar menuBar;
-    private javax.swing.JButton metaDataButton;
-    private javax.swing.JMenuItem motifLFMenu;
-    private javax.swing.JMenu networkMenu;
-    private javax.swing.JMenuItem nimrodLFMenu;
-    private javax.swing.JMenuItem preferenceMenuItem;
-    private javax.swing.JButton queryRetrieveButton;
-    private javax.swing.JButton queueButton;
-    private javax.swing.JMenuItem queueMenuItem;
-    private javax.swing.JMenuItem resetMenuItem;
-    private javax.swing.JButton sendButton;
-    private javax.swing.JMenuItem sendMenuItem;
-    private javax.swing.JLabel seriesLabel;
-    private javax.swing.JPanel studyAndSeriesDisplayPanel;
-    public static javax.swing.JTable studyListTable;
-    private javax.swing.JScrollPane studyTableScroll;
-    private javax.swing.JMenuItem systemLFmenu;
-    private javax.swing.JMenu themeMenu;
-    private javax.swing.JPanel thumbnailDisplay;
-    private javax.swing.JScrollPane thumbnailScroll;
-    private javax.swing.JMenu toolsMenu;
-    private javax.swing.JMenuItem userManualItem;
-    private javax.swing.JButton viewerButton;
-    private javax.swing.JPanel windowingPanelCanvas;
-    // End of variables declaration//GEN-END:variables
-    private ReceiveDelegate receiveDelegate = null;
-    public static ArrayList<Study> studyList = new ArrayList<Study>();
-    private QueryRetrieve queryRetrieve = null;
-    private HL7QueryRetrieve hl7QueryRetrieve = null;
-    private CreateDicomFrame createDicomFrame = null;
-    public static SendReceiveFrame sndRcvFrm;
-    private WindowingLayeredCanvas canvas = null;
-    public static MainScreen mainScreenObj;
-    public static DicomTagsViewer dicomTagsViewer= new DicomTagsViewer();
-    public static String selectedStudy = "";
-    public static String selectedSeries = "";
-    public SettingsDialog settingsDialog = null;
-
-    public static MainScreen getInstance() {
-        if (mainScreenObj == null) {
-            mainScreenObj = new MainScreen();
-        }        
-        return mainScreenObj;
+        resetItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.resetLocalDbMenuItem.text"));
+        resetItem.setFont(textFont);
+        ActionListener resetListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int isReset = JOptionPane.showConfirmDialog(rootPane, "Do you want to reset the local database?", "Reset", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (isReset == 0) {
+                    ApplicationContext.databaseRef.rebuild();
+                    if (serverTab.getSelectedIndex() == 0) {
+                        setTreeTableModel(null);
+                    }
+                    ((ImagePreviewPanel) ((JSplitPane) serverTab.getComponentAt(0)).getLeftComponent()).resetImagePreviewPanel();
+                    if (ApplicationContext.isImageViewExist()) {
+                        ApplicationContext.imgView.dispose();
+                        ApplicationContext.imgView = null;
+                    }
+                }
+            }
+        };
+        importItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.importMenuItem.text"));
+        importItem.setFont(textFont);
+        importItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FileChooserDialog fcd = new FileChooserDialog(ApplicationContext.mainScreenObj, true);
+                fcd.setLocationRelativeTo(ApplicationContext.mainScreenObj);
+                fcd.setVisible(true);
+            }
+        });
+        resetItem.addActionListener(CursorController.createListener(ApplicationContext.mainScreenObj, resetListener));
+                
+        preferencesPopup.add(preferencesItem);
+        preferencesPopup.add(resetItem);
+        preferencesPopup.add(importItem);
+        
+        //mdiaz
+        sendStudyItem = new JMenuItem("Send Study");
+        sendStudyItem.setFont(textFont);
+        sendStudyItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doSend();
+            }
+        });
+        preferencesPopup.add(sendStudyItem);
     }
 
-    private String showSexChooser() {
-        String sex = null;
-        Object[] options = {ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_1"), 
-            ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_2"), ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_3")};
-        int n = JOptionPane.showOptionDialog(this,
-            ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_4"), ApplicationContext.resBundle.getString("MainScreen.sexChooser.text_5"),
-        JOptionPane.YES_NO_CANCEL_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null,
-        options,
-        options[2]);
-        switch(n) {
-            case 0: sex = BodyJFrame.male;
-                    break;
-            case 1: sex = BodyJFrame.female;
-                    break;
-            case 2: break;    
+    /* mdiaz */
+    private void doSend() {
+        TreeTable treeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(0)).getBottomComponent()).getComponent(0)).getComponent(0));
+        if (treeTable.getSelectedRow() == -1) {
+            JOptionPane.showMessageDialog(this,"Dicom Nodes not selected.","Warning",JOptionPane.WARNING_MESSAGE);
+            return;
         }
-        return sex;
+        ServerListDialog configuredServer = new ServerListDialog(this, true);
+        configuredServer.setLocationRelativeTo(this);
+        configuredServer.setVisible(true);
+        if (configuredServer.getServer() != null) {
+            ServerModel ae = configuredServer.getServer();
+            StudyModel studyDetails = (StudyModel) ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(treeTable.getSelectedRow(), 11);
+            ArrayList<Series> allSeriesOfStudy = (ArrayList<Series>) ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(treeTable.getSelectedRow(), 12);
+            String studyUid = studyDetails.getStudyUID();
+            SendingDelegate sendingDelegate = new SendingDelegate(studyUid, allSeriesOfStudy.size(), ae);
+        }
+    }
+    
+    
+    public synchronized void refreshLocalDB() {
+        if (ApplicationContext.isLocal) {
+            ArrayList<Integer> expandedRows = new ArrayList<Integer>();
+            JTree tree;
+            if (ApplicationContext.currentTreeTable.getRowCount() > 1) {
+                tree = ((TreeTableCellEditor) ApplicationContext.currentTreeTable.getCellEditor(0, 0)).getTree();
+                for (int j = 1; j < ApplicationContext.currentTreeTable.getRowCount(); j++) {
+                    if (!((Boolean) ((TreeTableModelAdapter) ApplicationContext.currentTreeTable.getModel()).getValueAt(j, 14))) {
+                        if (tree.isExpanded(j)) {
+                            expandedRows.add(j);
+                        }
+                    }
+                }
+            }
+            loadlocalStudies();
+            tree = ((TreeTableCellEditor) ApplicationContext.currentTreeTable.getCellEditor(0, 0)).getTree();
+            for (int j = 0; j < expandedRows.size(); j++) {
+                tree.expandRow(expandedRows.get(j));
+            }
+            for (int i = 0; i < ApplicationContext.currentTreeTable.getRowCount(); i++) {
+                if (ApplicationContext.currentTreeTable.getValueAt(i, 2).equals(((ImagePreviewPanel) ((JSplitPane) serverTab.getComponentAt(0)).getLeftComponent()).getPatientId())) {
+                    ApplicationContext.currentTreeTable.setRowSelectionInterval(i, i);
+                    break;
+                }
+            }
+        }
+    }
+
+    public SearchFilterForm getCurrentSearchFilterForm() {
+        return ((SearchFilterForm) ((JSplitPane) serverTab.getSelectedComponent()).getTopComponent());
     }
 }

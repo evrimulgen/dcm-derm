@@ -35,11 +35,9 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
 package in.raster.mayam.util.core;
 
 import java.io.IOException;
-
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.net.Association;
 import org.dcm4che2.net.CommandUtils;
@@ -61,9 +59,10 @@ class StorageSCP extends StorageService {
         this.dcmrcv = dcmrcv;
     }
 
-    /** Overwrite {@link StorageService#cstore} to send delayed C-STORE RSP 
-     * by separate Thread, so reading of following received C-STORE RQs from
-     * the open association is not blocked.
+    /**
+     * Overwrite {@link StorageService#cstore} to send delayed C-STORE RSP by
+     * separate Thread, so reading of following received C-STORE RQs from the
+     * open association is not blocked.
      */
     @Override
     public void cstore(final Association as, final int pcid, DicomObject rq,
@@ -73,6 +72,7 @@ class StorageSCP extends StorageService {
         onCStoreRQ(as, pcid, rq, dataStream, tsuid, rsp);
         if (dcmrcv.getDimseRspDelay() > 0) {
             dcmrcv.executor().execute(new Runnable() {
+
                 public void run() {
                     try {
                         Thread.sleep(dcmrcv.getDimseRspDelay());
@@ -92,10 +92,10 @@ class StorageSCP extends StorageService {
     protected void onCStoreRQ(Association as, int pcid, DicomObject rq,
             PDVInputStream dataStream, String tsuid, DicomObject rsp)
             throws IOException, DicomServiceException {
-        if (dcmrcv.isStoreFile())
+        if (dcmrcv.isStoreFile()) {
             dcmrcv.onCStoreRQ(as, pcid, rq, dataStream, tsuid, rsp);
-        else
+        } else {
             super.onCStoreRQ(as, pcid, rq, dataStream, tsuid, rsp);
+        }
     }
-
 }

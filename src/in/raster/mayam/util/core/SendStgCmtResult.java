@@ -35,11 +35,9 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
 package in.raster.mayam.util.core;
 
 import java.util.TimerTask;
-
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.net.NetworkApplicationEntity;
 
@@ -71,11 +69,10 @@ class SendStgCmtResult extends TimerTask {
                     + stgcmtAE.getAETitle() + " failed:", e);
             if (failureCount++ < dcmrcv.getStgCmtRetry()) {
                 DcmRcv.LOG.info("Schedule retry in "
-                        + (dcmrcv.getStgCmtRetryPeriod()/1000) + "s.");
-               return;
+                        + (dcmrcv.getStgCmtRetryPeriod() / 1000) + "s.");
+                return;
             }
         }
         this.cancel();
     }
-
 }

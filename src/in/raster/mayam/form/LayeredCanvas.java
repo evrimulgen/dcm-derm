@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  * Babu Hussain A
+ * Devishree V
  * Meer Asgar Hussain B
  * Prakash J
  * Suresh V
@@ -39,29 +40,17 @@
 package in.raster.mayam.form;
 
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.SeriesChooserDelegate;
-import in.raster.mayam.model.Series;
-import in.raster.mayam.model.Study;
+import in.raster.mayam.delegates.LocalizerDelegate;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import javax.swing.JLayeredPane;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
+import java.awt.event.*;
+import java.io.File;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 /**
  *
- * @author  BabuHussain
+ * @author BabuHussain
  * @version 0.5
  *
  */
@@ -79,51 +68,145 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
     private String[] comparedWithStudies;
 
     public LayeredCanvas() {
-        this.addFocusListener(this);
-        this.addMouseListener(this);
-        this.addComponentListener(this);
-        this.setBorder(new LineBorder(Color.DARK_GRAY));
+        addFocusListener(this);
+        addMouseListener(this);
+        addComponentListener(this);
+        setBorder(new LineBorder(Color.DARK_GRAY));
         fileIsNull = true;
     }
 
-    public LayeredCanvas(String filePath) {
-        this.setBackground(Color.BLACK);
-        this.setLayout(null);
-        createImageCanvas(filePath);
+    public LayeredCanvas(File file, int startBufferingFrom, boolean isImageLayout) {
+        setBackground(Color.BLACK);
+        setLayout(null);
+        createImageCanvas(file, startBufferingFrom, isImageLayout);
         createAnnotationOverlay();
         createTextOverlay();
         setTextOverlayParam();
         findMultiframeStatus();
         createLayers();
-        this.addComponentListener(this);
+        addComponentListener(this);
     }
-    
+
+    public LayeredCanvas(boolean isImageLayout, String studyUid, String seriesUid) {
+        setBackground(Color.BLACK);
+        setLayout(null);
+        createImageCanvas();
+        createAnnotationOverlay();
+        createTextOverlay();
+        createLayers();
+        addComponentListener(this);
+    }
+
     /**
      * This routine used to create the component once again for another series.
+     *
      * @param filePath
      */
-    public void createSubComponents(String filePath) {
-        if (textOverlay != null) {
-            this.remove(textOverlay);
+    public void createSubComponents(String filePath, int startFrom, boolean isImageLayout) {
+        int layoutColumns;
+        int layoutRows;
+        if (this.imgpanel != null) {
+            layoutColumns = imgpanel.layoutColumns;
+            layoutRows = imgpanel.layoutRows;
+        } else {
+            layoutColumns = ApplicationContext.layeredCanvas.imgpanel.layoutColumns;
+            layoutRows = ApplicationContext.layeredCanvas.imgpanel.layoutRows;
         }
-        if (annotationPanel != null) {
-            this.remove(annotationPanel);
+        JPanel container = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent());
+        if (this.canvas != null) {
+            canvas.remove(imgpanel);
+            annotationPanel.resetMeasurements();
+            if (filePath != null) {
+                imgpanel = new ImagePanel(new File(filePath), canvas);
+            } else {
+                imgpanel = new ImagePanel(canvas);
+            }
+            if (!isImageLayout) {
+                imgpanel.startImageBuffering(startFrom);
+            }
+            imgpanel.setSize(ImageWidth, ImageHeight);
+            canvas.add(imgpanel);
+        } else if (this.imgpanel == null && this.annotationPanel == null && this.textOverlay == null) {
+            createImageCanvas(new File(filePath), startFrom, isImageLayout);
+            createAnnotationOverlay();
+            createTextOverlay();
+            createLayers();
         }
-        if (canvas != null) {
-            this.remove(canvas);
+        textOverlay.setTextOverlayParam(this.imgpanel.getTextOverlayParam());
+        if (((JPanel) container.getComponent(0)).getComponentCount() <= 1) {
+            imgpanel.setScaleFactor(container.getWidth() / layoutColumns, container.getHeight() / layoutRows, layoutColumns * layoutRows);
+        } else {
+            imgpanel.setScaleFactor(((JPanel) container.getComponent(0)).getWidth() / layoutColumns, ((JPanel) container.getComponent(0)).getHeight() / layoutRows, layoutColumns * layoutRows);
         }
-        createImageCanvas(filePath);
-        createAnnotationOverlay();
-        createTextOverlay();
-        setTextOverlayParam();
-        findMultiframeStatus();
-        createLayers();
-        this.imgpanel.revalidate();
-        this.imgpanel.repaint();
-        this.annotationPanel.revalidate();
-        this.annotationPanel.repaint();
-        this.textOverlay.revalidate();
-        this.textOverlay.repaint();
+        imgpanel.layoutColumns = layoutColumns;
+        imgpanel.layoutRows = layoutRows;
+        annotationPanel.doZoomIn();
+        imgpanel.revalidate();
+        imgpanel.repaint();
+        annotationPanel.revalidate();
+        annotationPanel.repaint();
+        textOverlay.revalidate();
+        textOverlay.repaint();
+        imgpanel.getCanvas().setSelection(true);
+        ApplicationContext.setSeriesContext();
+        if (!isImageLayout && ImagePanel.isDisplayScout()) {
+            LocalizerDelegate localizer = new LocalizerDelegate(false);
+            localizer.start();
+        }
+        try {
+            if (canvas != null) {
+                canvas.resizeHandler();
+                imgpanel.resizeHandler();
+                textOverlay.resizeHandler();
+                annotationPanel.resizeHandler();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void createImageLayoutComponents() {
+        int layoutColumns;
+        int layoutRows;
+        if (this.imgpanel != null) {
+            layoutColumns = imgpanel.layoutColumns;
+            layoutRows = imgpanel.layoutRows;
+        } else {
+            layoutColumns = ApplicationContext.layeredCanvas.imgpanel.layoutColumns;
+            layoutRows = ApplicationContext.layeredCanvas.imgpanel.layoutRows;
+        }
+        if (this.canvas != null) {
+            canvas.remove(imgpanel);
+            annotationPanel.resetMeasurements();
+            imgpanel = new ImagePanel(canvas);
+            imgpanel.setSize(ImageWidth, ImageHeight);
+            canvas.add(imgpanel);
+        } else if (this.imgpanel == null && this.annotationPanel == null && this.textOverlay == null) {
+            createImageCanvas(null, 0, true);
+            createAnnotationOverlay();
+            createTextOverlay();
+            createLayers();
+        }
+        imgpanel.layoutColumns = layoutColumns;
+        imgpanel.layoutRows = layoutRows;
+        annotationPanel.doZoomIn();
+        imgpanel.revalidate();
+        imgpanel.repaint();
+        annotationPanel.revalidate();
+        annotationPanel.repaint();
+        textOverlay.revalidate();
+        textOverlay.repaint();
+
+        try {
+            if (canvas != null) {
+                canvas.resizeHandler();
+                imgpanel.resizeHandler();
+                textOverlay.resizeHandler();
+                annotationPanel.resizeHandler();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void createLayers() {
@@ -132,10 +215,25 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
         this.add(textOverlay, Integer.valueOf(1));
     }
 
-    private void createImageCanvas(String filePath) {
+    private void createImageCanvas(File file, int startFrom, boolean isImageLayout) {
         canvas = new Canvas(this);
         canvas.setSize(514, 514);
-        imgpanel = new ImagePanel(filePath, canvas);
+        if (file != null) {
+            imgpanel = new ImagePanel(file, canvas);
+        } else {
+            imgpanel = new ImagePanel(canvas);
+        }
+        if (!isImageLayout) {
+            imgpanel.startImageBuffering(startFrom);
+        }
+        imgpanel.setSize(ImageWidth, ImageHeight);
+        canvas.add(imgpanel);
+    }
+
+    private void createImageCanvas() {
+        canvas = new Canvas(this);
+        canvas.setSize(514, 514);
+        imgpanel = new ImagePanel(canvas);
         imgpanel.setSize(ImageWidth, ImageHeight);
         canvas.add(imgpanel);
     }
@@ -161,12 +259,9 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
         repaint();
     }
 
-    public void findMultiframeStatus() {
-        if (imgpanel.isMulitiFrame()) {
+    private void findMultiframeStatus() {
+        if (imgpanel.isMultiFrame()) {
             textOverlay.multiframeStatusDisplay(true);
-            if (!ApplicationContext.databaseRef.getMultiframeStatus()) {
-                textOverlay.getTextOverlayParam().setFramePosition("1/" + imgpanel.getnFrames());
-            }
         } else {
             textOverlay.multiframeStatusDisplay(false);
         }
@@ -177,27 +272,21 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
         textOverlay.setTextOverlayParam(imgpanel.getTextOverlayParam());
     }
 
-    public void centerImagePanel() {
-        int xPosition = (this.getSize().width - imgpanel.getSize().width) / 2;
-        int yPosition = (this.getSize().height - imgpanel.getSize().height) / 2;
-        imgpanel.setBounds(xPosition, yPosition, imgpanel.getSize().width, imgpanel.getSize().height);
-    }
-
+    @Override
     public void focusGained(FocusEvent arg0) {
         this.setBorder(new LineBorder(Color.YELLOW));
     }
 
+    @Override
     public void focusLost(FocusEvent arg0) {
         this.setBorder(new LineBorder(Color.DARK_GRAY));
     }
 
+    @Override
     public void mouseClicked(MouseEvent arg0) {
         if (fileIsNull) {
             setSelection();
-            designContext();
-
         }
-
     }
 
     /**
@@ -216,59 +305,34 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
     }
 
     public void setSelection() {
-        if (ApplicationContext.layeredCanvas != null) {
-            if (ApplicationContext.layeredCanvas.getCanvas() != null) {
-                ApplicationContext.layeredCanvas.getCanvas().setNoSelectionColoring();
-            } else {
-                ApplicationContext.layeredCanvas.setNoSelectionColoring();
+        if (this.canvas != null) {
+            if (ApplicationContext.layeredCanvas != null) {
+                if (ApplicationContext.layeredCanvas.getCanvas() != null) {
+                    ApplicationContext.layeredCanvas.getCanvas().setNoSelectionColoring();
+                } else {
+                    ApplicationContext.layeredCanvas.setNoSelectionColoring();
+                }
             }
+            ApplicationContext.layeredCanvas = null;
+            ApplicationContext.layeredCanvas = this;
+            ApplicationContext.layeredCanvas.setSelectionColoring();
         }
-        ApplicationContext.imgPanel = this.imgpanel;
-        ApplicationContext.layeredCanvas = this;
-        ApplicationContext.annotationPanel = this.annotationPanel;
-        ApplicationContext.layeredCanvas.setSelectionColoring();
     }
 
+    @Override
     public void mousePressed(MouseEvent arg0) {
     }
 
+    @Override
     public void mouseReleased(MouseEvent arg0) {
     }
 
+    @Override
     public void mouseEntered(MouseEvent arg0) {
     }
 
+    @Override
     public void mouseExited(MouseEvent arg0) {
-    }
-
-    private void designContext() {
-        final LayeredCanvas ref = this;
-        ArrayList<Study> studyList = null;
-        if (((JPanel) ApplicationContext.imgView.jTabbedPane1.getSelectedComponent()).getName() != null) {
-            String patientName = ((JPanel) ApplicationContext.imgView.jTabbedPane1.getSelectedComponent()).getName();
-            studyList = ApplicationContext.databaseRef.getStudyUIDBasedOnPatientName(patientName);
-        }
-        JPopupMenu jPopupMenu2 = new JPopupMenu();
-        for (Study study : studyList) {
-            ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList(study.getStudyInstanceUID());
-            JMenu menu = new JMenu(study.getStudyDesc());
-            for (final Series series : seriesList) {
-                JMenuItem menuitem = new JMenuItem(series.getSeriesDesc());
-                menu.add(menuitem);
-                menuitem.addActionListener(new java.awt.event.ActionListener() {
-
-                    public void actionPerformed(ActionEvent arg0) {
-                        if (ApplicationContext.databaseRef.getMultiframeStatus()) {
-                            SeriesChooserDelegate seriesChooser = new SeriesChooserDelegate(series.getStudyInstanceUID(), series.getSeriesInstanceUID(), series.isMultiframe(), series.getInstanceUID(), ref);
-                        } else {
-                            SeriesChooserDelegate seriesChooser = new SeriesChooserDelegate(series.getStudyInstanceUID(), series.getSeriesInstanceUID(), ref);
-                        }
-                    }
-                });
-            }
-            jPopupMenu2.add(menu);
-        }
-        this.setComponentPopupMenu(jPopupMenu2);
     }
 
     public Canvas getCanvas() {
@@ -291,6 +355,7 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
         return textOverlay;
     }
 
+    @Override
     public void componentResized(ComponentEvent e) {
         try {
             if (canvas != null) {
@@ -299,17 +364,20 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
                 this.textOverlay.resizeHandler();
                 this.annotationPanel.resizeHandler();
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (NullPointerException ex) {
+            //Null pointer exception occurs if any of the components creation on progress
         }
     }
 
+    @Override
     public void componentMoved(ComponentEvent e) {
     }
 
+    @Override
     public void componentShown(ComponentEvent e) {
     }
 
+    @Override
     public void componentHidden(ComponentEvent e) {
     }
 
@@ -320,5 +388,4 @@ public class LayeredCanvas extends JLayeredPane implements FocusListener, MouseL
     public void setComparedWithStudies(String[] comparedWithStudies) {
         this.comparedWithStudies = comparedWithStudies;
     }
-
 }

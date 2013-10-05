@@ -40,7 +40,7 @@ package in.raster.mayam.util.localizer;
 
 /**
  *
- * @author  BabuHussain
+ * @author BabuHussain
  * @version 0.6
  *
  */
@@ -190,7 +190,6 @@ public class SliceLocator {
             _imgx = Float.parseFloat(_imgPositionArray[0]);
             _imgy = Float.parseFloat(_imgPositionArray[1]);
             _imgz = Float.parseFloat(_imgPositionArray[2]);
-
             _imgValid = true;
         } else {
             // The Pos contains no valid information it is assumed that the sout position is to be clweared of all valid
@@ -244,7 +243,7 @@ public class SliceLocator {
         String[] positionArray;
         positionArray = position.split("\\\\");
         for (int i = 0; i < positionArray.length; i++) {
-            if (positionArray[i].matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")) {
+            if (positionArray[i].trim().matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")) {
                 retVal = true;
             } else {
                 retVal = false;
@@ -260,7 +259,7 @@ public class SliceLocator {
         String[] vectorArray;
         vectorArray = vector.split("\\\\");
         for (int i = 0; i < vectorArray.length; i++) {
-            if (vectorArray[i].matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")) {
+            if (vectorArray[i].trim().matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")) {
                 retVal = true;
             } else {
                 retVal = false;
@@ -515,7 +514,6 @@ public class SliceLocator {
         _mAxisBottomy = rowPixel[2];
         _mAxisLeftx = colPixel[3];
         _mAxisLefty = rowPixel[3];
-
     }
 
     public float getBoxLlx() {
