@@ -38,6 +38,7 @@
 package de.iftm.dcm4che.services;
 
 //import java.io.File;
+import in.raster.mayam.context.ApplicationContext;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.Socket;
@@ -130,7 +131,7 @@ public class CDimseService {
     private final static DcmObjectFactory dof = DcmObjectFactory.getInstance();
     
     /** Default AE title used for the association if it is not explicit given in the url filed. */
-    public static String DEFAULT_CALLING_AET = "MAYAM";
+    public static String DEFAULT_CALLING_AET = ApplicationContext.listenerDetails[0];
     
     /** Query/Retrieve Level Values for Study = "PATIENT". See PS 3.4 - C.6 SOP CLASS DEFINITIONS*/
     static public final int PATIENT_LEVEL = 0;
