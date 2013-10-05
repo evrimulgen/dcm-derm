@@ -40,38 +40,50 @@
 package in.raster.mayam.facade;
 
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.delegate.InputArgumentsParser;
-import in.raster.mayam.form.display.Display;
+import in.raster.mayam.delegates.InputArgumentsParser;
 import in.raster.mayam.form.MainScreen;
 import in.raster.mayam.form.SplashScreen;
-import in.raster.mayam.form.dialog.ConfirmUpgrade;
-import in.raster.mayam.model.FileURLModel;
-import in.raster.mayam.util.database.UpgradeDataBase;
+import in.raster.mayam.form.display.Display;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
  *
- * @author  BabuHussain
+ * @author BabuHussain
  * @version 0.5
  *
  */
 public class ApplicationFacade {
 
+    public static MainScreen mainscreen;
     public static SplashScreen splash;
-    public static MainScreen mainScreen;
-    //public String applicationName="Mayam";
-    public static String binPath="";
-    
-    //Added For Upgrade
-    public static boolean version7 = false;        
-    private UpgradeDataBase upgradeDatabaseRef = new UpgradeDataBase();     
 
     private ApplicationFacade() {
+    }
+
+    public static void main(String[] args) {
+        InputArgumentsParser.parse(args);
+        ApplicationFacade facade = new ApplicationFacade();
+        facade.setSystemProperties();
+        facade.createSplash();
+        facade.createMainScreen();
+        if (!ApplicationContext.isJnlp) {
+            splash.setVisible(false);
+            mainscreen.setVisible(true);
+        }
+    }
+
+    private void createMainScreen() {
+        GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+        mainscreen = new MainScreen();
+        if (screenDevices.length >= 1) {
+            mainscreen.setLocation(0, 0);
+        }
     }
 
     public void createSplash() {
@@ -79,29 +91,34 @@ public class ApplicationFacade {
         Display.alignScreen(splash);
         splash.setVisible(true);
     }
-    public void createMainScreen()
-    {
-        mainScreen = MainScreen.getInstance();
-    }
 
     private void setSystemProperties() {
+        System.setProperty("java.library.path", System.getProperty("user.dir") + File.separator + "lib");
+        Field fieldSysPath;
+        try {
+            fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+            fieldSysPath.setAccessible(true);
+            fieldSysPath.set(null, null);
+        } catch (NoSuchFieldException ex) {
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
+        }
         if (Platform.getCurrentPlatform().equals(Platform.MAC)) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.mrj.application.apple.menu.about.name", ApplicationContext.applicationName);
             System.setProperty("apple.awt.antialiasing", "true");
             System.setProperty("apple.awt.textantialiasing", "true");
-//            System.setProperty("apple.awt.brushMetalLook", "true");
-//            System.setProperty("com.sun.media.jai.disableMediaLib", "true");
-//            System.setProperty("apple.awt.graphics.EnableLazyPixelConversion.TYPE_3BYTE_BGR", "false");
-//            System.setProperty("apple.awt.graphics.EnableLazyDrawing", "false");
-//            System.setProperty("apple.awt.rendering", "VALUE_RENDER_SPEED");
-//            System.setProperty("apple.awt.interpolation", "VALUE_INTERPOLATION_BILINEAR");
-//            System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
-//            System.setProperty("apple.awt.graphics.UseQuartz", "true");
         }
-        if(Platform.getCurrentPlatform().equals(Platform.LINUX) || Platform.getCurrentPlatform().equals(Platform.SOLARIS))
+        if (Platform.getCurrentPlatform().equals(Platform.LINUX) || Platform.getCurrentPlatform().equals(Platform.SOLARIS)) {
             System.setProperty("sun.java2d.pmoffscreen", "false");
-    }    
+        }
+        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true"); //Need to avoid the exceptions occured when using jdk 1.7                 
+    }
 
     public static void exitApp(String exitString) {
         if (splash != null) {
@@ -110,108 +127,8 @@ public class ApplicationFacade {
         JOptionPane.showMessageDialog(null, exitString, "Application Error", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
-    
-    public static void main(String[] args) {
-        try {
-            InputArgumentsParser.parse(args);
-            ApplicationFacade facade = new ApplicationFacade();
-            facade.setSystemProperties();
-            facade.createSplash();
-            facade.checkUpgrade();
-            facade.createMainScreen();
-            splash.setVisible(false);
-            mainScreen.setVisible(true);
-        } catch (Exception ex) {
-            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 
-    private void checkUpgrade() {
-        String[] dir = new File(System.getProperty("user.dir")).list();
-        ApplicationContext.openOrCreateDB();
-        if (!ApplicationContext.databaseRef.checkLocaleExist()) {
-            ApplicationContext.isUpgrade = true;
-            showConfirmationForUpgrade();
-        } else {
-            for (int i = 0; i < dir.length; i++) {
-                if ("viewerdb".equals(dir[i])) {
-                    ApplicationContext.isUpgrade = version7 = true;
-                    showConfirmationForUpgrade();
-                }
-            }
-        }
-    }
-
-    private void showConfirmationForUpgrade() {
-        ConfirmUpgrade confirmUpgrade = new ConfirmUpgrade(ApplicationContext.mainScreen, true);
-        confirmUpgrade.setLocationRelativeTo(ApplicationContext.mainScreen);
-        confirmUpgrade.setVisible(true);
-        if (confirmUpgrade.getReturnStatus() == 0) {
-            System.exit(confirmUpgrade.getReturnStatus());
-        } else {
-            upgrade();
-        }
-    }
-
-    private void upgrade() {
-        if (version7) {
-            upgradeDatabaseRef.openOlderConnection();            
-            ApplicationContext.openOrCreateDB();
-            ApplicationContext.databaseRef.deletePresets();
-            upgradeDatabaseRef.savePreferences();
-            upgradeDatabaseRef.saveURLs();
-            File viewer = new File(System.getProperty("user.dir") + File.separator + "viewerdb");
-            try {
-                delete(viewer);
-            } catch (IOException ex) {
-                Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-        } else {
-            ApplicationContext.databaseRef.openOrCreateDB();
-            ArrayList<FileURLModel> fileUrls = saveUrl();
-            ApplicationContext.databaseRef.dropTablesForUpgrade();
-            ApplicationContext.databaseRef.createTablesForUpgrade();
-            for (int i = 0; i < fileUrls.size(); i++) {
-                upgradeDatabaseRef.startImport(fileUrls.get(i).getFilesUnderStudyUID(), fileUrls.get(i).getInstancecount());
-            }
-        }
-    }
-
-    public static void delete(File file)
-            throws IOException {
-        if (file.isDirectory()) {
-            if (file.list().length == 0) {
-                file.delete();
-            } else {
-                String files[] = file.list();
-
-                for (String temp : files) {
-                    File fileDelete = new File(file, temp);
-                    delete(fileDelete);
-                }
-                if (file.list().length == 0) {
-                    file.delete();
-                }
-            }
-        } else {
-            file.delete();
-        }
-    }
-
-    private static ArrayList<FileURLModel> saveUrl() {
-        int instancecount = 0;
-        ArrayList<String> studyuidlist = ApplicationContext.databaseRef.getStudyUIDList();
-        ArrayList<FileURLModel> fileurls = new ArrayList<FileURLModel>();
-        for (int i = 0; i < studyuidlist.size(); i++) {
-            ArrayList<String> seriesuidlist = ApplicationContext.databaseRef.getSeriesUIDList(studyuidlist.get(i));
-            for (int j = 0; j < seriesuidlist.size(); j++) {
-                instancecount = ApplicationContext.databaseRef.getSeriesLevelInstance(studyuidlist.get(i), seriesuidlist.get(j));
-            }
-            FileURLModel file = new FileURLModel(studyuidlist.get(i), instancecount, ApplicationContext.databaseRef.getUrlBasedOnStudyIUID(studyuidlist.get(i)));            
-            fileurls.add(file);
-        }
-        return fileurls;
+    public static void hideSplash() {
+        splash.setVisible(false);
     }
 }
-
