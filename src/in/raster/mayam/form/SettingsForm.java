@@ -42,6 +42,7 @@ package in.raster.mayam.form;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.form.dialogs.QueryButtonSettings;
 import in.raster.mayam.models.ButtonsModel;
+import in.raster.mayam.models.EMRServerModel;
 import in.raster.mayam.models.PresetModel;
 import in.raster.mayam.models.ServerModel;
 import in.raster.mayam.models.combo.CountryComboModel;
@@ -49,6 +50,7 @@ import in.raster.mayam.models.combo.LanguageComboModel;
 import in.raster.mayam.models.combo.ModalityComboModel;
 import in.raster.mayam.models.combo.ThemeComboModel;
 import in.raster.mayam.models.table.ButtonTableModel;
+import in.raster.mayam.models.table.EMRServerTableModel;
 import in.raster.mayam.models.table.PresetTableModel;
 import in.raster.mayam.models.table.ServerTableModel;
 import in.raster.mayam.models.table.editor.ServerTableCellEditor;
@@ -81,6 +83,7 @@ import org.dcm4che.util.DcmURL;
 public class SettingsForm extends javax.swing.JFrame {
 
     ServerTableModel serverTableModel;
+    EMRServerTableModel emrServerTableModel;
     QueryButtonSettings buttonSettings;
     JPopupMenu popup = new JPopupMenu();
     JLabel moveLabel = new JLabel(" ");
@@ -95,13 +98,14 @@ public class SettingsForm extends javax.swing.JFrame {
     public SettingsForm() {
         activeLanguageAndCountry = ApplicationContext.databaseRef.getActiveLanguage();
         initComponents();
-        jTabbedPane1.setFont(ApplicationContext.labelFont);
+        jTabbedPanel.setFont(ApplicationContext.labelFont);
         popup.add(moveLabel);
         moveLabel.setOpaque(true);
         moveLabel.setBackground(Color.BLACK);
         moveLabel.setForeground(Color.ORANGE);
         moveLabel.setFont(ApplicationContext.labelFont);
         setServerListTableModel();
+        setEMRServerListTableModel();
         setButtonListTableModel(ApplicationContext.databaseRef.getAllQueryButtons());
         loadThemeCombo();
         loadModalitiesCombo();
@@ -115,7 +119,7 @@ public class SettingsForm extends javax.swing.JFrame {
     }
 
     public void setSelectedTab() {
-        jTabbedPane1.setSelectedIndex(0);
+        jTabbedPanel.setSelectedIndex(0);
     }
 
     /**
@@ -128,7 +132,7 @@ public class SettingsForm extends javax.swing.JFrame {
     private void initComponents() {
 
         retrieveTypeGroup = new javax.swing.ButtonGroup();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jTabbedPanel = new javax.swing.JTabbedPane();
         serverPanel = new javax.swing.JPanel();
         listenerPanel = new javax.swing.JPanel();
         listenerAetLabel = new javax.swing.JLabel();
@@ -176,6 +180,13 @@ public class SettingsForm extends javax.swing.JFrame {
         cGetRadioBtn = new javax.swing.JRadioButton();
         wadoRadioBtn = new javax.swing.JRadioButton();
         dynamicJNLPRetrieveTypeChk = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
+        emrServerPanel = new javax.swing.JPanel();
+        addEMRServerBtn = new javax.swing.JButton();
+        deleteEMRServerBtn = new javax.swing.JButton();
+        verifyEMRServerBtn = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        emrServerListTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(ApplicationContext.currentBundle.getString("MainScreen.settingsMenuItem.text")); // NOI18N
@@ -222,7 +233,7 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addComponent(listenerPortTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(saveListenerBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(70, Short.MAX_VALUE))
+                .addContainerGap(76, Short.MAX_VALUE))
         );
         listenerPanelLayout.setVerticalGroup(
             listenerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -234,7 +245,7 @@ public class SettingsForm extends javax.swing.JFrame {
                     .addComponent(listenerPortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(listenerPortTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(saveListenerBtn))
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         serversPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.serversPanel.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
@@ -304,7 +315,7 @@ public class SettingsForm extends javax.swing.JFrame {
                     .addComponent(deleteServerBtn)
                     .addComponent(verifyServerBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE))
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout serverPanelLayout = new javax.swing.GroupLayout(serverPanel);
@@ -326,7 +337,7 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addComponent(serversPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab(ApplicationContext.currentBundle.getString("Preferences.servers.text"), serverPanel); // NOI18N
+        jTabbedPanel.addTab(ApplicationContext.currentBundle.getString("Preferences.servers.text"), serverPanel); // NOI18N
 
         modalityPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.modalities.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
 
@@ -338,7 +349,7 @@ public class SettingsForm extends javax.swing.JFrame {
         );
         modalityPanelLayout.setVerticalGroup(
             modalityPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 76, Short.MAX_VALUE)
+            .addGap(0, 86, Short.MAX_VALUE)
         );
 
         queryButtonsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.queryParameters.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
@@ -374,7 +385,7 @@ public class SettingsForm extends javax.swing.JFrame {
             .addGroup(queryButtonsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(queryButtonsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
                     .addGroup(queryButtonsPanelLayout.createSequentialGroup()
                         .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -390,7 +401,7 @@ public class SettingsForm extends javax.swing.JFrame {
                     .addComponent(addButton)
                     .addComponent(deleteButton))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 253, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -415,7 +426,7 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab(ApplicationContext.currentBundle.getString("Preferences.queryPanel.text"), queryParametersPanel); // NOI18N
+        jTabbedPanel.addTab(ApplicationContext.currentBundle.getString("Preferences.queryPanel.text"), queryParametersPanel); // NOI18N
 
         languagePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.language.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
 
@@ -492,7 +503,7 @@ public class SettingsForm extends javax.swing.JFrame {
                     .addComponent(localeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(updateLanguageButton)
-                .addContainerGap(260, Short.MAX_VALUE))
+                .addContainerGap(263, Short.MAX_VALUE))
         );
 
         themesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.themes.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
@@ -521,7 +532,7 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addGroup(themesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(themeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(saveThemeBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         themesPanelLayout.setVerticalGroup(
             themesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -556,7 +567,7 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab(ApplicationContext.currentBundle.getString("Preferences.preferences.text"), preferencesPanel); // NOI18N
+        jTabbedPanel.addTab(ApplicationContext.currentBundle.getString("Preferences.preferences.text"), preferencesPanel); // NOI18N
 
         addPreset.setText(ApplicationContext.currentBundle.getString("Preferences.presets.addButton.text")); // NOI18N
         addPreset.addActionListener(new java.awt.event.ActionListener() {
@@ -608,7 +619,7 @@ public class SettingsForm extends javax.swing.JFrame {
                         .addComponent(presetModalityLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(modalityCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 685, Short.MAX_VALUE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE))
                 .addContainerGap())
         );
         presetsPanelLayout.setVerticalGroup(
@@ -621,11 +632,11 @@ public class SettingsForm extends javax.swing.JFrame {
                     .addComponent(modalityCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(presetModalityLabel))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 425, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab(ApplicationContext.currentBundle.getString("Preferences.presets.text"), presetsPanel); // NOI18N
+        jTabbedPanel.addTab(ApplicationContext.currentBundle.getString("Preferences.presets.text"), presetsPanel); // NOI18N
 
         loopbackChk.setFont(ApplicationContext.labelFont);
         loopbackChk.setSelected(ApplicationContext.databaseRef.getLoopbackStatus());
@@ -691,7 +702,104 @@ public class SettingsForm extends javax.swing.JFrame {
                 .addContainerGap(376, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab(ApplicationContext.currentBundle.getString("Preferences.miscellaneous.text"), miscellaneousPanel); // NOI18N
+        jTabbedPanel.addTab(ApplicationContext.currentBundle.getString("Preferences.miscellaneous.text"), miscellaneousPanel); // NOI18N
+
+        emrServerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, ApplicationContext.currentBundle.getString("Preferences.emrServersPanel.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("Lucida Grande",Font.BOLD,15))); // NOI18N
+
+        addEMRServerBtn.setText(ApplicationContext.currentBundle.getString("Preferences.servers.addButton.text")); // NOI18N
+        addEMRServerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addEMRServerBtnActionPerformed(evt);
+            }
+        });
+
+        deleteEMRServerBtn.setText(ApplicationContext.currentBundle.getString("Preferences.servers.deleteButton.text")); // NOI18N
+        deleteEMRServerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteEMRServerBtnActionPerformed(evt);
+            }
+        });
+
+        verifyEMRServerBtn.setText(ApplicationContext.currentBundle.getString("Preferences.servers.verifyButton.text")); // NOI18N
+        verifyEMRServerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                verifyEMRServerBtnActionPerformed(evt);
+            }
+        });
+
+        emrServerListTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {},
+                {},
+                {},
+                {}
+            },
+            new String [] {
+
+            }
+        ));
+        emrServerListTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                emrServerListTableMouseClicked(evt);
+            }
+        });
+        jScrollPane5.setViewportView(emrServerListTable);
+
+        javax.swing.GroupLayout emrServerPanelLayout = new javax.swing.GroupLayout(emrServerPanel);
+        emrServerPanel.setLayout(emrServerPanelLayout);
+        emrServerPanelLayout.setHorizontalGroup(
+            emrServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(emrServerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(emrServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 661, Short.MAX_VALUE)
+                    .addGroup(emrServerPanelLayout.createSequentialGroup()
+                        .addComponent(addEMRServerBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(deleteEMRServerBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(verifyEMRServerBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        emrServerPanelLayout.setVerticalGroup(
+            emrServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(emrServerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(emrServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addEMRServerBtn)
+                    .addComponent(deleteEMRServerBtn)
+                    .addComponent(verifyEMRServerBtn))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 715, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(emrServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 497, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addContainerGap(70, Short.MAX_VALUE)
+                    .addComponent(emrServerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap()))
+        );
+
+        emrServerPanel.getAccessibleContext().setAccessibleName("HL7 Servers");
+        emrServerPanel.getAccessibleContext().setAccessibleDescription("");
+
+        jTabbedPanel.addTab("EMR Servers", jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -699,14 +807,14 @@ public class SettingsForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(jTabbedPanel)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1))
+                .addComponent(jTabbedPanel))
         );
 
         pack();
@@ -831,6 +939,51 @@ public class SettingsForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_serverListTableMouseClicked
 
+    private void addEMRServerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addEMRServerBtnActionPerformed
+        EMRServerModel serverModel = new EMRServerModel("Description", "localhost", 8080, "http");
+        if (!ApplicationContext.databaseRef.checkRecordExists("servers", "logicalname", "Description")) {
+            ApplicationContext.databaseRef.insertEMRServer(serverModel);
+            setEMRServerListTableModel();
+        } else {
+            JOptionPane.showMessageDialog(this, "Server '" + serverModel.getDescription() + "' " + " already exist", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_addEMRServerBtnActionPerformed
+
+    private void deleteEMRServerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEMRServerBtnActionPerformed
+        deleteEMRServer();
+    }//GEN-LAST:event_deleteEMRServerBtnActionPerformed
+
+    private void verifyEMRServerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_verifyEMRServerBtnActionPerformed
+//        if (serverListTable.getSelectedRow() != -1) {
+//            DcmURL url = ApplicationContext.communicationDelegate.constructURL((String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 1), (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 2), Integer.parseInt((String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 3)));
+//            boolean result = ApplicationContext.communicationDelegate.verifyServer(url);
+//            if (result) {
+//                JOptionPane.showMessageDialog(rootPane, "Echo dicom://" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 1) + "@" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 2) + ":" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 3) + " successfully!", "Echo Result", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                JOptionPane.showMessageDialog(rootPane, "Echo dicom://" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 1) + "@" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 2) + ":" + (String) serverListTable.getValueAt(serverListTable.getSelectedRow(), 3) + " not successfully!", "Echo Result", JOptionPane.ERROR_MESSAGE);
+//            }
+//        } else {
+            JOptionPane.showMessageDialog(this, "Please select a server to verify!", "Cannot Verify Server", JOptionPane.ERROR_MESSAGE);
+//        }
+    }//GEN-LAST:event_verifyEMRServerBtnActionPerformed
+
+    private void emrServerListTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_emrServerListTableMouseClicked
+        if (evt.getClickCount() == 2 && emrServerListTable.getSelectedColumn() < 4) {
+            int row = 0, col = 0;
+            if (emrServerListTable.isEditing()) {
+                row = emrServerListTable.getEditingRow();
+                col = emrServerListTable.getEditingColumn();
+                emrServerListTable.getCellEditor().stopCellEditing();
+            } else {
+                row = emrServerListTable.getSelectedRow();
+                col = emrServerListTable.getSelectedColumn();
+            }
+            emrServerListTable.editCellAt(row, col);
+            emrServerListTable.changeSelection(row, col, false, false);
+            emrServerListTable.invalidate();
+        }
+    }//GEN-LAST:event_emrServerListTableMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -873,6 +1026,7 @@ public class SettingsForm extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
+    private javax.swing.JButton addEMRServerBtn;
     private javax.swing.JButton addPreset;
     private javax.swing.JButton addServerBtn;
     private javax.swing.JTable buttonListTable;
@@ -881,13 +1035,18 @@ public class SettingsForm extends javax.swing.JFrame {
     private javax.swing.JComboBox countryCombo;
     private javax.swing.JLabel countryLabel;
     private javax.swing.JButton deleteButton;
+    private javax.swing.JButton deleteEMRServerBtn;
     private javax.swing.JButton deletePreset;
     private javax.swing.JButton deleteServerBtn;
     private javax.swing.JCheckBox dynamicJNLPRetrieveTypeChk;
+    private javax.swing.JTable emrServerListTable;
+    private javax.swing.JPanel emrServerPanel;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JTabbedPane jTabbedPanel;
     private javax.swing.JComboBox languageCombo;
     private javax.swing.JLabel languageLabel;
     private javax.swing.JPanel languagePanel;
@@ -919,6 +1078,7 @@ public class SettingsForm extends javax.swing.JFrame {
     private javax.swing.JComboBox themeCombo;
     private javax.swing.JPanel themesPanel;
     private javax.swing.JButton updateLanguageButton;
+    private javax.swing.JButton verifyEMRServerBtn;
     private javax.swing.JButton verifyServerBtn;
     private javax.swing.JRadioButton wadoRadioBtn;
     // End of variables declaration//GEN-END:variables
@@ -936,6 +1096,16 @@ public class SettingsForm extends javax.swing.JFrame {
         serverListTable.getColumnModel().getColumn(0).setMinWidth(110);
         serverListTable.getColumnModel().getColumn(1).setMinWidth(110);
         serverListTable.getColumnModel().getColumn(2).setMinWidth(110);
+    }
+    
+    public void setEMRServerListTableModel() {
+        EMRServerTableModel model = new EMRServerTableModel();
+        model.setData(ApplicationContext.databaseRef.getEMRServerList());
+        emrServerListTable.setModel(model);
+        setEMRServerListTableRenderer();
+        emrServerListTable.getColumnModel().getColumn(0).setMinWidth(110);
+        emrServerListTable.getColumnModel().getColumn(1).setMinWidth(110);
+        emrServerListTable.getColumnModel().getColumn(2).setMinWidth(110);
     }
 
     public void setButtonListTableModel(ArrayList<ButtonsModel> buttonModel) {
@@ -986,6 +1156,23 @@ public class SettingsForm extends javax.swing.JFrame {
                 ApplicationContext.databaseRef.deleteServer(((ServerTableModel) serverListTable.getModel()).getRow(serverListTable.getSelectedRow()));
                 setServerListTableModel();
                 ApplicationContext.mainScreenObj.removeTab(serverName);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a server to delete!", "Cannot Delete Server", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * MDIAZ
+     */
+    private void deleteEMRServer() {
+        if (emrServerListTable.getSelectedRow() != -1) {
+            String serverName = emrServerListTable.getValueAt(emrServerListTable.getSelectedRow(), 0).toString();
+            int isDelete = JOptionPane.showConfirmDialog(rootPane, "Are you sure want to delete server " + serverName + "?", "Delete Server", JOptionPane.YES_NO_OPTION);
+            if (isDelete == 0) {
+                ApplicationContext.databaseRef.deleteEMRServer(((EMRServerTableModel) emrServerListTable.getModel()).getRow(emrServerListTable.getSelectedRow()));
+                setEMRServerListTableModel();
+//              ApplicationContext.mainScreenObj.removeTab(serverName);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Please select a server to delete!", "Cannot Delete Server", JOptionPane.ERROR_MESSAGE);
@@ -1046,7 +1233,18 @@ public class SettingsForm extends javax.swing.JFrame {
                 }
             }
         });
+        
+        //MDIAZ
+        emrServerListTable.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+                    deleteEMRServer();
+                }
+            }
+        });
     }
+    
 
     private void setServerListTableRenderer() {
         serverListTable.setDefaultRenderer(Object.class, new CellRenderer());
@@ -1063,6 +1261,22 @@ public class SettingsForm extends javax.swing.JFrame {
         }
     }
 
+   /**
+    * MDIAZ
+    */
+    private void setEMRServerListTableRenderer() {
+        emrServerListTable.setDefaultRenderer(Object.class, new CellRenderer());
+        emrServerListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
+        emrServerListTable.getTableHeader().setFont(ApplicationContext.labelFont);
+        emrServerListTable.setRowHeight(25);
+        emrServerListTable.getTableHeader().setForeground(new Color(255, 138, 0));
+        emrServerListTable.getTableHeader().setBackground(new Color(0, 0, 0));
+        for (int i = 0; i < emrServerListTable.getColumnCount() - 2; i++) {
+            TableColumn tc = emrServerListTable.getColumnModel().getColumn(i);
+            tc.setCellEditor(new ServerTableCellEditor(new JTextField()));
+        }
+    }
+    
     private void setRenderer() {
         buttonListTable.setDefaultRenderer(Object.class, new CellRenderer());
         buttonListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
@@ -1184,6 +1398,21 @@ public class SettingsForm extends javax.swing.JFrame {
             }
         };
 
+        /* MDIAZ */
+        Action emrServerTableTabNavigation = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                processActionEvent(emrServerListTable, true);
+            }
+        };
+
+        Action emrServerTableReverseNAvigation = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                processActionEvent(emrServerListTable, false);
+            }
+        };
+        
         serverListTable.putClientProperty("autoStartsEdit", Boolean.TRUE);
         serverListTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         serverListTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "navigate");
@@ -1194,6 +1423,18 @@ public class SettingsForm extends javax.swing.JFrame {
         serverListTable.getActionMap().put("reversenavigate", serverTableReverseNAvigation);
         serverListTable.setSurrendersFocusOnKeystroke(true);
 
+        /* MDIAZ */
+        emrServerListTable.putClientProperty("autoStartsEdit", Boolean.TRUE);
+        emrServerListTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        emrServerListTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "navigate");
+        emrServerListTable.getActionMap().put("navigate", emrServerTableTabNavigation);
+        emrServerListTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "navigate");
+        emrServerListTable.getActionMap().put("navigate", emrServerTableTabNavigation);
+        emrServerListTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("shift TAB"), "reversenavigate");
+        emrServerListTable.getActionMap().put("reversenavigate", emrServerTableReverseNAvigation);
+        emrServerListTable.setSurrendersFocusOnKeystroke(true);
+        
+        
         presetListTable.putClientProperty("autoStartsEdit", Boolean.TRUE);
         presetListTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         presetListTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "navigate");
@@ -1239,11 +1480,11 @@ public class SettingsForm extends javax.swing.JFrame {
         Border loweredetched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
         Font titleFont = new Font("Lucida Grande", Font.BOLD, 15);
         setTitle(ApplicationContext.currentBundle.getString("MainScreen.settingsMenuItem.text"));
-        jTabbedPane1.setTitleAt(0, ApplicationContext.currentBundle.getString("Preferences.servers.text"));
-        jTabbedPane1.setTitleAt(1, ApplicationContext.currentBundle.getString("Preferences.queryPanel.text"));
-        jTabbedPane1.setTitleAt(2, ApplicationContext.currentBundle.getString("Preferences.preferences.text"));
-        jTabbedPane1.setTitleAt(3, ApplicationContext.currentBundle.getString("Preferences.presets.text"));
-        jTabbedPane1.setTitleAt(4, ApplicationContext.currentBundle.getString("Preferences.miscellaneous.text"));
+        jTabbedPanel.setTitleAt(0, ApplicationContext.currentBundle.getString("Preferences.servers.text"));
+        jTabbedPanel.setTitleAt(1, ApplicationContext.currentBundle.getString("Preferences.queryPanel.text"));
+        jTabbedPanel.setTitleAt(2, ApplicationContext.currentBundle.getString("Preferences.preferences.text"));
+        jTabbedPanel.setTitleAt(3, ApplicationContext.currentBundle.getString("Preferences.presets.text"));
+        jTabbedPanel.setTitleAt(4, ApplicationContext.currentBundle.getString("Preferences.miscellaneous.text"));
         listenerPanel.setBorder(BorderFactory.createTitledBorder(loweredetched, ApplicationContext.currentBundle.getString("Preferences.listener.text"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, titleFont));
         listenerAetLabel.setText(ApplicationContext.currentBundle.getString("Preferences.listener.aeTitleLabel.text"));
         listenerPortLabel.setText(ApplicationContext.currentBundle.getString("Preferences.listener.portLabel.text"));

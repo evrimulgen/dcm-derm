@@ -170,6 +170,7 @@ public class DatabaseHandler {
             statement.executeUpdate("create table presets(pk integer primary key GENERATED ALWAYS AS IDENTITY,presetname varchar(255),windowwidth numeric,windowlevel numeric,modality_fk integer,foreign key(modality_fk) references modality(pk))");
             statement.executeUpdate("create table locale (pk integer primary key GENERATED ALWAYS AS IDENTITY,countrycode varchar(10),country varchar(255),languagecode varchar(10),language varchar(255),localeid varchar(255),status boolean)");
             statement.executeUpdate("create table miscellaneous(Loopback boolean,JNLPRetrieveType varchar(25),AllowDynamicRetrieveType boolean)");
+            statement.executeUpdate("create table emrservers(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255) NOT NULL UNIQUE,hostname varchar(255),port integer,subprotocol varchar(255))");
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -238,6 +239,20 @@ public class DatabaseHandler {
     public void insertServer(ServerModel serverModel) {
         try {
             conn.createStatement().execute("insert into servers(logicalname,aetitle,hostname,port,retrievetype,showpreviews,wadocontext,wadoport,wadoprotocol,retrievets) values('" + serverModel.getDescription() + "','" + serverModel.getAeTitle() + "','" + serverModel.getHostName() + "'," + serverModel.getPort() + ",'" + serverModel.getRetrieveType() + "'," + serverModel.isPreviewEnabled() + ",'" + serverModel.getWadoURL() + "'," + serverModel.getWadoPort() + ",'" + serverModel.getWadoProtocol() + "','" + serverModel.getRetrieveTransferSyntax() + "')");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    /**
+     * MDIAZ
+     * 
+     * @param serverModel 
+     */
+    public void insertEMRServer(EMRServerModel serverModel) {
+        try {
+            conn.createStatement().execute("insert into emrservers(logicalname,hostname,port,subprotocol) values('" + serverModel.getDescription() + "','" + serverModel.getHostName() + "'," + serverModel.getPort() + ",'" + serverModel.getSubprotocol() + "')");
             conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -478,11 +493,49 @@ public class DatabaseHandler {
         }
         return serverList;
     }
+    
+    /**
+     * MDIAZ
+     * 
+     * @return 
+     */
+    public ArrayList<EMRServerModel> getEMRServerList() {
+        ArrayList<EMRServerModel> serverList = new ArrayList<EMRServerModel>();
+        try {
+            ResultSet serverInfo = conn.createStatement().executeQuery("select * from emrservers");
+            while (serverInfo.next()) {
+                serverList.add(new EMRServerModel(serverInfo.getInt("pk"), serverInfo.getString("logicalname"), serverInfo.getString("hostname"), serverInfo.getInt("port"), serverInfo.getString("subprotocol")));
+            }
+            serverInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return serverList;
+    }
 
     public ArrayList<String> getAllServerNames() {
         ArrayList<String> serverNames = new ArrayList<String>();
         try {
             ResultSet serverInfo = conn.createStatement().executeQuery("select logicalname from servers");
+            while (serverInfo.next()) {
+                serverNames.add(serverInfo.getString("logicalname"));
+            }
+            serverInfo.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return serverNames;
+    }
+    
+    /**
+     * MDIAZ
+     * 
+     * @return 
+     */
+    public ArrayList<String> getAllEMRServerNames() {
+        ArrayList<String> serverNames = new ArrayList<String>();
+        try {
+            ResultSet serverInfo = conn.createStatement().executeQuery("select logicalname from emrservers");
             while (serverInfo.next()) {
                 serverNames.add(serverInfo.getString("logicalname"));
             }
@@ -532,6 +585,24 @@ public class DatabaseHandler {
             ResultSet serverInfo = conn.createStatement().executeQuery("select * from servers where logicalname='" + serverName + "'");
             while (serverInfo.next()) {
                 return new ServerModel(serverInfo.getString("logicalname"), serverInfo.getString("aetitle"), serverInfo.getString("hostname"), serverInfo.getInt("port"), serverInfo.getString("retrievetype"), serverInfo.getString("wadocontext"), serverInfo.getInt("wadoport"), serverInfo.getString("wadoprotocol"), serverInfo.getString("retrievets"));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    /**
+     * MDIAZ 
+     * 
+     * @param serverName
+     * @return 
+     */
+    public EMRServerModel getEMRServerDetails(String serverName) {
+        try {
+            ResultSet serverInfo = conn.createStatement().executeQuery("select * from emrservers where logicalname='" + serverName + "'");
+            while (serverInfo.next()) {
+                return new EMRServerModel(serverInfo.getString("logicalname"), serverInfo.getString("hostname"), serverInfo.getInt("port"), serverInfo.getString("subprotocol"));
             }
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -1240,6 +1311,22 @@ public class DatabaseHandler {
         return duplicate;
     }
 
+    /**
+     * MDIAZ
+     * @param serverModel
+     * @return 
+     */
+    public boolean updateEMRServer(EMRServerModel serverModel) {
+        boolean duplicate = false;
+        try {
+            conn.createStatement().executeUpdate("update emrservers set logicalname='" + serverModel.getDescription() + "',hostname='" + serverModel.getHostName() + "',port=" + serverModel.getPort() + ",subprotocol='" + serverModel.getSubprotocol()+"'");
+            conn.commit();
+        } catch (SQLException ex) {
+            duplicate = true;
+        }
+        return duplicate;
+    }
+    
     public void updatePreset(PresetModel presetModel) {
         try {
             conn.createStatement().execute("update presets set presetname='" + presetModel.getPresetName() + "',windowwidth=" + presetModel.getWindowWidth() + ",windowlevel=" + presetModel.getWindowLevel() + " where pk=" + presetModel.getPk());
@@ -1326,6 +1413,20 @@ public class DatabaseHandler {
     public void deleteServer(ServerModel serverModel) {
         try {
             conn.createStatement().execute("delete from servers where pk=" + serverModel.getPk());
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    /**
+     * MDIAZ
+     * 
+     * @param serverModel 
+     */
+    public void deleteEMRServer(EMRServerModel serverModel) {
+        try {
+            conn.createStatement().execute("delete from emrservers where pk=" + serverModel.getPk());
             conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
