@@ -940,7 +940,7 @@ public class SettingsForm extends javax.swing.JFrame {
     }//GEN-LAST:event_serverListTableMouseClicked
 
     private void addEMRServerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addEMRServerBtnActionPerformed
-        EMRServerModel serverModel = new EMRServerModel("Description", "localhost", 8080, "http");
+        EMRServerModel serverModel = new EMRServerModel("Description", "localhost", 8080, "MLLP");
         if (!ApplicationContext.databaseRef.checkRecordExists("servers", "logicalname", "Description")) {
             ApplicationContext.databaseRef.insertEMRServer(serverModel);
             setEMRServerListTableModel();
@@ -1102,6 +1102,7 @@ public class SettingsForm extends javax.swing.JFrame {
         EMRServerTableModel model = new EMRServerTableModel();
         model.setData(ApplicationContext.databaseRef.getEMRServerList());
         emrServerListTable.setModel(model);
+        setEMRServerSubprotocolComboEditor();
         setEMRServerListTableRenderer();
         emrServerListTable.getColumnModel().getColumn(0).setMinWidth(110);
         emrServerListTable.getColumnModel().getColumn(1).setMinWidth(110);
@@ -1146,6 +1147,18 @@ public class SettingsForm extends javax.swing.JFrame {
         comboBox.setMaximumRowCount(4);
         TableCellEditor editor = new DefaultCellEditor(comboBox);
         serverListTable.getColumnModel().getColumn(4).setCellEditor(editor);
+    }
+    
+    /**
+     * MDIAZ
+     */
+    private void setEMRServerSubprotocolComboEditor() {
+        String[] retrieveTypeArray = {"MLLP"};
+        JComboBox comboBox = new JComboBox(retrieveTypeArray);
+        comboBox.setFont(ApplicationContext.textFont);
+        comboBox.setMaximumRowCount(1);
+        TableCellEditor editor = new DefaultCellEditor(comboBox);
+        emrServerListTable.getColumnModel().getColumn(3).setCellEditor(editor);
     }
 
     private void deleteServer() {

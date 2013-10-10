@@ -62,6 +62,7 @@ public class StudyModel {
     private String studyLevelInstances;
     private String numberOfSeries;
     private String modality = "";
+    private String patientSex;
 
     public StudyModel() {
     }
@@ -181,6 +182,10 @@ public class StudyModel {
         return numberOfSeries;
     }
 
+    public String getPatientSex() {
+        return patientSex;
+    }
+    
     public void setNumberOfSeries(String numberOfSeries) {
         this.numberOfSeries = numberOfSeries;
     }
@@ -191,5 +196,9 @@ public class StudyModel {
 
     public void setStudyTime(String studyTime) {
         this.studyTime = studyTime;
+    }
+    
+    public void setPatientSex(String patientSex) {
+        this.patientSex = patientSex;
     }
 }

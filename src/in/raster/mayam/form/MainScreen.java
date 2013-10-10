@@ -49,7 +49,6 @@ import in.raster.mayam.delegates.MoveDelegate;
 import in.raster.mayam.delegates.ReceiveDelegate;
 import in.raster.mayam.delegates.SendingDelegate;
 import in.raster.mayam.delegates.WadoRetrieveDelegate;
-import in.raster.mayam.facade.ApplicationFacade;
 import in.raster.mayam.form.dialogs.FileChooserDialog;
 import in.raster.mayam.form.dialogs.ServerListDialog;
 import in.raster.mayam.listeners.*;
@@ -87,6 +86,7 @@ public class MainScreen extends javax.swing.JFrame {
     QueryButtonListener queryButtonListener = null;
     ServerTabChangeListener serverTabChangeListener = null;
     int progressValue = 0;
+    private CreateDicomFrame createDicomFrame; //MDIAZ
 
     /**
      * Creates new form MainScreen
@@ -247,6 +247,9 @@ public class MainScreen extends javax.swing.JFrame {
                     }
                 }
             });
+            //MDIAZ
+            createDicomFrame = new CreateDicomFrame(this);
+            createDicomFrame.setLocationRelativeTo(this);
         }
     }
 
@@ -705,9 +708,8 @@ public class MainScreen extends javax.swing.JFrame {
         importItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                FileChooserDialog fcd = new FileChooserDialog(ApplicationContext.mainScreenObj, true);
-                fcd.setLocationRelativeTo(ApplicationContext.mainScreenObj);
-                fcd.setVisible(true);
+                //MDIAZ
+                importHandler();
             }
         });
         resetItem.addActionListener(CursorController.createListener(ApplicationContext.mainScreenObj, resetListener));
@@ -717,7 +719,7 @@ public class MainScreen extends javax.swing.JFrame {
         preferencesPopup.add(importItem);
         
         //mdiaz
-        sendStudyItem = new JMenuItem("Send Study");
+        sendStudyItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.sendstudy.text"));
         sendStudyItem.setFont(textFont);
         sendStudyItem.addActionListener(new ActionListener() {
             @Override
@@ -745,6 +747,34 @@ public class MainScreen extends javax.swing.JFrame {
             String studyUid = studyDetails.getStudyUID();
             SendingDelegate sendingDelegate = new SendingDelegate(studyUid, allSeriesOfStudy.size(), ae);
         }
+    }
+    
+    /**
+     * MDIAZ
+     */
+    private void importHandler() {
+        Object[] options = {ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_1"),
+            ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_2"),
+            ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_3")};
+        int n = JOptionPane.showOptionDialog(this,
+            ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_4"), 
+            ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_5"),
+        JOptionPane.YES_NO_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[2]);
+        switch(n) {
+            case 0: createDicomFrame.reset();
+                    createDicomFrame.setVisible(true);
+                    break;
+            case 1: //Codigo original:
+                    FileChooserDialog fcd = new FileChooserDialog(ApplicationContext.mainScreenObj, true);
+                    fcd.setLocationRelativeTo(ApplicationContext.mainScreenObj);
+                    fcd.setVisible(true);
+                    break;
+            case 2: break;
+        } 
     }
     
     
