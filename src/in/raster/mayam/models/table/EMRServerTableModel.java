@@ -57,7 +57,7 @@ public class EMRServerTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int r, int c) {
-        return true;
+        return editable;
     }
 
     public EMRServerModel getRow(int r) {
@@ -111,5 +111,9 @@ public class EMRServerTableModel extends AbstractTableModel {
                 ApplicationContext.databaseRef.updateEMRServer(row);
                 break;
         }
+    }
+    
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 }
