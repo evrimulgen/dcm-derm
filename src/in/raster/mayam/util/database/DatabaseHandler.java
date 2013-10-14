@@ -39,6 +39,8 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.util.database;
 
+import com.jme3.math.Vector3f;
+import in.raster.mayam.body.CoordBean;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.LocalCineTimer;
 import in.raster.mayam.facade.ApplicationFacade;
@@ -170,7 +172,8 @@ public class DatabaseHandler {
             statement.executeUpdate("create table presets(pk integer primary key GENERATED ALWAYS AS IDENTITY,presetname varchar(255),windowwidth numeric,windowlevel numeric,modality_fk integer,foreign key(modality_fk) references modality(pk))");
             statement.executeUpdate("create table locale (pk integer primary key GENERATED ALWAYS AS IDENTITY,countrycode varchar(10),country varchar(255),languagecode varchar(10),language varchar(255),localeid varchar(255),status boolean)");
             statement.executeUpdate("create table miscellaneous(Loopback boolean,JNLPRetrieveType varchar(25),AllowDynamicRetrieveType boolean)");
-            statement.executeUpdate("create table emrservers(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255) NOT NULL UNIQUE,hostname varchar(255),port integer,subprotocol varchar(255))");
+            statement.executeUpdate("create table emrservers(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255) NOT NULL UNIQUE,hostname varchar(255),port integer,subprotocol varchar(255))"); //MDIAZ
+            statement.executeUpdate("create table coords (sopuid varchar(255) NOT NULL, x float, y float, z float, framenumber integer NOT NULL)"); //MDIAZ
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -461,6 +464,25 @@ public class DatabaseHandler {
             }
         } catch (Exception e) {
         }
+    }
+    
+    /**
+     * MDIAZ
+     * @param sopInstanceUID
+     * @param coords
+     * @throws SQLException 
+     */
+    private void insertCoords(String sopInstanceUID, ArrayList<CoordBean> coords) throws SQLException {
+        PreparedStatement stm = conn.prepareStatement("insert into coords values(?,?,?,?,?)");
+        for(CoordBean cb : coords) {
+            stm.setString(1, sopInstanceUID);
+            stm.setFloat(2, cb.getPoint().getX());
+            stm.setFloat(3, cb.getPoint().getY());
+            stm.setFloat(4, cb.getPoint().getZ());
+            stm.setInt(5, cb.getFrameNuber());
+            stm.executeUpdate();
+         }
+        conn.commit();
     }
 
     //Accessing Data  
@@ -813,9 +835,10 @@ public class DatabaseHandler {
         try {
             ResultSet studyInfo = conn.createStatement().executeQuery("select * from study");
             while (studyInfo.next()) {
-                ResultSet patientInfo = conn.createStatement().executeQuery("select PatientName,PatientBirthDate from patient where PatientId='" + studyInfo.getString("PatientId") + "'");
+                ResultSet patientInfo = conn.createStatement().executeQuery("select PatientName,PatientBirthDate,PatientSex from patient where PatientId='" + studyInfo.getString("PatientId") + "'");
                 patientInfo.next();
                 StudyModel study = new StudyModel(studyInfo.getString("PatientId"), patientInfo.getString("PatientName"), patientInfo.getString("PatientBirthDate"), studyInfo.getString("AccessionNo"), studyInfo.getString("StudyDate"), studyInfo.getString("StudyTime"), studyInfo.getString("StudyDescription"), studyInfo.getString("ModalitiesInStudy"), studyInfo.getString("NoOfSeries"), studyInfo.getString("NoOfInstances"), studyInfo.getString("StudyInstanceUID"));
+                study.setPatientSex(patientInfo.getString("PatientSex")); //MDIAZ
                 studies.add(study);
                 patientInfo.close();
             }
@@ -1203,6 +1226,36 @@ public class DatabaseHandler {
         return null;
     }
 
+    /**
+     * MDIAZ
+     * @param sopInstanceUID
+     * @return 
+     */
+    public ArrayList<CoordBean> getCoords(String sopInstanceUID) { //FN es frame number
+        String sql = "select x,y,z,framenumber from coords where sopuid ='" + sopInstanceUID + "'";
+        ArrayList<CoordBean> list = new ArrayList<CoordBean>();
+        try {
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                CoordBean cb = new CoordBean();
+                Vector3f v = new Vector3f();
+                v.setX(rs.getFloat("x"));
+                v.setY(rs.getFloat("y"));
+                v.setZ(rs.getFloat("z"));
+                cb.setPoint(v);
+                cb.setSOPId(sopInstanceUID);
+                cb.setFrameNuber(rs.getInt("framenumber"));
+                list.add(cb);
+            }
+            rs.close();
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        } 
+        return list;
+    }
+    
+    
     //Updations
     public void update(String tableName, String fieldName, int fieldValue, String whereField, String whereValue) {
         try {
@@ -1391,6 +1444,23 @@ public class DatabaseHandler {
         }
     }
 
+    /**
+     * MDIAZ
+     * @param sopInstanceUID
+     * @param coords 
+     */
+    public void updateCoords(String sopInstanceUID, ArrayList<CoordBean> coords) { // MEJORAR ESTO!!!
+        try {
+            conn.createStatement().execute("delete from coords where sopuid ='" + sopInstanceUID + "'");
+            //deleteRow("coords","sopuid",sopInstanceUID);
+            conn.commit();
+            insertCoords(sopInstanceUID, coords);
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
     //Deletions
     public void deleteButton(String description) {
         try {
@@ -1471,7 +1541,8 @@ public class DatabaseHandler {
         }
     }
 
-    public void deleteRow(String tableName, String whereFiled, String whereValue) throws SQLException {
-        conn.createStatement().execute("delete from " + tableName + " where " + whereFiled + "='" + whereValue + "'");
+    public void deleteRow(String tableName, String whereField, String whereValue) throws SQLException {
+        conn.createStatement().execute("delete from " + tableName + " where " + whereField + "='" + whereValue + "'");
     }
+
 }

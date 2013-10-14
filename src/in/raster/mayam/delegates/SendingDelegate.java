@@ -58,7 +58,7 @@ import java.util.logging.Logger;
  * @version 0.5
  *
  */
-public class SendingDelegate extends Thread {
+public class SendingDelegate {
 
     String forwardAET = "";
     String forwardHost = "";
@@ -68,20 +68,12 @@ public class SendingDelegate extends Thread {
     ServerModel ae = null;
     SendingProgress sendingProgress;
     
-    public SendingDelegate(String studyUid, int seriesLevel, ServerModel ae) {
-
-        this.studyUid = studyUid;
-        this.seriesLevel = seriesLevel;
-        this.ae = ae;
-        this.start();
-    }
-
-    /**
+   /**
      * This routine used to send the study to the specified AE
      * @param studyIUID
      * @param ae
      */
-    public void send(String studyUid, int seriesLevel, ServerModel ae) {
+    public void send(String studyUid, int seriesLevel, ServerModel ae) throws Exception {
         sendingProgress = new SendingProgress();
         sendingProgress.updateBar(0);
         forwardAET = ae.getAeTitle();
@@ -93,35 +85,30 @@ public class SendingDelegate extends Thread {
         sendingProgress.setVisible(true);
         ArrayList<Series> seriesList = ApplicationContext.databaseRef.getSeriesList(studyUid);
         Iterator<Series> seriesItr = seriesList.iterator();
-        while (seriesItr.hasNext()) {
-            Series series = seriesItr.next();
-            Iterator<Instance> imgitr = series.getImageList().iterator();
-            while (imgitr.hasNext()) {
-                Instance img = imgitr.next();
-                File temp = new File(ApplicationContext.getAppDirectory() + File.separator + img.getFilepath());
-                String forwardParam[];
-                if (temp.isFile()) {
-                    forwardParam = new String[]{forwardAET + "@" + forwardHost + ":" + forwardPort, temp.getAbsolutePath()};
-                } else {
-                    temp = new File(img.getFilepath());
-                    forwardParam = new String[]{forwardAET + "@" + forwardHost + ":" + forwardPort, temp.getAbsolutePath()};
-
-                }
-                DcmSnd.main(forwardParam);
-                count++;
-                sendingProgress.updateBar(count);
-            }
-        }
         try {
-            this.sleep(1000);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(SendingDelegate.class.getName()).log(Level.SEVERE, null, ex);
+            while (seriesItr.hasNext()) {
+                Series series = seriesItr.next();
+                Iterator<Instance> imgitr = series.getImageList().iterator();
+                while (imgitr.hasNext()) {
+                    Instance img = imgitr.next();
+                    File temp = new File(ApplicationContext.getAppDirectory() + File.separator + img.getFilepath());
+                    String forwardParam[];
+                    if (temp.isFile()) {
+                        forwardParam = new String[]{forwardAET + "@" + forwardHost + ":" + forwardPort, temp.getAbsolutePath()};
+                    } else {
+                        temp = new File(img.getFilepath());
+                        forwardParam = new String[]{forwardAET + "@" + forwardHost + ":" + forwardPort, temp.getAbsolutePath()};
+                    }
+                    DcmSnd.main(forwardParam);
+                    count++;
+                    sendingProgress.updateBar(count);
+                }
+            }
+        } catch (Exception e) {
+            sendingProgress.setVisible(false);
+            throw e;
         }
         sendingProgress.setVisible(false);
     }
 
-    @Override
-    public void run() {
-        send(this.studyUid, this.seriesLevel, this.ae);
-    }
 }

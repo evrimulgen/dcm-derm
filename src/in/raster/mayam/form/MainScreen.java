@@ -40,7 +40,13 @@
 package in.raster.mayam.form;
 
 import com.nilo.plaf.nimrod.NimRODLookAndFeel;
+import com.pixelmed.dicom.AttributeList;
+import com.pixelmed.dicom.DicomException;
+import com.pixelmed.dicom.TagFromName;
+import com.pixelmed.display.SourceImage;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
+import in.raster.mayam.body.BodyJFrame;
+import in.raster.mayam.body.BodyManager;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.CGetDelegate;
 import in.raster.mayam.delegates.CreateButtonsDelegate;
@@ -51,6 +57,7 @@ import in.raster.mayam.delegates.SendingDelegate;
 import in.raster.mayam.delegates.WadoRetrieveDelegate;
 import in.raster.mayam.form.dialogs.FileChooserDialog;
 import in.raster.mayam.form.dialogs.ServerListDialog;
+import in.raster.mayam.form.dialogs.StudyListDialog;
 import in.raster.mayam.listeners.*;
 import in.raster.mayam.models.*;
 import in.raster.mayam.models.table.renderer.IconRenderer;
@@ -58,6 +65,7 @@ import in.raster.mayam.models.treetable.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,6 +90,7 @@ public class MainScreen extends javax.swing.JFrame {
     JPopupMenu preferencesPopup;
     JMenuItem preferencesItem, resetItem, importItem;
     JMenuItem sendStudyItem; //MDIAZ
+    JMenuItem localizationItem;
     //Listeners
     QueryButtonListener queryButtonListener = null;
     ServerTabChangeListener serverTabChangeListener = null;
@@ -719,6 +728,18 @@ public class MainScreen extends javax.swing.JFrame {
         preferencesPopup.add(importItem);
         
         //mdiaz
+        // agrego opcion para visualizacion de locacalizacion de lesiones
+        localizationItem = new JMenuItem(ApplicationContext.currentBundle.getString("Localization.title"));
+        localizationItem.setFont(textFont);
+        localizationItem.addActionListener(new ActionListener() {
+             @Override
+            public void actionPerformed(ActionEvent e) {
+                doLocalization();
+            }
+        });
+        preferencesPopup.add(localizationItem);
+        
+        // agrego opcion para envio de estudio a PACS
         sendStudyItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.sendstudy.text"));
         sendStudyItem.setFont(textFont);
         sendStudyItem.addActionListener(new ActionListener() {
@@ -730,22 +751,102 @@ public class MainScreen extends javax.swing.JFrame {
         preferencesPopup.add(sendStudyItem);
     }
 
-    /* mdiaz */
+    /**
+     * MDIAZ
+     */
     private void doSend() {
-        TreeTable treeTable = ((TreeTable) ((JViewport) ((JScrollPane) ((JSplitPane) serverTab.getComponentAt(0)).getBottomComponent()).getComponent(0)).getComponent(0));
-        if (treeTable.getSelectedRow() == -1) {
-            JOptionPane.showMessageDialog(this,"No study was selected.","Warning",JOptionPane.WARNING_MESSAGE);
-            return;
-        }
         ServerListDialog configuredServer = new ServerListDialog(this, true);
         configuredServer.setLocationRelativeTo(this);
         configuredServer.setVisible(true);
-        if (configuredServer.getServer() != null) {
-            ServerModel ae = configuredServer.getServer();
-            StudyModel studyDetails = (StudyModel) ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(treeTable.getSelectedRow(), 11);
-            ArrayList<Series> allSeriesOfStudy = (ArrayList<Series>) ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(treeTable.getSelectedRow(), 12);
-            String studyUid = studyDetails.getStudyUID();
-            SendingDelegate sendingDelegate = new SendingDelegate(studyUid, allSeriesOfStudy.size(), ae);
+        if (configuredServer.getSelectedServer() != null) {
+            ServerModel ae = configuredServer.getSelectedServer();
+            StudyListDialog studyList = new StudyListDialog(this, true);
+            studyList.setLocationRelativeTo(this);
+            studyList.setVisible(true);
+            if (studyList.getSelectedStudy() != null) {
+                ArrayList<Series> allSeriesOfStudy = ApplicationContext.databaseRef.getSeriesList(studyList.getSelectedStudy().getStudyUID());
+                try {
+                    SendingDelegate sendingDelegate = new SendingDelegate();
+                    sendingDelegate.send(studyList.getSelectedStudy().getStudyUID(), allSeriesOfStudy.size(), ae);
+                } catch(Exception e) {
+                    JOptionPane.showMessageDialog(this,ApplicationContext.currentBundle.getString("Alert.studyNotSent"),
+                        ApplicationContext.currentBundle.getString("Alert.error.text"),JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+    
+    /**
+     * MDIAZ
+     */
+    private void doLocalization() {
+        StudyListDialog studyList = new StudyListDialog(this, true);
+        studyList.setLocationRelativeTo(this);
+        studyList.setVisible(true);
+        if (studyList.getSelectedStudy() != null) {
+            try {
+
+                StudyModel selectedStudy = studyList.getSelectedStudy();
+            
+                ArrayList<Series> allSeriesOfStudy = ApplicationContext.databaseRef.getSeriesList(selectedStudy.getStudyUID());
+                //System.out.println(allSeriesOfStudy.get(0).getImageList().get(0).getSop_iuid());
+                String filePath = ApplicationContext.databaseRef.getFirstInstanceLocation(studyList.getSelectedStudy().getStudyUID(), allSeriesOfStudy.get(0).getSeriesInstanceUID());
+                AttributeList list = new AttributeList();
+                list.read(new File(filePath));
+                final SourceImage srcImg = new SourceImage(list);
+                
+                /** Dado el DICOM seleccionado: Si no esta en BD local (segun SOPInstanceUID), 
+                 * o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
+                 */
+                final String sopInstanceUID =  list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]; //allSeriesOfStudy.get(0).getImageList().get(0).getSop_iuid();
+                final boolean exists = ApplicationContext.databaseRef.checkRecordExists("coords","sopuid",sopInstanceUID);
+            
+                /** Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
+                 * desde BD segun SOPInstanceUID del archivo
+                 * abrir dialogo para registrar puntos. 
+                 * Elegir segun sexo: F Female
+                 *                    M Male
+                 *                    O Other
+                 *                    U Unknown
+                 *                    A Ambiguous
+                 *                    N Not applicable
+                 * Si no es F ni M abre selector de genero
+                 */
+             
+                final String sex;
+//              String[] sValues = list.get(TagFromName.PatientSex).getOriginalStringValues();
+//              if (sValues != null && (BodyJFrame.male.equals(sValues[0])
+//                         || BodyJFrame.female.equals(sValues[0]))) {
+//                     sex = sValues[0];
+//              }
+                if (selectedStudy.getPatientSex() != null && (BodyJFrame.male.equals(selectedStudy.getPatientSex())
+                         || BodyJFrame.female.equals(selectedStudy.getPatientSex()))) {
+                    sex = selectedStudy.getPatientSex();
+                }
+                else {
+                   sex = showSexChooser();
+                   if(sex != null) {
+                       //Actualizo sexo del paciente en BD: 
+                       ApplicationContext.databaseRef.update("patient","patientsex",sex,"patientid", selectedStudy.getPatientId());
+                   } else {
+                       return; //si se cancela el selector de genero
+                    }
+                }
+                
+                BodyManager.getInstance().reset();
+                java.awt.EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
+                        BodyManager.getInstance().deleteObservers();
+                        BodyManager.getInstance().addObserver(frame);
+                        frame.setVisible(true);
+                    }
+                });
+                
+            } catch (IOException | DicomException ex) {
+                Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
     
@@ -808,5 +909,30 @@ public class MainScreen extends javax.swing.JFrame {
 
     public SearchFilterForm getCurrentSearchFilterForm() {
         return ((SearchFilterForm) ((JSplitPane) serverTab.getSelectedComponent()).getTopComponent());
+    }
+    
+    /**
+     * MDIAZ
+     * @return 
+     */
+    private String showSexChooser() {
+        String sex = null;
+        Object[] options = {ApplicationContext.currentBundle.getString("MainScreen.sexChooser.text_1"), 
+            ApplicationContext.currentBundle.getString("MainScreen.sexChooser.text_2"), ApplicationContext.currentBundle.getString("MainScreen.sexChooser.text_3")};
+        int n = JOptionPane.showOptionDialog(this,
+            ApplicationContext.currentBundle.getString("MainScreen.sexChooser.text_4"), ApplicationContext.currentBundle.getString("MainScreen.sexChooser.text_5"),
+        JOptionPane.YES_NO_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[2]);
+        switch(n) {
+            case 0: sex = BodyJFrame.male;
+                    break;
+            case 1: sex = BodyJFrame.female;
+                    break;
+            case 2: break;    
+        }
+        return sex;
     }
 }
