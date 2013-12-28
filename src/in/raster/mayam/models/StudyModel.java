@@ -181,7 +181,7 @@ public class StudyModel {
     public String getNumberOfSeries() {
         return numberOfSeries;
     }
-
+	//MDIAZ
     public String getPatientSex() {
         return patientSex;
     }
@@ -197,7 +197,7 @@ public class StudyModel {
     public void setStudyTime(String studyTime) {
         this.studyTime = studyTime;
     }
-    
+    //MDIAZ
     public void setPatientSex(String patientSex) {
         this.patientSex = patientSex;
     }
