@@ -1097,7 +1097,7 @@ public class SettingsForm extends javax.swing.JFrame {
         serverListTable.getColumnModel().getColumn(1).setMinWidth(110);
         serverListTable.getColumnModel().getColumn(2).setMinWidth(110);
     }
-    
+    //MDIAZ
     public void setEMRServerListTableModel() {
         EMRServerTableModel model = new EMRServerTableModel();
         model.setData(ApplicationContext.databaseRef.getEMRServerList());
