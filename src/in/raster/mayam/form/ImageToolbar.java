@@ -40,29 +40,24 @@
 package in.raster.mayam.form;
 
 import in.raster.mayam.context.ApplicationContext;
+import in.raster.mayam.delegates.Buffer;
 import in.raster.mayam.delegates.CineTimer;
-import in.raster.mayam.delegates.ImageBuffer;
-import in.raster.mayam.delegates.ImageGenerator;
 import in.raster.mayam.delegates.LocalizerDelegate;
 import in.raster.mayam.dicomtags.DicomTags;
 import in.raster.mayam.dicomtags.DicomTagsReader;
 import in.raster.mayam.form.dialogs.ExportDialog;
 import in.raster.mayam.form.display.Display;
 import in.raster.mayam.models.PresetModel;
-import in.raster.mayam.models.ScoutLineInfoModel;
-import in.raster.mayam.models.SeriesAnnotations;
 import in.raster.mayam.param.TextOverlayParam;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.ColorModel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Timer;
 import javax.swing.*;
-import org.dcm4che.image.ColorModelParam;
 
 /**
  *
@@ -84,12 +79,10 @@ public class ImageToolbar extends javax.swing.JPanel {
      */
     public ImageToolbar() {
         initComponents();
-        cineTimer = new CineTimer();
     }
 
     public ImageToolbar(ImageView imgView) {
         initComponents();
-        cineTimer = new CineTimer();
         this.imgView = imgView;
         layoutButton.setArrowPopupMenu(jPopupMenu1);
         layoutPopupDesign = new LayoutPopupDesign(jPopupMenu1);
@@ -136,119 +129,109 @@ public class ImageToolbar extends javax.swing.JPanel {
             doRuler(true);
         } else if (e.getKeyCode() == KeyEvent.VK_T) {
             doPan();
+        } else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+            ApplicationContext.layeredCanvas.annotationPanel.deleteSelectedAnnotation();
         }
     }
 
     public void changeImageLayout(int row, int col) {
-        try {
-            ApplicationContext.layeredCanvas.imgpanel.storeAnnotation();
-            GridLayout g = new GridLayout(1, 1);
-            ArrayList<String> tempRef = ApplicationContext.databaseRef.getSeriesInstancesLocation(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
-            JPanel panel = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent());
-            panel = new JPanel(new GridLayout(row, col));
-            ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).setRightComponent(panel);
-            for (int i = 0; i < (row * col); i++) {
-                if (i < tempRef.size()) {
-                    JPanel newPanel = new JPanel(g);
-                    LayeredCanvas canvas = new LayeredCanvas(new File(tempRef.get(i)), 0, false);
-                    newPanel.add(canvas);
-                    panel.add(newPanel);
-                    canvas.canvas.setSelection(true);
-                    if (synchronizeButton.isSelected()) {
-                        canvas.imgpanel.doSynchronize();
-                    }
-                    canvas.imgpanel.setCurrentSeriesAnnotation();
-                } else {
-                    JPanel newPanel = new JPanel(g);
-                    LayeredCanvas j = new LayeredCanvas();
-                    j.setStudyUID(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
-                    newPanel.add(j);
-                    panel.add(newPanel);
-                }
+        ApplicationContext.layeredCanvas.imgpanel.storeAnnotation();
+        GridLayout g = new GridLayout(1, 1);
+        ArrayList<String> tempRef = ApplicationContext.databaseRef.getSeriesInstancesLocation(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
+        JPanel panel = ((JPanel) ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).getRightComponent());
+        for (int i = 0; i < panel.getComponentCount(); i++) {
+            try {
+                ((LayeredCanvas) ((JPanel) panel.getComponent(i)).getComponent(0)).imgpanel.buffer.terminateThread();
+                ((LayeredCanvas) ((JPanel) panel.getComponent(i)).getComponent(0)).imgpanel.shutDown();
+            } catch (NullPointerException ex) {
+                System.out.println("May be tile layout choosen");
             }
-            jPopupMenu1.setVisible(false);
-            isImageLayout = false;
-            ApplicationContext.setSeriesContext();//To set the selected series   
-            ApplicationContext.setImageIdentification();
-            layoutPopupDesign.resetPopupMenu();
-        } catch (IllegalArgumentException ex) {
-            //ignore : Illegal argument occurs in Jdk 1.7
         }
+        if (ApplicationContext.buffer != null) {
+            ApplicationContext.buffer.terminateTileLayoutThread();
+            ApplicationContext.buffer = null;
+        }
+        panel.removeAll();
+        panel = new JPanel(new GridLayout(row, col));
+        ((JSplitPane) ApplicationContext.tabbedPane.getSelectedComponent()).setRightComponent(panel);
+        for (int i = 0; i < (row * col); i++) {
+            if (i < tempRef.size()) {
+                JPanel newPanel = new JPanel(g);
+                LayeredCanvas canvas = new LayeredCanvas(new File(tempRef.get(i)), 0, false);
+                newPanel.add(canvas);
+                panel.add(newPanel);
+                canvas.canvas.setSelection(true);
+                if (synchronizeButton.isSelected()) {
+                    canvas.imgpanel.doSynchronize();
+                }
+                canvas.imgpanel.setCurrentSeriesAnnotation();
+            } else {
+                JPanel newPanel = new JPanel(g);
+                LayeredCanvas j = new LayeredCanvas();
+                j.setStudyUID(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
+                newPanel.add(j);
+                panel.add(newPanel);
+            }
+        }
+        panel.setName(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
+        jPopupMenu1.setVisible(false);
+        isImageLayout = false;
+        ApplicationContext.setCorrespondingPreviews();
+        ApplicationContext.setAllSeriesIdentification(panel.getName());
+        layoutPopupDesign.resetPopupMenu();
     }
 
     public void changeTileLayout(final int row, final int col) {
-        try {
-            jPopupMenu1.setVisible(false);
-            String studyUid = ApplicationContext.layeredCanvas.imgpanel.getStudyUID();
-            String seriesUid = ApplicationContext.layeredCanvas.imgpanel.getSeriesUID();
-            ApplicationContext.selectedPanel.removeAll();
-            ApplicationContext.selectedPanel.revalidate();
-            ApplicationContext.selectedPanel.repaint();
-            ApplicationContext.selectedPanel.setLayout(new GridLayout(row, col));
-            LayeredCanvas canvas = new LayeredCanvas(new File(ApplicationContext.databaseRef.getFirstInstanceLocation(studyUid, seriesUid)), 0, true);
-            ApplicationContext.selectedPanel.add(canvas);
-            ArrayList<String> instanceUidList = canvas.imgpanel.getInstanceUidList();
-            ApplicationContext.imgBuffer = new ImageBuffer(canvas.imgpanel);
-            ApplicationContext.imgBuffer.setDefaultBufferSize((row * col) + (row * col) + (row * col));
-            if (instanceUidList.size() > ApplicationContext.imgBuffer.getDefaultBufferSize()) {
-                ApplicationContext.imageUpdator = new ImageGenerator(ApplicationContext.imgBuffer, canvas.imgpanel, true);
-                ApplicationContext.imageUpdator.setParameters(instanceUidList.size() - (row * col), (row * col) + (row * col), true);
-                ApplicationContext.imageUpdator.start();
-            } else {
-                ApplicationContext.imageUpdator = new ImageGenerator(ApplicationContext.imgBuffer, ApplicationContext.imgBuffer.getImagePanelRef(), true);
-                ApplicationContext.imageUpdator.setParameters(0, instanceUidList.size(), true);
-                ApplicationContext.imageUpdator.start();
-            }
-
-            TextOverlayParam textOverlayParam = canvas.imgpanel.getTextOverlayParam();
-            double pixelSpacingX = canvas.imgpanel.getPixelSpacingX();
-            double pixelSpacingY = canvas.imgpanel.getPixelSpacingY();
-            canvas.imgpanel.setCurrentSeriesAnnotation();
-            SeriesAnnotations currentSeriesAnnotation = canvas.imgpanel.getCurrentSeriesAnnotation();
-            String fileLoc = canvas.imgpanel.getFileLocation();
-            canvas.imgpanel.getFilePathsifLink();
-            ColorModelParam cmParam = canvas.imgpanel.getCmParam();
-            ColorModel cm = canvas.imgpanel.getCm();
-            int windowLevel = canvas.imgpanel.getWindowLevel();
-            int windowWidth = canvas.imgpanel.getWindowWidth();
-            String modality = canvas.imgpanel.getModality();
-            String studyDesc = canvas.imgpanel.getStudyDesc();
-
-            for (int i = 1; i < (row * col); i++) {
-                if (i < instanceUidList.size()) {
-                    canvas = new LayeredCanvas(true, studyUid, seriesUid);
-                    ApplicationContext.selectedPanel.add(canvas);
-                    canvas.imgpanel.setImageInfo(pixelSpacingX, pixelSpacingY, studyUid, seriesUid, fileLoc, currentSeriesAnnotation, instanceUidList, cmParam, cm, windowLevel, windowWidth, modality, studyDesc);
-                    canvas.textOverlay.setTextOverlayParam(new TextOverlayParam(textOverlayParam.getPatientName(), textOverlayParam.getPatientID(), textOverlayParam.getSex(), textOverlayParam.getStudyDate(), textOverlayParam.getStudyDescription(), textOverlayParam.getSeriesDescription(), textOverlayParam.getBodyPartExamined(), textOverlayParam.getInstitutionName(), textOverlayParam.getWindowLevel(), textOverlayParam.getWindowWidth(), i, textOverlayParam.getTotalInstance(), textOverlayParam.isMultiframe()));
-                } else {
-                    LayeredCanvas j = new LayeredCanvas();
-                    j.setStudyUID(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
-                    ApplicationContext.selectedPanel.add(j, i);
-                }
-            }
-            final int total = instanceUidList.size();
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 1; i < (row * col); i++) {
-                        if (i < total) {
-                            ((LayeredCanvas) ApplicationContext.selectedPanel.getComponent(i)).imgpanel.setImage(i);
-                        }
-                    }
-                    ApplicationContext.setSeriesContext();//To set the selected series   
-                    ApplicationContext.setImageIdentification();
-                }
-            });
-            isImageLayout = true;
-            LocalizerDelegate.hideAllScoutLines();
-            scoutButton.setSelected(false);
-            textOverlayParam = null;
-            currentSeriesAnnotation = null;
-            layoutPopupDesign.resetPopupMenu();
-        } catch (IllegalArgumentException iae) {
-            //ignore : Illegal argument occurs in Jdk 1.7
-            System.out.println("exception changeTileLayout");
+        jPopupMenu1.setVisible(false);
+        if (ApplicationContext.layeredCanvas.imgpanel.buffer != null) {
+            ApplicationContext.layeredCanvas.imgpanel.buffer.terminateThread();
+        } else if (ApplicationContext.buffer != null) {
+            ApplicationContext.buffer.terminateThread();
         }
+        ApplicationContext.selectedPanel.removeAll();
+        ApplicationContext.selectedPanel.setLayout(new GridLayout(row, col));
+        LayeredCanvas canvas = new LayeredCanvas(new File(ApplicationContext.databaseRef.getFirstInstanceLocation(ApplicationContext.layeredCanvas.imgpanel.getStudyUID(), ApplicationContext.layeredCanvas.imgpanel.getSeriesUID())), 0, true);
+        ApplicationContext.selectedPanel.add(canvas);
+        ApplicationContext.selectedPanel.setName(canvas.getStudyUID());
+        ArrayList<String> instanceUidList = canvas.imgpanel.getInstanceUidList();
+        ApplicationContext.layeredCanvas = canvas;
+        ApplicationContext.buffer = new Buffer(canvas.imgpanel);
+        ApplicationContext.buffer.setBufferSize((row * col) + (row * col) + (row * col));
+//        ApplicationContext.buffer.createThread(instanceUidList.size() - (row * col) - 1);        
+        ApplicationContext.buffer.createThread(-1);
+        TextOverlayParam textOverlayParam = canvas.imgpanel.getTextOverlayParam();
+        canvas.imgpanel.setIsNormal(false);
+        for (int i = 1; i < (row * col); i++) {
+            if (i < instanceUidList.size()) {
+                canvas = new LayeredCanvas(true, canvas.imgpanel.getStudyUID(), canvas.imgpanel.getSeriesUID());
+                ApplicationContext.selectedPanel.add(canvas);
+                ApplicationContext.layeredCanvas.imgpanel.setInfo(canvas.imgpanel);
+                canvas.textOverlay.setTextOverlayParam(new TextOverlayParam(textOverlayParam.getPatientName(), textOverlayParam.getPatientID(), textOverlayParam.getSex(), textOverlayParam.getStudyDate(), textOverlayParam.getStudyDescription(), textOverlayParam.getSeriesDescription(), textOverlayParam.getBodyPartExamined(), textOverlayParam.getInstitutionName(), textOverlayParam.getWindowLevel(), textOverlayParam.getWindowWidth(), i, textOverlayParam.getTotalInstance(), textOverlayParam.isMultiframe()));
+            } else {
+                LayeredCanvas j = new LayeredCanvas();
+                j.setStudyUID(ApplicationContext.layeredCanvas.imgpanel.getStudyUID());
+                ApplicationContext.selectedPanel.add(j, i);
+            }
+        }
+        ApplicationContext.setCorrespondingPreviews();
+        ApplicationContext.setAllSeriesIdentification(ApplicationContext.selectedPanel.getName());
+        final int total = instanceUidList.size();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 1; i < (row * col); i++) {
+                    if (i < total) {
+                        ((LayeredCanvas) ApplicationContext.selectedPanel.getComponent(i)).imgpanel.setImage(i);
+                        ((LayeredCanvas) ApplicationContext.selectedPanel.getComponent(i)).setSelectedThumbnails();
+                    }
+                }
+            }
+        });
+        isImageLayout = true;
+        LocalizerDelegate.hideAllScoutLines();
+        scoutButton.setSelected(false);
+        textOverlayParam = null;
+        layoutPopupDesign.resetPopupMenu();
     }
 
     /**
@@ -274,7 +257,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         horizontalFlip = new javax.swing.JButton();
         leftRotate = new javax.swing.JButton();
         rightRotate = new javax.swing.JButton();
-        zoom = new javax.swing.JButton();
+        zoomButton = new javax.swing.JButton();
         panButton = new javax.swing.JButton();
         invert = new javax.swing.JButton();
         rulerButton = new javax.swing.JButton();
@@ -283,7 +266,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         arrowButton = new javax.swing.JButton();
         clearAllMeasurement = new javax.swing.JButton();
         deleteMeasurement = new javax.swing.JButton();
-        moveMeasurement = new javax.swing.JButton();
         annotationVisibility = new javax.swing.JButton();
         textOverlay = new javax.swing.JButton();
         reset = new javax.swing.JButton();
@@ -407,18 +389,18 @@ public class ImageToolbar extends javax.swing.JPanel {
         });
         jToolBar1.add(rightRotate);
 
-        zoom.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/zoom.png"))); // NOI18N
-        toolsButtonGroup.add(zoom);
-        zoom.setFocusable(false);
-        zoom.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        zoom.setPreferredSize(new java.awt.Dimension(45, 45));
-        zoom.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        zoom.addActionListener(new java.awt.event.ActionListener() {
+        zoomButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/zoom.png"))); // NOI18N
+        toolsButtonGroup.add(zoomButton);
+        zoomButton.setFocusable(false);
+        zoomButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        zoomButton.setPreferredSize(new java.awt.Dimension(45, 45));
+        zoomButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        zoomButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                zoomActionPerformed(evt);
+                zoomButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(zoom);
+        jToolBar1.add(zoomButton);
 
         panButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/pan.png"))); // NOI18N
         toolsButtonGroup.add(panButton);
@@ -532,22 +514,6 @@ public class ImageToolbar extends javax.swing.JPanel {
             }
         });
         jToolBar1.add(deleteMeasurement);
-
-        moveMeasurement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/annotation_selection.png"))); // NOI18N
-        moveMeasurement.setActionCommand("moveMeasurement");
-        toolsButtonGroup.add(moveMeasurement);
-        moveMeasurement.setDoubleBuffered(true);
-        moveMeasurement.setFocusable(false);
-        moveMeasurement.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        moveMeasurement.setPreferredSize(new java.awt.Dimension(45, 45));
-        moveMeasurement.setRequestFocusEnabled(false);
-        moveMeasurement.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        moveMeasurement.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                moveMeasurementActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(moveMeasurement);
 
         annotationVisibility.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/annotation_overlay.png"))); // NOI18N
         toolsButtonGroup.add(annotationVisibility);
@@ -718,11 +684,7 @@ public class ImageToolbar extends javax.swing.JPanel {
             ApplicationContext.layeredCanvas.annotationPanel.setAddEllipse(false);
             ApplicationContext.layeredCanvas.annotationPanel.setAddRect(false);
             ApplicationContext.layeredCanvas.annotationPanel.stopPanning();
-            if (ApplicationContext.layeredCanvas.imgpanel.probe()) {
-                probeButton.setSelected(true);
-            } else {
-                probeButton.setSelected(false);
-            }
+            probeButton.setSelected(ApplicationContext.layeredCanvas.imgpanel.probe());
         } else {
             JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
         }
@@ -784,20 +746,9 @@ public class ImageToolbar extends javax.swing.JPanel {
         tempCanvas = null;
     }//GEN-LAST:event_rightRotateActionPerformed
 
-    private void zoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomActionPerformed
-        toolsButtonGroup.clearSelection();
-        if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
-            ApplicationContext.layeredCanvas.annotationPanel.setAddLine(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddArrow(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddEllipse(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddRect(false);
-            if (ApplicationContext.layeredCanvas.imgpanel.doZoom()) {
-                toolsButtonGroup.setSelected(zoom.getModel(), true);
-            }
-        } else {
-            JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
-        }
-    }//GEN-LAST:event_zoomActionPerformed
+    private void zoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomButtonActionPerformed
+        doZoom();
+    }//GEN-LAST:event_zoomButtonActionPerformed
 
     private void panButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panButtonActionPerformed
         doPan();
@@ -809,15 +760,10 @@ public class ImageToolbar extends javax.swing.JPanel {
         for (int i = 0; i < currentSeriesPanel.getComponentCount(); i++) {
             tempCanvas = (LayeredCanvas) currentSeriesPanel.getComponent(i);
             if (tempCanvas != null && tempCanvas.annotationPanel != null && tempCanvas.imgpanel != null) {
-                tempCanvas.imgpanel.negative();
+                invert.setSelected(tempCanvas.imgpanel.negative());
             }
         }
         tempCanvas = null;
-        if (invert.isSelected()) {
-            invert.setSelected(false);
-        } else {
-            invert.setSelected(true);
-        }
     }//GEN-LAST:event_invertActionPerformed
 
     private void rulerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rulerButtonActionPerformed
@@ -848,27 +794,11 @@ public class ImageToolbar extends javax.swing.JPanel {
         toolsButtonGroup.clearSelection();
         if (ApplicationContext.layeredCanvas.annotationPanel != null) {
             ApplicationContext.layeredCanvas.annotationPanel.doDeleteMeasurement();
-            if (ApplicationContext.layeredCanvas.annotationPanel.isDeleteMeasurement()) {
-                toolsButtonGroup.setSelected(deleteMeasurement.getModel(), true);
-            }
+            toolsButtonGroup.setSelected(deleteMeasurement.getModel(), ApplicationContext.layeredCanvas.annotationPanel.isDeleteMeasurement());
         } else {
             JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
         }
     }//GEN-LAST:event_deleteMeasurementActionPerformed
-
-    private void moveMeasurementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveMeasurementActionPerformed
-        toolsButtonGroup.clearSelection();
-        if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
-            ImagePanel.tool = "";
-            AnnotationPanel.tool = "";
-            ApplicationContext.layeredCanvas.annotationPanel.doMoveMeasurement();
-            if (AnnotationPanel.isMoveMeasurement()) {
-                toolsButtonGroup.setSelected(moveMeasurement.getModel(), true);
-            }
-        } else {
-            JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
-        }
-    }//GEN-LAST:event_moveMeasurementActionPerformed
 
     private void annotationVisibilityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_annotationVisibilityActionPerformed
         if (ApplicationContext.layeredCanvas.annotationPanel != null) {
@@ -929,6 +859,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         } else {
             synchronizeButton.setSelected(false);
         }
+        synchronizeButton.setSelected(!synchronizeButton.isSelected() ? true : false);
         ApplicationContext.layeredCanvas.imgpanel.doSynchronize();
     }//GEN-LAST:event_synchronizeButtonActionPerformed
 
@@ -975,7 +906,6 @@ public class ImageToolbar extends javax.swing.JPanel {
     private javax.swing.JCheckBox loopCheckbox;
     private javax.swing.JSlider loopSlider;
     private javax.swing.JButton metaDataButton;
-    private javax.swing.JButton moveMeasurement;
     private javax.swing.JButton panButton;
     private javax.swing.JButton presetButton;
     private javax.swing.JButton probeButton;
@@ -990,7 +920,7 @@ public class ImageToolbar extends javax.swing.JPanel {
     private javax.swing.ButtonGroup toolsButtonGroup;
     private javax.swing.JButton verticalFlip;
     private javax.swing.JButton windowing;
-    private javax.swing.JButton zoom;
+    private javax.swing.JButton zoomButton;
     // End of variables declaration//GEN-END:variables
 
     private void textOverlayContext() {
@@ -1040,14 +970,9 @@ public class ImageToolbar extends javax.swing.JPanel {
     public void setWindowingTool() {
         toolsButtonGroup.clearSelection();
         if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
-            ApplicationContext.layeredCanvas.annotationPanel.setAddLine(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddArrow(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddEllipse(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddRect(false);
+            ApplicationContext.layeredCanvas.annotationPanel.disableAnnotations();
             ApplicationContext.layeredCanvas.annotationPanel.stopPanning();
-            if (ApplicationContext.layeredCanvas.imgpanel.doWindowing()) {
-                toolsButtonGroup.setSelected(windowing.getModel(), true);
-            }
+            toolsButtonGroup.setSelected(windowing.getModel(), ApplicationContext.layeredCanvas.imgpanel.doWindowing());
         }
     }
 
@@ -1091,25 +1016,21 @@ public class ImageToolbar extends javax.swing.JPanel {
         }
     }
 
-    private void resetTools() {
+    public void doPan() {
+        toolsButtonGroup.clearSelection();
         if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
-            ApplicationContext.layeredCanvas.annotationPanel.setMouseLocX1(-1);
+            ApplicationContext.layeredCanvas.annotationPanel.disableAnnotations();
+            toolsButtonGroup.setSelected(panButton.getModel(), ApplicationContext.layeredCanvas.imgpanel.doPan());
         } else {
             JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
         }
     }
 
-    public void doPan() {
+    public void doZoom() {
         toolsButtonGroup.clearSelection();
         if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
-            ApplicationContext.layeredCanvas.annotationPanel.setAddLine(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddArrow(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddEllipse(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddRect(false);
-            if (ApplicationContext.layeredCanvas.imgpanel.doPan()) {
-                toolsButtonGroup.setSelected(panButton.getModel(), true);
-            }
-            ApplicationContext.layeredCanvas.annotationPanel.doPan();
+            ApplicationContext.layeredCanvas.annotationPanel.disableAnnotations();
+            toolsButtonGroup.setSelected(zoomButton.getModel(), ApplicationContext.layeredCanvas.imgpanel.doZoom());
         } else {
             JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
         }
@@ -1219,15 +1140,10 @@ public class ImageToolbar extends javax.swing.JPanel {
         toolsButtonGroup.clearSelection();
         if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
             ApplicationContext.layeredCanvas.annotationPanel.stopPanning();
-            ApplicationContext.layeredCanvas.annotationPanel.setAddLine(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddArrow(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddEllipse(false);
-            ApplicationContext.layeredCanvas.annotationPanel.setAddRect(false);
+            ApplicationContext.layeredCanvas.annotationPanel.disableAnnotations();
             ApplicationContext.layeredCanvas.imgpanel.doStack();
             ApplicationContext.layeredCanvas.imgpanel.repaint();
-            if (ApplicationContext.layeredCanvas.imgpanel.isStackSelected()) {
-                toolsButtonGroup.setSelected(stackButton.getModel(), true);
-            }
+            toolsButtonGroup.setSelected(stackButton.getModel(), ApplicationContext.layeredCanvas.imgpanel.isStackSelected());
         } else {
             JOptionPane.showMessageDialog(ImageToolbar.this, "Tile selected is not valid for this process");
         }
@@ -1249,9 +1165,10 @@ public class ImageToolbar extends javax.swing.JPanel {
     public void doCineLoop() {
         if (ApplicationContext.layeredCanvas.annotationPanel != null && ApplicationContext.layeredCanvas.imgpanel != null) {
             if (loopCheckbox.isSelected()) {
+                cineTimer = new CineTimer();
                 try {
                     timer = new Timer();
-                    timer.scheduleAtFixedRate(new CineTimer(), 0, (11 - loopSlider.getValue()) * 50);//
+                    timer.scheduleAtFixedRate(cineTimer, 0, (11 - loopSlider.getValue()) * 50);//                    timer.scheduleAtFixedRate(cineTimer, 0, (11 - loopSlider.getValue()) * 50);//                                        
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1294,7 +1211,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         horizontalFlip.setEnabled(true);
         leftRotate.setEnabled(true);
         rightRotate.setEnabled(true);
-        zoom.setEnabled(true);
+        zoomButton.setEnabled(true);
         panButton.setEnabled(true);
         invert.setEnabled(true);
         annotationVisibility.setEnabled(true);
@@ -1319,7 +1236,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         horizontalFlip.setEnabled(false);
         leftRotate.setEnabled(false);
         rightRotate.setEnabled(false);
-        zoom.setEnabled(false);
+        zoomButton.setEnabled(false);
         panButton.setEnabled(false);
         invert.setEnabled(false);
         rulerButton.setEnabled(false);
@@ -1328,7 +1245,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         ellipseButton.setEnabled(false);
         clearAllMeasurement.setEnabled(false);
         deleteMeasurement.setEnabled(false);
-        moveMeasurement.setEnabled(false);
         annotationVisibility.setEnabled(false);
         textOverlay.setEnabled(false);
         reset.setEnabled(false);
@@ -1354,7 +1270,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         ellipseButton.setEnabled(true);
         clearAllMeasurement.setEnabled(true);
         deleteMeasurement.setEnabled(true);
-        moveMeasurement.setEnabled(true);
     }
 
     public void hideAnnotationTools() {
@@ -1364,7 +1279,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         ellipseButton.setEnabled(false);
         clearAllMeasurement.setEnabled(false);
         deleteMeasurement.setEnabled(false);
-        moveMeasurement.setEnabled(false);
         String actionCommand = null;
         if (toolsButtonGroup != null && toolsButtonGroup.getSelection() != null) {
             actionCommand = toolsButtonGroup.getSelection().getActionCommand();
@@ -1398,7 +1312,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         horizontalFlip.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.horizontalFlipButton.toolTipText"));
         leftRotate.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.leftRotateButton.toolTipText"));
         rightRotate.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.rightRotateButton.toolTipText"));
-        zoom.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.zoom.toolTipText"));
+        zoomButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.zoomInButton.toolTipText"));
         panButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.panButton.toolTipText"));
         invert.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.invertButton.toolTipText"));
         rulerButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.rulerButton.toolTipText"));
@@ -1407,7 +1321,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         arrowButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.arrowButton.toolTipText"));
         deleteMeasurement.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.deleteSelectedMeasurementButton.toolTipText"));
         clearAllMeasurement.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.deleteAllMeasurementButton.toolTipText"));
-        moveMeasurement.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.moveMeasurementButton.toolTipText"));
         annotationVisibility.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.annotaionOverlayButton.toolTipText"));
         textOverlay.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.textOverlayButton.toolTipText"));
         reset.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.resetButton.toolTipText"));
@@ -1433,10 +1346,7 @@ public class ImageToolbar extends javax.swing.JPanel {
     }
 
     public boolean getAnnotationStatus() {
-        if (rulerButton.isEnabled()) {
-            return true;
-        }
-        return false;
+        return rulerButton.isEnabled();
     }
 
     public void disableImageTools() {
@@ -1448,6 +1358,22 @@ public class ImageToolbar extends javax.swing.JPanel {
     public void enableImageTools() {
         if (!windowing.isEnabled()) {
             enableAllTools();
+        }
+    }
+
+    public void disableMultiSeriesTools() {
+        layoutButton.setEnabled(false);
+        textOverlay.setEnabled(false);
+        exportButton.setEnabled(false);
+        synchronizeButton.setEnabled(false);
+    }
+
+    public void enableMultiSeriesTools() {
+        if (windowing.isEnabled()) {
+            layoutButton.setEnabled(true);
+            textOverlay.setEnabled(true);
+            exportButton.setEnabled(true);
+            synchronizeButton.setEnabled(true);
         }
     }
 }
