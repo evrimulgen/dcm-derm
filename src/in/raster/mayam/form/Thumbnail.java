@@ -39,9 +39,13 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.form;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -54,10 +58,6 @@ import javax.swing.SwingConstants;
 public class Thumbnail extends JLabel {
 
     public Thumbnail(String iuid) {
-        Color color = new Color(0, 0, 0);
-        setBackground(color);
-        setDoubleBuffered(false);
-        setOpaque(false);
         setPreferredSize(new Dimension(75, 75));
         setName(iuid);
         setFont(new java.awt.Font("Times", 0, 10));
@@ -65,7 +65,20 @@ public class Thumbnail extends JLabel {
     }
 
     public void setImage(BufferedImage image) {
-        setIcon(new ImageIcon(image));
+        try {
+            setIcon(new ImageIcon(image));
+        } catch (NullPointerException ex) {
+            setDefaultImage();
+        }
+    }
+
+    public void readImage(String dest) {
+        try {
+            setIcon(new ImageIcon(ImageIO.read(new File(dest))));
+        } catch (IOException ex) {
+            setDefaultImage();
+        }
+
     }
 
     public void setVideoImage() {
