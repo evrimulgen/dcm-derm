@@ -373,7 +373,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
                     String[] dataSet = (String[]) qs.getDatasetVector().elementAt(pos);
                     StudyModel studyModel = new StudyModel();
                     studyModel.setPatientId(dataSet[3]);
-                    studyModel.setPatientSex(dataSet[4]);
+                    studyModel.setSex(dataSet[4]);
                     studyModel.setPatientName(dataSet[0]+" "+dataSet[1]);
                     studyModel.setStudyDate(""/*10/10/1010*/);
                     studyModel.setStudyDescription(""/*Study Description DUMMY*/);

@@ -39,7 +39,6 @@
 package in.raster.mayam.models;
 
 import in.raster.mayam.context.ApplicationContext;
-import in.raster.mayam.model.StudyModel;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 
@@ -100,7 +99,7 @@ public class EMRStudyModel extends AbstractTableModel {
             case 1:
                 return row.getPatientName();
             case 2:
-                return row.getPatientSex();
+                return row.getSex();
             case 3:    
                 return row.getDob();
             case 4:
