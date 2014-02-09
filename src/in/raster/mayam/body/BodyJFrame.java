@@ -115,7 +115,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         jList1.setPreferredSize(new java.awt.Dimension(35, 144));
         jScrollPane1.setViewportView(jList1);
 
-        addButton.setText("Add");
+        addButton.setText(ApplicationContext.currentBundle.getString("BodyJFrame.add.text")); // NOI18N
         addButton.setEnabled(false);
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -123,29 +123,28 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
-        removeButton.setText(bundle.getString("BodyJFrame.removeButton.text")); // NOI18N
+        removeButton.setText(ApplicationContext.currentBundle.getString("BodyJFrame.removeButton.text")); // NOI18N
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(bundle.getString("CancelButton")); // NOI18N
+        cancelButton.setText(ApplicationContext.currentBundle.getString("CancelButton")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        acceptButton.setText(bundle.getString("AcceptButton")); // NOI18N
+        acceptButton.setText(ApplicationContext.currentBundle.getString("AcceptButton")); // NOI18N
         acceptButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 acceptButtonActionPerformed(evt);
             }
         });
 
-        removeAllButton.setText(bundle.getString("BodyJFrame.removeAllButton.text")); // NOI18N
+        removeAllButton.setText(ApplicationContext.currentBundle.getString("BodyJFrame.removeAllButton.text")); // NOI18N
         removeAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeAllButtonActionPerformed(evt);
@@ -185,7 +184,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
                                 .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(removeAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE))))
+                                .addComponent(removeAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))))
@@ -209,7 +208,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
                         .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(acceptButton))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 463, Short.MAX_VALUE)
                     .addComponent(jScrollPane1))
                 .addGap(10, 10, 10))
         );

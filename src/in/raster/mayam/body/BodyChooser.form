@@ -86,7 +86,7 @@
               <Image iconType="3" name="/in/raster/mayam/form/images/male1.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="BodyChooser.maleButton.text" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="BodyChooser.maleButton.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="contentAreaFilled" type="boolean" value="false"/>
@@ -120,7 +120,7 @@
               <Image iconType="3" name="/in/raster/mayam/form/images/fem1.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="BodyChooser.femaleButton.text" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="BodyChooser.femaleButton.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="contentAreaFilled" type="boolean" value="false"/>

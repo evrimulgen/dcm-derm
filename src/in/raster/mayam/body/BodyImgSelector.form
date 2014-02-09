@@ -68,7 +68,7 @@
     <Component class="javax.swing.JButton" name="acceptButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="AcceptButton" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="AcceptButton" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -78,7 +78,7 @@
     <Component class="javax.swing.JButton" name="cancelButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CancelButton" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CancelButton" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>

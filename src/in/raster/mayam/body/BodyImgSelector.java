@@ -50,15 +50,14 @@ public class BodyImgSelector extends javax.swing.JDialog {
 
         jScrollPane1.setViewportView(jList1);
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
-        acceptButton.setText(bundle.getString("AcceptButton")); // NOI18N
+        acceptButton.setText(ApplicationContext.currentBundle.getString("AcceptButton")); // NOI18N
         acceptButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 acceptButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(bundle.getString("CancelButton")); // NOI18N
+        cancelButton.setText(ApplicationContext.currentBundle.getString("CancelButton")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);

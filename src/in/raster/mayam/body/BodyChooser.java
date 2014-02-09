@@ -44,8 +44,7 @@ public class BodyChooser extends javax.swing.JDialog {
 
         maleButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         maleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/male1.png"))); // NOI18N
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
-        maleButton.setText(bundle.getString("BodyChooser.maleButton.text")); // NOI18N
+        maleButton.setText(ApplicationContext.currentBundle.getString("BodyChooser.maleButton.text")); // NOI18N
         maleButton.setBorderPainted(false);
         maleButton.setContentAreaFilled(false);
         maleButton.setFocusPainted(false);
@@ -64,7 +63,7 @@ public class BodyChooser extends javax.swing.JDialog {
 
         femaleButton.setFont(new java.awt.Font("Lucida Grande", 1, 12)); // NOI18N
         femaleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/fem1.png"))); // NOI18N
-        femaleButton.setText(bundle.getString("BodyChooser.femaleButton.text")); // NOI18N
+        femaleButton.setText(ApplicationContext.currentBundle.getString("BodyChooser.femaleButton.text")); // NOI18N
         femaleButton.setBorderPainted(false);
         femaleButton.setContentAreaFilled(false);
         femaleButton.setFocusPainted(false);
