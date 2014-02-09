@@ -72,8 +72,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("in/raster/mayam/form/i18n/Bundle",ApplicationContext.currentLocale); // NOI18N
-        imageButton.setText(bundle.getString("CreateDicomFrame.text_1")); // NOI18N
+        imageButton.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_1")); // NOI18N
         imageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 imageButtonActionPerformed(evt);
@@ -99,7 +98,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         modality.setDisabledTextColor(new java.awt.Color(227, 224, 224));
 
         jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel5.setText(bundle.getString("CreateDicomFrame.text_9")); // NOI18N
+        jLabel5.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_9")); // NOI18N
 
         studyId.setDisabledTextColor(new java.awt.Color(227, 224, 224));
 
@@ -111,7 +110,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
         dob.setDisabledTextColor(new java.awt.Color(227, 224, 224));
 
-        jLabel7.setText(bundle.getString("CreateDicomFrame.text_13")); // NOI18N
+        jLabel7.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_13")); // NOI18N
 
         accesionNumber.setDisabledTextColor(new java.awt.Color(227, 224, 224));
 
@@ -125,27 +124,27 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
         patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Male", "Female", "Unknown" }));
 
-        jLabel10.setText(bundle.getString("CreateDicomFrame.text_11")); // NOI18N
+        jLabel10.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_11")); // NOI18N
 
-        jLabel11.setText(bundle.getString("CreateDicomFrame.text_12")); // NOI18N
+        jLabel11.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_12")); // NOI18N
 
-        jLabel12.setText(bundle.getString("CreateDicomFrame.text_6")); // NOI18N
+        jLabel12.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_6")); // NOI18N
 
-        cancelButton.setText(bundle.getString("CreateDicomFrame.text_16")); // NOI18N
+        cancelButton.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_16")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        createButton.setText(bundle.getString("CreateDicomFrame.text_15")); // NOI18N
+        createButton.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_15")); // NOI18N
         createButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createButtonActionPerformed(evt);
             }
         });
 
-        queryButton.setText(bundle.getString("CreateDicomFrame.text_14")); // NOI18N
+        queryButton.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_14")); // NOI18N
         queryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 queryButtonActionPerformed(evt);

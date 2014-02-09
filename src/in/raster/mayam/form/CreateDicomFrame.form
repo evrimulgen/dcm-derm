@@ -217,7 +217,7 @@
         <Component class="javax.swing.JButton" name="imageButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_1" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_1" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -298,7 +298,7 @@
           <Properties>
             <Property name="horizontalAlignment" type="int" value="4"/>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_9" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_9" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -339,7 +339,7 @@
         <Component class="javax.swing.JLabel" name="jLabel7">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_13" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_13" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -396,7 +396,7 @@
         <Component class="javax.swing.JLabel" name="jLabel10">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_11" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_11" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -405,7 +405,7 @@
         <Component class="javax.swing.JLabel" name="jLabel11">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_12" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_12" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -414,7 +414,7 @@
         <Component class="javax.swing.JLabel" name="jLabel12">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_6" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_6" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -423,7 +423,7 @@
         <Component class="javax.swing.JButton" name="cancelButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_16" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_16" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -433,7 +433,7 @@
         <Component class="javax.swing.JButton" name="createButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_15" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_15" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -443,7 +443,7 @@
         <Component class="javax.swing.JButton" name="queryButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_14" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;,ApplicationContext.currentLocale).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="CreateDicomFrame.text_14" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
