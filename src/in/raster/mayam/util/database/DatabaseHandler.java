@@ -473,7 +473,7 @@ public class DatabaseHandler {
             stm.setFloat(2, cb.getPoint().getX());
             stm.setFloat(3, cb.getPoint().getY());
             stm.setFloat(4, cb.getPoint().getZ());
-            stm.setInt(5, cb.getFrameNuber());
+            stm.setInt(5, cb.getFrameNumber());
             stm.executeUpdate();
          }
         conn.commit();
@@ -1288,7 +1288,7 @@ public class DatabaseHandler {
                 v.setZ(rs.getFloat("z"));
                 cb.setPoint(v);
                 cb.setSOPId(sopInstanceUID);
-                cb.setFrameNuber(rs.getInt("framenumber"));
+                cb.setFrameNumber(rs.getInt("framenumber"));
                 list.add(cb);
             }
             rs.close();

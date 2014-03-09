@@ -8,7 +8,7 @@ public class CoordBean {
     
     private Vector3f point = null;
     
-    private Integer frameNuber = null;
+    private Integer frameNumber = null;
     
     public CoordBean(){};
 
@@ -28,12 +28,12 @@ public class CoordBean {
         this.point = point;
     }
 
-    public Integer getFrameNuber() {
-        return frameNuber;
+    public Integer getFrameNumber() {
+        return frameNumber;
     }
 
-    public void setFrameNuber(Integer frameNuber) {
-        this.frameNuber = frameNuber;
+    public void setFrameNumber(Integer frameNumber) {
+        this.frameNumber = frameNumber;
     }
 
     @Override

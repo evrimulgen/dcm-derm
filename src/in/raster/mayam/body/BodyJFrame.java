@@ -9,12 +9,12 @@ import com.jme3.system.JmeCanvasContext;
 import com.pixelmed.display.SourceImage;
 import in.raster.mayam.context.ApplicationContext;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -84,6 +84,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         removeAllButton = new javax.swing.JButton();
         thumbPanel = new FramePreview();
         frLabel = new javax.swing.JLabel();
+        addAtPoint = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -96,17 +97,13 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 530, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5))
+            .addComponent(canvas1, javax.swing.GroupLayout.DEFAULT_SIZE, 584, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 452, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5))
+                .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 457, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 2, Short.MAX_VALUE))
         );
 
         jList1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -115,8 +112,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         jList1.setPreferredSize(new java.awt.Dimension(35, 144));
         jScrollPane1.setViewportView(jList1);
 
-        addButton.setText(ApplicationContext.currentBundle.getString("BodyJFrame.add.text")); // NOI18N
-        addButton.setEnabled(false);
+        addButton.setText(ApplicationContext.currentBundle.getString("BodyJFrame.save.text")); // NOI18N
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addButtonActionPerformed(evt);
@@ -165,29 +161,52 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             .addGap(0, 100, Short.MAX_VALUE)
         );
 
+        addAtPoint.setText("Add at this point");
+        addAtPoint.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        addAtPoint.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                addAtPointMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(40, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(23, 23, 23)
+                        .addComponent(frLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(frLabel)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(removeButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(addButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(acceptButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(removeAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(removeAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(addAtPoint, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(acceptButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -206,9 +225,11 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
                         .addComponent(frLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(thumbPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(addAtPoint, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(acceptButton))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 463, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane1))
                 .addGap(10, 10, 10))
         );
@@ -217,7 +238,9 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }// </editor-fold>//GEN-END:initComponents
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        //parent.add
+        ApplicationContext.databaseRef.updateCoords(sIUID.trim(),
+               BodyManager.getInstance().getCoordList()/*coordList*/);
+        JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("BodyJFrame.changes.saved"));
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
@@ -240,8 +263,29 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
        ApplicationContext.databaseRef.updateCoords(sIUID.trim(),
                BodyManager.getInstance().getCoordList()/*coordList*/);
+       JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("BodyJFrame.changes.saved"));
        this.dispose();
     }//GEN-LAST:event_acceptButtonActionPerformed
+
+    private void addAtPointMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addAtPointMouseClicked
+        int i = jList1.getSelectedIndex();
+        if(i > -1) {
+            displayImgSelector();
+            if (selectedFrameNumber != null) { //si el usuario cancela el ImgSelector, esta variable es nula
+                CoordBean selectedPoint = BodyManager.getInstance().getCoordList().get(i);
+                CoordBean newPoint = new CoordBean();
+                newPoint.setPoint(selectedPoint.getPoint().clone());
+                newPoint.setFrameNumber(selectedFrameNumber);
+                newPoint.setSOPId(sIUID);
+                BodyManager.getInstance().getCoordList().add(newPoint);
+                setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+
+                        String.valueOf(BodyManager.getInstance().getCoordList().size()));
+            }
+        }
+        else {
+            JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("BodyJFrame.points.notSelected"));
+        }
+    }//GEN-LAST:event_addAtPointMouseClicked
 
     /**
      * @param args the command line arguments
@@ -279,6 +323,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton acceptButton;
+    private javax.swing.JLabel addAtPoint;
     private javax.swing.JButton addButton;
     private javax.swing.JButton cancelButton;
     private java.awt.Canvas canvas1;
@@ -305,7 +350,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
 
     @Override
     public void update(Observable o, Object o1) {
-        Vector3f point = ((BodyManager)o).getCoord();
+//        Vector3f point = ((BodyManager)o).getCoord();
         displayImgSelector();
         if (selectedFrameNumber != null) { //si el usuario cancela el ImgSelector, esta variable es nula
             //CoordBean cb = new CoordBean();
@@ -313,7 +358,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             //cb.setPoint(point);
             //cb.setSOPId(sIUID);
             BodyManager.getInstance().getCoordList().get(
-                    BodyManager.getInstance().getCoordList().size()-1).setFrameNuber(selectedFrameNumber);
+                    BodyManager.getInstance().getCoordList().size()-1).setFrameNumber(selectedFrameNumber);
             BodyManager.getInstance().getCoordList().get(
                     BodyManager.getInstance().getCoordList().size()-1).setSOPId(sIUID);
             setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+
@@ -353,8 +398,8 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             int i = list.getSelectedIndex();
             if(i > -1) {
                 CoordBean cb = (CoordBean) BodyManager.getInstance().getCoordList().get(i);
-                BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNuber());
-                frLabel.setText(ApplicationContext.currentBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNuber()+1));
+                BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNumber());
+                frLabel.setText(ApplicationContext.currentBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNumber()+1));
                 ((FramePreview)thumbPanel).setImage(bi);
             }
         }
