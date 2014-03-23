@@ -4,7 +4,6 @@
  */
 package in.raster.mayam.body;
 
-import com.jme3.math.Vector3f;
 import com.jme3.system.JmeCanvasContext;
 import com.pixelmed.display.SourceImage;
 import in.raster.mayam.context.ApplicationContext;
