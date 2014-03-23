@@ -8,13 +8,14 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.light.AmbientLight;
-import com.jme3.light.DirectionalLight;
+import com.jme3.light.PointLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.LightNode;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Sphere;
@@ -44,6 +45,7 @@ public class BodyApp extends SimpleApplication {
   
   private String modelPath = null;  
   private Node shootables;
+  private Node light;
   private Geometry mark;
   private ChaseCamera chaseCam;
  
@@ -52,21 +54,22 @@ public class BodyApp extends SimpleApplication {
 
     initKeys();
     initMark();
-    
+    viewPort.setBackgroundColor(ColorRGBA.DarkGray);
     flyCam.setEnabled(false);
     
     Spatial model = assetManager.loadModel(modelPath);
     model.scale(18.0f);
     
     AmbientLight ambient = new AmbientLight();
-    ambient.setColor(ColorRGBA.Blue);
+    ambient.setColor(ColorRGBA.White);
     rootNode.addLight(ambient);
-    DirectionalLight sun1 = new DirectionalLight();
-    sun1.setDirection(new Vector3f(-0.1f, -0.7f, -1.0f).normalizeLocal());
+
+    PointLight sun1 = new PointLight();
+    sun1.setRadius(28.0f);
     rootNode.addLight(sun1);
-    DirectionalLight sun2 = new DirectionalLight();
-    sun2.setDirection(new Vector3f(-0.1f, -0.7f, 1.0f).normalizeLocal());
-    rootNode.addLight(sun2);
+    
+    light = new LightNode("parentLight",sun1);
+    rootNode.attachChild(light);
         
     shootables = new Node("Shootables");
     shootables.attachChild(model);
@@ -76,6 +79,7 @@ public class BodyApp extends SimpleApplication {
     chaseCam.setMinVerticalRotation(-1.57f);
     chaseCam.setSmoothMotion(true);
     chaseCam.setMinDistance(10.0f);
+    chaseCam.setMaxDistance(21.0f);
 
     inputManager.setCursorVisible(true);
 }
@@ -122,7 +126,7 @@ public class BodyApp extends SimpleApplication {
   }
   
   @Override
-    public void simpleUpdate(float tpf) {
+  public void simpleUpdate(float tpf) {
         Vector3f v = BodyManager.getInstance().getCoord();
         //System.out.println("update:"+ v);
         if (v != null && !v.equals(mark.getLocalTranslation())) {
@@ -134,5 +138,6 @@ public class BodyApp extends SimpleApplication {
                  rootNode.attachChild(mark);
              }
         }
+        light.setLocalTranslation(cam.getLocation());
     }
 }
