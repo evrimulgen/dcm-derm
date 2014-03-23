@@ -813,7 +813,7 @@ public class MainScreen extends javax.swing.JFrame {
                     }
                 });
                 
-            } catch (IOException | DicomException ex) {
+            } catch (Exception ex) {
                 Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
             }
         }

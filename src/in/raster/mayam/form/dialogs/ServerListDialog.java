@@ -176,7 +176,7 @@ public class ServerListDialog extends javax.swing.JDialog {
 
         String[] columnNames = {ApplicationContext.currentBundle.getString("Preferences.serversPanel.text")};
         Class columnTypes[] = new Class[]{String.class};
-        ArrayList<ServerModel> servers = new ArrayList<>();
+        ArrayList<ServerModel> servers = new ArrayList<ServerModel>();
         
         
         public void setData(ArrayList<ServerModel> data) {

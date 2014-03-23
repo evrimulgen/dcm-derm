@@ -179,7 +179,7 @@ public class StudyListDialog extends javax.swing.JDialog {
         ApplicationContext.currentBundle.getString("CreateDicomFrame.text_3"),
         ApplicationContext.currentBundle.getString("CreateDicomFrame.text_2")};
         Class columnTypes[] = new Class[]{String.class, String.class, String.class};
-        ArrayList<StudyModel> studies = new ArrayList<>();
+        ArrayList<StudyModel> studies = new ArrayList<StudyModel>();
         
         
         public void setData(ArrayList<StudyModel> data) {
