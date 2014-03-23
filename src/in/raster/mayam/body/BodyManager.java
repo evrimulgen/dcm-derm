@@ -19,7 +19,7 @@ public class BodyManager extends Observable implements ListSelectionListener {
     private ArrayList<CoordBean> coordList = null;
    
     private BodyManager() {
-        coordList = new ArrayList<>();
+        coordList = new ArrayList<CoordBean>();
         currentPoint = new Vector3f();
     }
     

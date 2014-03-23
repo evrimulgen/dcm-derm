@@ -323,7 +323,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                     importDcmDir.start();
                     this.setVisible(false);
                     
-                } catch (DicomException | IOException e) {
+                } catch (Exception  e) {
                     Logger.getLogger(CreateDicomFrame.class.getName()).log(Level.SEVERE, null, e);
                 }
             }
