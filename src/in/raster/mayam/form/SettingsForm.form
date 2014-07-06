@@ -60,7 +60,7 @@
         <Container class="javax.swing.JPanel" name="serverPanel">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Servers">
+              <JTabbedPaneConstraints tabName="Servidores">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.servers.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.servers.text&quot;)"/>
                 </Property>
@@ -113,7 +113,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="listenerAetTxt" min="-2" pref="177" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="listenerPortLabel" max="32767" attributes="0"/>
+                          <Component id="listenerPortLabel" pref="59" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="listenerPortTxt" min="-2" pref="196" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -195,7 +195,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="DICOM Servers">
+                    <TitledBorder title="Servidores DICOM">
                       <ResourceString PropertyName="titleX" bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.serversPanel.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.serversPanel.text&quot;)"/>
                       <Connection PropertyName="font" code="new Font(&quot;Lucida Grande&quot;,Font.BOLD,15)" type="code"/>
                     </TitledBorder>
@@ -233,7 +233,7 @@
                               <Component id="verifyServerBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jScrollPane4" pref="306" max="32767" attributes="0"/>
+                          <Component id="jScrollPane4" pref="309" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -339,7 +339,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="Modalities">
+                    <TitledBorder title="Modalidades">
                       <ResourceString PropertyName="titleX" bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.modalities.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.modalities.text&quot;)"/>
                       <Connection PropertyName="font" code="new Font(&quot;Lucida Grande&quot;,Font.BOLD,15)" type="code"/>
                     </TitledBorder>
@@ -378,7 +378,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane2" pref="649" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="655" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="addButton" min="-2" pref="105" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -399,7 +399,7 @@
                               <Component id="deleteButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="jScrollPane2" pref="253" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" pref="256" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -493,7 +493,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="Language">
+                    <TitledBorder title="Idioma">
                       <ResourceString PropertyName="titleX" bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.language.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.language.text&quot;)"/>
                       <Connection PropertyName="font" code="new Font(&quot;Lucida Grande&quot;,Font.BOLD,15)" type="code"/>
                     </TitledBorder>
@@ -542,7 +542,7 @@
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="updateLanguageButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="260" max="32767" attributes="0"/>
+                          <EmptySpace pref="263" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -637,7 +637,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="Themes">
+                    <TitledBorder title="Temas">
                       <ResourceString PropertyName="titleX" bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.themes.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.themes.text&quot;)"/>
                       <Connection PropertyName="font" code="new Font(&quot;Lucida Grande&quot;,Font.BOLD,15)" type="code"/>
                     </TitledBorder>
@@ -656,7 +656,7 @@
                               <Component id="themeCombo" min="-2" pref="167" max="-2" attributes="0"/>
                               <Component id="saveThemeBtn" min="-2" pref="116" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="18" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -741,7 +741,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="modalityCombo" min="-2" pref="108" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="jScrollPane3" pref="685" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="691" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -758,7 +758,7 @@
                           <Component id="presetModalityLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" pref="425" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" pref="428" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -840,7 +840,7 @@
         <Container class="javax.swing.JPanel" name="miscellaneousPanel">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Miscellaneous">
+              <JTabbedPaneConstraints tabName="Miscelanea">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.miscellaneous.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.miscellaneous.text&quot;)"/>
                 </Property>
@@ -867,7 +867,7 @@
                           </Group>
                           <Component id="dynamicJNLPRetrieveTypeChk" min="-2" pref="449" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="165" max="32767" attributes="0"/>
+                      <EmptySpace pref="171" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -885,7 +885,7 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="dynamicJNLPRetrieveTypeChk" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="376" max="32767" attributes="0"/>
+                      <EmptySpace pref="379" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -987,7 +987,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="497" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="500" max="32767" attributes="0"/>
                   <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace pref="68" max="32767" attributes="0"/>
@@ -1003,7 +1003,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="HL7 Servers">
+                    <TitledBorder title="Servidores HL7">
                       <ResourceString PropertyName="titleX" bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.emrServersPanel.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.emrServersPanel.text&quot;)"/>
                       <Connection PropertyName="font" code="new Font(&quot;Lucida Grande&quot;,Font.BOLD,15)" type="code"/>
                     </TitledBorder>
@@ -1022,11 +1022,11 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="jScrollPane5" alignment="0" pref="661" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="addEMRServerBtn" min="-2" pref="91" max="-2" attributes="0"/>
+                                  <Component id="addEMRServerBtn" min="-2" pref="106" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Component id="deleteEMRServerBtn" min="-2" pref="80" max="-2" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="verifyEMRServerBtn" min="-2" pref="91" max="-2" attributes="0"/>
+                                  <Component id="deleteEMRServerBtn" min="-2" pref="106" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="verifyEMRServerBtn" min="-2" pref="106" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
@@ -1065,6 +1065,12 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="Preferences.servers.deleteButton.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;Preferences.servers.deleteButton.text&quot;)"/>
+                    </Property>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[68, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[68, 30]"/>
                     </Property>
                   </Properties>
                   <Events>

@@ -293,7 +293,8 @@ public class DatabaseHandler {
     }
 
     public void insertDefaultLocales() throws SQLException {
-        conn.createStatement().execute("insert into locale (countrycode,country,languagecode,language,localeid,status) values('GB','United Kingdom','en','English','en_GB',true)");
+        conn.createStatement().execute("insert into locale (countrycode,country,languagecode,language,localeid,status) values('AR','Argentina','es','Español','es_AR',true)");
+        addNewLocale("en_GB");
         addNewLocale("ta_IN");
         addNewLocale("it_IT");
     }
