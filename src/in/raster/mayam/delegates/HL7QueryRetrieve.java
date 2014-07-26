@@ -447,10 +447,10 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
         parent.patientId.setText(studyListModel.getPatientId(index));
         parent.patientName.setText(studyListModel.getPatientName(index));
         parent.patientSex.setSelectedItem(studyListModel.getPatientSex(index));
-        parent.dob.setText(studyListModel.getPatientDoB(index));
+        parent.dob.setDateFormatString(studyListModel.getPatientDoB(index));
         parent.studyId.setText(studyListModel.getStudyId(index));
         parent.studyDesc.setText(studyListModel.getStudyDescription(index));
-        parent.studyDate.setText(studyListModel.getStudyDate(index));
+        parent.studyDate.setDateFormatString(studyListModel.getStudyDate(index));
 //      parent.accesionNumber.setText(studyListModel.getValueAt(index, 3));
 //      parent.modality.setText(studyListModel.getValueAt(index, 4));
         this.setVisible(false);
