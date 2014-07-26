@@ -93,7 +93,7 @@ public class ApplicationContext {
     public static ResourceBundle currentBundle = null;
     public static DatabaseHandler databaseRef = DatabaseHandler.getInstance();
     public static CommunicationDelegate communicationDelegate = new CommunicationDelegate();
-    public static String applicationName = "Mayam2";
+    public static String applicationName = "MayamDerm";
     public static String[] listenerDetails;
     public static String activeTheme = null;
     public static ArrayList<JButton> searchButtons = new ArrayList<JButton>();//To keep track of instant query buttons
