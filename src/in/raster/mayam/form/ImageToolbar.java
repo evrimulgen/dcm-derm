@@ -271,7 +271,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         metaDataButton = new javax.swing.JButton();
         stackButton = new javax.swing.JButton();
         scoutButton = new javax.swing.JButton();
-        cube3DButton = new javax.swing.JButton();
         synchronizeButton = new javax.swing.JButton();
         loopCheckbox = new javax.swing.JCheckBox();
         loopSlider = new javax.swing.JSlider();
@@ -603,16 +602,6 @@ public class ImageToolbar extends javax.swing.JPanel {
         });
         jToolBar1.add(scoutButton);
 
-        cube3DButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/Cube3D.png"))); // NOI18N
-        toolsButtonGroup.add(cube3DButton);
-        cube3DButton.setComponentPopupMenu(jPopupMenu4);
-        cube3DButton.setEnabled(false);
-        cube3DButton.setFocusable(false);
-        cube3DButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cube3DButton.setPreferredSize(new java.awt.Dimension(45, 45));
-        cube3DButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(cube3DButton);
-
         synchronizeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/in/raster/mayam/form/images/Link.png"))); // NOI18N
         synchronizeButton.setFocusable(false);
         synchronizeButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -888,7 +877,6 @@ public class ImageToolbar extends javax.swing.JPanel {
     private javax.swing.JButton annotationVisibility;
     private javax.swing.JButton arrowButton;
     private javax.swing.JButton clearAllMeasurement;
-    private javax.swing.JButton cube3DButton;
     private javax.swing.JButton deleteMeasurement;
     private javax.swing.JButton ellipseButton;
     private javax.swing.JButton exportButton;
@@ -1219,7 +1207,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         metaDataButton.setEnabled(true);
         stackButton.setEnabled(true);
         scoutButton.setEnabled(true);
-        cube3DButton.setEnabled(true);
+        //cube3DButton.setEnabled(true);
         synchronizeButton.setEnabled(true);
         setAnnotationToolsStatus();
         loopSlider.setEnabled(true);
@@ -1250,7 +1238,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         metaDataButton.setEnabled(false);
         stackButton.setEnabled(false);
         scoutButton.setEnabled(false);
-        cube3DButton.setEnabled(false);
+//        cube3DButton.setEnabled(false);
         synchronizeButton.setEnabled(false);
         loopSlider.setEnabled(false);
     }
@@ -1326,7 +1314,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         metaDataButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.metaDataButton.toolTipText"));
         stackButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.stackButton.toolTipText"));
         scoutButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.scoutButton.toolTipText"));
-        cube3DButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.3DButton.toolTipText"));
+//        cube3DButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.3DButton.toolTipText"));
         synchronizeButton.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.synchronizeButton.toolTipText"));
         loopCheckbox.setToolTipText(ApplicationContext.currentBundle.getString("ImageView.loopChk.toolTipText"));
         layoutPopupDesign.applyLocaleChange();
