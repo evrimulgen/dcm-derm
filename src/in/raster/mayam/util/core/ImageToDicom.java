@@ -46,14 +46,13 @@ import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.metadata.IIOMetadataNode;
 import java.util.Iterator;
 import org.w3c.dom.Node;
 import org.w3c.dom.NamedNodeMap;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import com.pixelmed.utils.StringUtilities;
 import com.pixelmed.utils.XPathQuery;
+import java.util.Date;
 
 /**
  * <p>A class for converting RGB consumer image input format files (anything JIIO can recognize) into images of a specified SOP Class, or single or multi frame DICOM Secondary Capture images.</p>
@@ -557,7 +556,7 @@ public class ImageToDicom {
          * @exception DicomException
 	 */
         public ImageToDicom(String inputFile, String outputFile,String patientName,String patientID,String studyID,
-                String dateOfBirth, String patientSex, String accessionNumber, String studyDate, String studyDesc,
+                Date dateOfBirth, String patientSex, String accessionNumber, Date studyDate, String studyDesc,
                 String seriesNumber, String instanceNumber, String modality, String sopClass)
 			throws IOException, DicomException {
             
@@ -565,19 +564,28 @@ public class ImageToDicom {
 		
 		// various Type 1 and Type 2 attributes for mandatory SC modules ...
 	
-		UIDGenerator u = new UIDGenerator();	
-
+		UIDGenerator u = new UIDGenerator();
+                if(seriesNumber == null) {
+                    seriesNumber = "1";
+                }
+                if(instanceNumber == null) {
+                    instanceNumber = "1";
+                }
+                if(accessionNumber == null) {
+                    accessionNumber = "1";
+                }
+                
 		{ Attribute a = new UniqueIdentifierAttribute(TagFromName.SOPInstanceUID); a.addValue(u.getNewSOPInstanceUID(studyID,seriesNumber,instanceNumber)); list.put(a); }
 		{ Attribute a = new UniqueIdentifierAttribute(TagFromName.SeriesInstanceUID); a.addValue(u.getNewSeriesInstanceUID(studyID,seriesNumber)); list.put(a); }
 		{ Attribute a = new UniqueIdentifierAttribute(TagFromName.StudyInstanceUID); a.addValue(u.getNewStudyInstanceUID(studyID)); list.put(a); }
 
 		{ Attribute a = new PersonNameAttribute(TagFromName.PatientName); a.addValue(patientName); list.put(a); }
 		{ Attribute a = new LongStringAttribute(TagFromName.PatientID); a.addValue(patientID); list.put(a); }
-		{ Attribute a = new DateAttribute(TagFromName.PatientBirthDate); a.addValue(dateOfBirth); list.put(a); }
+		{ Attribute a = new DateAttribute(TagFromName.PatientBirthDate); a.addValue(new java.text.SimpleDateFormat("yyyyMMdd").format(dateOfBirth)); list.put(a); }
 		{ Attribute a = new CodeStringAttribute(TagFromName.PatientSex); a.addValue(patientSex); list.put(a); }
 		{ Attribute a = new ShortStringAttribute(TagFromName.StudyID); a.addValue(studyID); list.put(a); }
                 
-                { Attribute a = new ShortStringAttribute(TagFromName.StudyDate); a.addValue(studyDate); list.put(a); }
+                { Attribute a = new ShortStringAttribute(TagFromName.StudyDate); a.addValue(new java.text.SimpleDateFormat("yyyyMMdd").format(studyDate)); list.put(a); }
                 { Attribute a = new ShortStringAttribute(TagFromName.StudyDescription); a.addValue(studyDesc); list.put(a); }
                 
 		{ Attribute a = new PersonNameAttribute(TagFromName.ReferringPhysicianName); a.addValue("^^^^"); list.put(a); }
@@ -591,9 +599,11 @@ public class ImageToDicom {
 		{ Attribute a = new CodeStringAttribute(TagFromName.ImageType); a.addValue("DERIVED"); a.addValue("SECONDARY"); list.put(a); }
 		
 		{
-			java.util.Date currentDateTime = new java.util.Date();
-			{ Attribute a = new DateAttribute(TagFromName.StudyDate); a.addValue(new java.text.SimpleDateFormat("yyyyMMdd").format(currentDateTime)); list.put(a); }
-			{ Attribute a = new TimeAttribute(TagFromName.StudyTime); a.addValue(new java.text.SimpleDateFormat("HHmmss.SSS").format(currentDateTime)); list.put(a); }
+                        if (studyDate == null) {
+                            studyDate = new java.util.Date();
+                        }
+			{ Attribute a = new DateAttribute(TagFromName.StudyDate); a.addValue(new java.text.SimpleDateFormat("yyyyMMdd").format(studyDate)); list.put(a); }
+			{ Attribute a = new TimeAttribute(TagFromName.StudyTime); a.addValue(new java.text.SimpleDateFormat("HHmmss.SSS").format(studyDate)); list.put(a); }
 		}
 		{ Attribute a = new UniqueIdentifierAttribute(TagFromName.InstanceCreatorUID); a.addValue(VersionAndConstants.instanceCreatorUID); list.put(a); }
 		
