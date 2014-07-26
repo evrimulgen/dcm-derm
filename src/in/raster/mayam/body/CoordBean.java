@@ -1,6 +1,7 @@
 package in.raster.mayam.body;
 
 import com.jme3.math.Vector3f;
+import java.awt.image.BufferedImage;
 
 public class CoordBean {
     
@@ -9,6 +10,10 @@ public class CoordBean {
     private Vector3f point = null;
     
     private Integer frameNumber = null;
+    
+    private String patientId = null;
+    
+    private BufferedImage thumb = null;
     
     public CoordBean(){};
 
@@ -36,6 +41,22 @@ public class CoordBean {
         this.frameNumber = frameNumber;
     }
 
+    public void setPatientId(String patientId) {
+        this.patientId = patientId;
+    }
+    
+    public String getPatientId() {
+        return patientId;
+    }
+    
+    public BufferedImage getThumb() {
+        return thumb;
+    }
+    
+    public void setThumb(BufferedImage thumb) {
+        this.thumb = thumb;
+    }
+    
     @Override
     public int hashCode() {
         int hash = 3;
