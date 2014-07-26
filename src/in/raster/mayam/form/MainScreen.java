@@ -41,7 +41,6 @@ package in.raster.mayam.form;
 
 import com.nilo.plaf.nimrod.NimRODLookAndFeel;
 import com.pixelmed.dicom.AttributeList;
-import com.pixelmed.dicom.DicomException;
 import com.pixelmed.dicom.TagFromName;
 import com.pixelmed.display.SourceImage;
 import com.sun.java.swing.plaf.motif.MotifLookAndFeel;
@@ -60,7 +59,6 @@ import in.raster.mayam.models.treetable.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -249,6 +247,7 @@ public class MainScreen extends javax.swing.JFrame {
         });
             //MDIAZ
             createDicomFrame = new CreateDicomFrame(this);
+            createDicomFrame.setAlwaysOnTop(true);
             createDicomFrame.setLocationRelativeTo(this);
     }
 
@@ -357,6 +356,9 @@ public class MainScreen extends javax.swing.JFrame {
         if (settingsForm != null && preferencesPopup != null) {
             SwingUtilities.updateComponentTreeUI(settingsForm);
             SwingUtilities.updateComponentTreeUI(preferencesPopup);
+        }
+        if (createDicomFrame != null) {
+            SwingUtilities.updateComponentTreeUI(createDicomFrame);
         }
         if (ApplicationContext.isImageViewExist()) {
             SwingUtilities.updateComponentTreeUI(ApplicationContext.imgView);
@@ -768,7 +770,8 @@ public class MainScreen extends javax.swing.JFrame {
                  * o sea que no tiene puntos registrados, abrir dialogo para registrar puntos. Elegir segun sexo
                  */
                 final String sopInstanceUID =  list.get(TagFromName.SOPInstanceUID).getOriginalStringValues()[0]; //allSeriesOfStudy.get(0).getImageList().get(0).getSop_iuid();
-                final boolean exists = ApplicationContext.databaseRef.checkRecordExists("coords","sopuid",sopInstanceUID);
+                final String patientId = list.get(TagFromName.PatientID).getOriginalStringValues()[0];
+                final boolean exists = ApplicationContext.databaseRef.checkRecordExists("coords","patientId",patientId);
             
                 /** Si tiene puntos registrados previamente, levantar el body viewer con los puntos cargados
                  * desde BD segun SOPInstanceUID del archivo
@@ -806,7 +809,7 @@ public class MainScreen extends javax.swing.JFrame {
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        BodyJFrame frame = new BodyJFrame(!exists, sex, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
+                        BodyJFrame frame = new BodyJFrame(!exists, sex, patientId, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
                         BodyManager.getInstance().deleteObservers();
                         BodyManager.getInstance().addObserver(frame);
                         frame.setVisible(true);
