@@ -1,15 +1,14 @@
 package in.raster.mayam.form;
 
 import in.raster.mayam.delegates.HL7QueryRetrieve;
-import com.pixelmed.dicom.DicomException;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.ImportDcmDirDelegate;
 import in.raster.mayam.util.core.ImageToDicom;
 import java.io.File;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -36,6 +35,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         jLayeredPane1 = new javax.swing.JLayeredPane();
+        dateUtil1 = new com.toedter.calendar.DateUtil();
         jPanel1 = new javax.swing.JPanel();
         imageButton = new javax.swing.JButton();
         studyDesc = new javax.swing.JTextField();
@@ -45,16 +45,13 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         patientId = new javax.swing.JTextField();
-        modality = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         studyId = new javax.swing.JTextField();
         imgPathText = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
-        dob = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         accesionNumber = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        studyDate = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         patientSex = new javax.swing.JComboBox();
         jLabel10 = new javax.swing.JLabel();
@@ -66,9 +63,12 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         cancelButton = new javax.swing.JButton();
         createButton = new javax.swing.JButton();
         queryButton = new javax.swing.JButton();
+        dob = new com.toedter.calendar.JDateChooser();
+        studyDate = new com.toedter.calendar.JDateChooser();
+        modality = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(860, 422));
+        setResizable(false);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -95,8 +95,6 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
         patientId.setDisabledTextColor(new java.awt.Color(227, 224, 224));
 
-        modality.setDisabledTextColor(new java.awt.Color(227, 224, 224));
-
         jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel5.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_9")); // NOI18N
 
@@ -108,25 +106,26 @@ public class CreateDicomFrame extends javax.swing.JFrame {
         jLabel6.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_4")); // NOI18N
         jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
-        dob.setDisabledTextColor(new java.awt.Color(227, 224, 224));
-
         jLabel7.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_13")); // NOI18N
 
         accesionNumber.setDisabledTextColor(new java.awt.Color(227, 224, 224));
+        accesionNumber.setEnabled(false);
 
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel8.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_8")); // NOI18N
 
-        studyDate.setDisabledTextColor(new java.awt.Color(227, 224, 224));
-
         jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel9.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_5")); // NOI18N
 
-        patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Male", "Female", "Unknown" }));
+        patientSex.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "M", "F", "O" }));
 
         jLabel10.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_11")); // NOI18N
 
+        seriesNumber.setEnabled(false);
+
         jLabel11.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_12")); // NOI18N
+
+        InstanceNumber.setEnabled(false);
 
         jLabel12.setText(ApplicationContext.currentBundle.getString("CreateDicomFrame.text_6")); // NOI18N
 
@@ -150,6 +149,13 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                 queryButtonActionPerformed(evt);
             }
         });
+
+        dob.setDateFormatString("yyyyMMdd");
+
+        studyDate.setDateFormatString("yyyyMMdd");
+
+        modality.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "XC" }));
+        modality.setMinimumSize(new java.awt.Dimension(40, 25));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -196,32 +202,33 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                                         .addGap(29, 29, 29)
                                         .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(18, 18, 18)
-                                        .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(patientId, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(31, 31, 31)
                                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(18, 18, 18)
-                                        .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                        .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addGap(24, 24, 24))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(patientName, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
-                                    .addComponent(imgPathText)
-                                    .addComponent(studyDesc))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(patientSex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(phyName, javax.swing.GroupLayout.PREFERRED_SIZE, 626, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(121, 121, 121))
+                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(patientName, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
+                                        .addComponent(imgPathText)
+                                        .addComponent(studyDesc))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(patientSex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(phyName, javax.swing.GroupLayout.PREFERRED_SIZE, 626, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(12, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -235,24 +242,28 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                     .addComponent(jLabel2)
                     .addComponent(patientName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(dob)
-                    .addComponent(patientId)
-                    .addComponent(jLabel3)
-                    .addComponent(patientSex)
-                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(patientId)
+                        .addComponent(jLabel3)
+                        .addComponent(patientSex)
+                        .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(dob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(phyName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel12))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(studyId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel5)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(studyId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(modality, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(studyDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -288,7 +299,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         pack();
@@ -296,6 +307,8 @@ public class CreateDicomFrame extends javax.swing.JFrame {
 
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         if(srcFilePath == null || srcFilePath.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("CreateDicomFrame.srcFilePath.empty"),
+                    ApplicationContext.currentBundle.getString("ErrorTitles.text"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -309,18 +322,26 @@ public class CreateDicomFrame extends javax.swing.JFrame {
             
             if(jfc.getSelectedFile() != null) {
                 
-                System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
+//                System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
                 
                 try {
                     dstFilePath = jfc.getSelectedFile().getAbsolutePath();
                     ImageToDicom itd = new ImageToDicom(srcFilePath, dstFilePath,
-                            patientName.getText(), patientId.getText(), studyId.getText(), 
-                            dob.getText(), patientSex.getToolTipText(), accesionNumber.getText(),
-                            modality.getText(), studyDesc.getText(), "1", 
-                            "1", studyDate.getText(), null);
-                    File openedFile = new File(dstFilePath); 
-                    ImportDcmDirDelegate importDcmDir = new ImportDcmDirDelegate(openedFile, openedFile.isDirectory());
-                    importDcmDir.start();
+                            patientName.getText(), patientId.getText(), studyId.getText(), dob.getDate(), 
+                            (String)patientSex.getSelectedItem(), 
+                            accesionNumber.getText()!=null&&!accesionNumber.getText().trim().isEmpty()?accesionNumber.getText():null,
+                            studyDate.getDate(), studyDesc.getText(), 
+                            seriesNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?seriesNumber.getText():null,
+                            InstanceNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?InstanceNumber.getText():null,
+                            (String)modality.getSelectedItem(), null);
+                    this.setAlwaysOnTop(false);
+                    int result = JOptionPane.showConfirmDialog(null, ApplicationContext.currentBundle.getString("CreateDicomFrame.open_file"),
+                        ApplicationContext.currentBundle.getString("CreateDicomFrame.file_created"), JOptionPane.YES_NO_OPTION);
+                    if (result==0) {
+                        File openedFile = new File(dstFilePath); 
+                        ImportDcmDirDelegate importDcmDir = new ImportDcmDirDelegate(openedFile, openedFile.isDirectory());
+                        importDcmDir.start();
+                    }
                     this.setVisible(false);
                     
                 } catch (Exception  e) {
@@ -337,6 +358,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     private void queryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryButtonActionPerformed
         HL7QueryRetrieve hl7QueryRetrieve = new HL7QueryRetrieve(this);//ms.getHL7QueryScreen();
         hl7QueryRetrieve.setLocationRelativeTo(this);
+        hl7QueryRetrieve.setAlwaysOnTop(true);
         hl7QueryRetrieve.setVisible(true);
     }//GEN-LAST:event_queryButtonActionPerformed
 
@@ -401,7 +423,8 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     public javax.swing.JTextField accesionNumber;
     private javax.swing.JButton cancelButton;
     private javax.swing.JButton createButton;
-    public javax.swing.JTextField dob;
+    private com.toedter.calendar.DateUtil dateUtil1;
+    public com.toedter.calendar.JDateChooser dob;
     private javax.swing.JButton imageButton;
     private javax.swing.JTextField imgPathText;
     private javax.swing.JLabel jLabel1;
@@ -418,14 +441,14 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JLayeredPane jLayeredPane1;
     private javax.swing.JPanel jPanel1;
-    public javax.swing.JTextField modality;
+    private javax.swing.JComboBox modality;
     public javax.swing.JTextField patientId;
     public javax.swing.JTextField patientName;
     public javax.swing.JComboBox patientSex;
     private javax.swing.JTextField phyName;
     private javax.swing.JButton queryButton;
     private javax.swing.JTextField seriesNumber;
-    public javax.swing.JTextField studyDate;
+    public com.toedter.calendar.JDateChooser studyDate;
     public javax.swing.JTextField studyDesc;
     public javax.swing.JTextField studyId;
     // End of variables declaration//GEN-END:variables
@@ -435,14 +458,15 @@ public class CreateDicomFrame extends javax.swing.JFrame {
     
     public void reset() {
         accesionNumber.setText("");
-        dob.setText("");
-        studyDate.setText("");
+        dob.setDate(null);
+        imgPathText.setText("");
+        studyDate.setDate(null);
         patientId.setText("");
         patientName.setText("");
-        modality.setText("");
+        phyName.setText("");
         studyDesc.setText("");
         studyId.setText("");
-        //newSOPInstanceUID = null;
+        imgPathText.setText("");
     }
 
 }
