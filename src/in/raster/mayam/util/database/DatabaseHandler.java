@@ -45,7 +45,12 @@ import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.ThumbnailConstructor;
 import in.raster.mayam.facade.ApplicationFacade;
 import in.raster.mayam.models.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.*;
@@ -56,6 +61,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
 import org.apache.derby.jdbc.EmbeddedSimpleDataSource;
 import org.dcm4che.dict.Tags;
@@ -176,7 +182,7 @@ public class DatabaseHandler {
             statement.executeUpdate("create table locale (pk integer primary key GENERATED ALWAYS AS IDENTITY,countrycode varchar(10),country varchar(255),languagecode varchar(10),language varchar(255),localeid varchar(255),status boolean)");
             statement.executeUpdate("create table miscellaneous(Loopback boolean,JNLPRetrieveType varchar(25),AllowDynamicRetrieveType boolean)");
             statement.executeUpdate("create table emrservers(pk integer primary key GENERATED ALWAYS AS IDENTITY,logicalname varchar(255) NOT NULL UNIQUE,hostname varchar(255),port integer,subprotocol varchar(255))"); //MDIAZ
-            statement.executeUpdate("create table coords (sopuid varchar(255) NOT NULL, x float, y float, z float, framenumber integer NOT NULL)"); //MDIAZ
+            statement.executeUpdate("create table coords (patientId varchar(255) NOT NULL, sopuid varchar(255) NOT NULL, x float, y float, z float, framenumber integer NOT NULL, thumb BLOB NOT NULL)"); //MDIAZ
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -350,6 +356,7 @@ public class DatabaseHandler {
                 insertStmt.setString(3, date);
                 insertStmt.setString(4, dataset.getString(Tags.PatientSex));
                 insertStmt.execute();
+                conn.commit();
             } catch (SQLException ex) {
                 System.out.println("Exception in inserting patient info : " + ex.getMessage());
             }
@@ -370,6 +377,7 @@ public class DatabaseHandler {
                 String studyDesc = (dataset.getString(Tags.StudyDescription) != null && dataset.getString(Tags.StudyDescription).length() > 0) ? dataset.getString(Tags.StudyDescription) : "";
                 String studyType = saveAsLink ? "link" : "local";
                 conn.createStatement().execute("insert into study values('" + dataset.getString(Tags.StudyInstanceUID) + "','" + date + "','" + time + "','" + accessionNo + "','" + refName + "','" + studyDesc.replace('/', ' ') + "','" + dataset.getString(Tags.Modality) + "'," + 0 + "," + 0 + "," + 0 + "," + 0 + ",'" + retAe + "','" + studyType + "'," + "false,'" + dataset.getString(Tags.PatientID) + "')");
+                conn.commit();
             } catch (SQLException ex) {
                 System.out.println("Exception in inserting study info");
             }
@@ -388,6 +396,7 @@ public class DatabaseHandler {
             String bodyPartExamined = (dataset.getString(Tags.BodyPartExamined) != null && dataset.getString(Tags.BodyPartExamined).length() > 0) ? dataset.getString(Tags.BodyPartExamined) : "";
             try {
                 conn.createStatement().execute("insert into series values('" + dataset.getString(Tags.SeriesInstanceUID) + "','" + seriesNo + "','" + date + "','" + time + "','" + modality + "','" + seriesDesc + "','" + bodyPartExamined + "','" + institution + "'," + numSeries + ",'" + dataset.getString(Tags.PatientID) + "','" + dataset.getString(Tags.StudyInstanceUID) + "')");
+                conn.commit();
             } catch (SQLException ex) {
                 System.out.println("Exception in inserting series info");
             }
@@ -439,7 +448,7 @@ public class DatabaseHandler {
                 conn.createStatement().executeUpdate("insert into image(SopUID,SOPClassUID,InstanceNo,multiframe,totalframe,SendStatus,ForwardDateTime,ReceivedDateTime,ReceiveStatus,FileStoreUrl,SliceLocation,EncapsulatedDocument,ThumbnailStatus,FrameOfReferenceUID,ImagePosition,ImageOrientation,ImageType,PixelSpacing,SliceThickness,NoOfRows,NoOfColumns,ReferencedSopUid,PatientId,StudyInstanceUID,SeriesInstanceUID) values('" + dataset.getString(Tags.SOPInstanceUID) + "','" + dataset.getString(Tags.SOPClassUID) + "'," + dataset.getInt(Tags.InstanceNumber) + ",'" + multiframe + "','" + totalFrame + "','" + "partial" + "','" + " " + "','" + " " + "','" + "partial" + "','" + filePath + "'," + sliceLoc + ",'" + encapsulatedPDF + "',false,'" + frameOfRefUid + "','" + imgPos + "','" + imgOrientation + "','" + image_type + "','" + pixelSpacing + "','" + sliceThickness + "'," + row + "," + columns + ",'" + referSopInsUid.trim() + "','" + dataset.getString(Tags.PatientID) + "','" + dataset.getString(Tags.StudyInstanceUID) + "','" + dataset.getString(Tags.SeriesInstanceUID) + "')");
                 conn.commit();
                 boolean isVideo = false;
-                 if (dataset.getString(Tags.SOPClassUID).equals(UID.VideoEndoscopicImageStorage) || dataset.getString(Tags.SOPClassUID).equals(UID.VideoMicroscopicImageStorage) || dataset.getString(Tags.SOPClassUID).equals(UID.VideoPhotographicImageStorage)) {
+                 if (dataset.getString(Tags.SOPClassUID)!=null && (dataset.getString(Tags.SOPClassUID).equals(UID.VideoEndoscopicImageStorage) || dataset.getString(Tags.SOPClassUID).equals(UID.VideoMicroscopicImageStorage) || dataset.getString(Tags.SOPClassUID).equals(UID.VideoPhotographicImageStorage))) {
                         String storeLoc = isLink ? ApplicationContext.getAppDirectory() + File.separator + "Videos" + File.separator + dataset.getString(Tags.SOPInstanceUID) + "_V" : new File(filePath).getParentFile() + File.separator + dataset.getString(Tags.SOPInstanceUID) + "_V";
                         ApplicationContext.convertVideo(filePath, storeLoc, dataset.getString(Tags.SOPInstanceUID));
                         isVideo = true;
@@ -467,16 +476,28 @@ public class DatabaseHandler {
      * @param coords
      * @throws SQLException 
      */
-    private void insertCoords(String sopInstanceUID, ArrayList<CoordBean> coords) throws SQLException {
-        PreparedStatement stm = conn.prepareStatement("insert into coords values(?,?,?,?,?)");
+    private void insertCoords(ArrayList<CoordBean> coords) throws SQLException {
+        PreparedStatement stm = conn.prepareStatement("insert into coords values(?,?,?,?,?,?,?)");
         for(CoordBean cb : coords) {
-            stm.setString(1, sopInstanceUID);
-            stm.setFloat(2, cb.getPoint().getX());
-            stm.setFloat(3, cb.getPoint().getY());
-            stm.setFloat(4, cb.getPoint().getZ());
-            stm.setInt(5, cb.getFrameNumber());
-            stm.executeUpdate();
-         }
+            try {
+                stm.setString(1, cb.getPatientId());
+                stm.setString(2, cb.getSOPId());
+                stm.setFloat(3, cb.getPoint().getX());
+                stm.setFloat(4, cb.getPoint().getY());
+                stm.setFloat(5, cb.getPoint().getZ());
+                stm.setInt(6, cb.getFrameNumber());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(cb.getThumb(),"png", baos);
+                baos.flush();
+                baos.close();
+                InputStream is = new ByteArrayInputStream(baos.toByteArray());
+                stm.setBlob(7, is);
+                stm.executeUpdate();
+            } catch (IOException ex) {
+                Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        stm.close();
         conn.commit();
     }
 
@@ -1276,8 +1297,8 @@ public class DatabaseHandler {
      * @param sopInstanceUID
      * @return 
      */
-    public ArrayList<CoordBean> getCoords(String sopInstanceUID) { //FN es frame number
-        String sql = "select x,y,z,framenumber from coords where sopuid ='" + sopInstanceUID + "'";
+    public ArrayList<CoordBean> getCoords(String patientId) { //FN es frame number
+        String sql = "select x,y,z,framenumber,sopuid,thumb from coords where patientId ='" + patientId + "'";
         ArrayList<CoordBean> list = new ArrayList<CoordBean>();
         try {
             ResultSet rs = conn.createStatement().executeQuery(sql);
@@ -1288,15 +1309,21 @@ public class DatabaseHandler {
                 v.setY(rs.getFloat("y"));
                 v.setZ(rs.getFloat("z"));
                 cb.setPoint(v);
-                cb.setSOPId(sopInstanceUID);
+                cb.setSOPId(rs.getString("sopuid"));
+                cb.setPatientId(patientId);
                 cb.setFrameNumber(rs.getInt("framenumber"));
+                InputStream is = rs.getBlob("thumb").getBinaryStream(); 
+                BufferedImage thumb = ImageIO.read(is);
+                cb.setThumb(thumb);
                 list.add(cb);
             }
             rs.close();
         }
         catch(SQLException e) {
-            e.printStackTrace();
-        } 
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, e);
+        } catch (IOException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return list;
     }
 
@@ -1483,12 +1510,12 @@ public class DatabaseHandler {
      * @param sopInstanceUID
      * @param coords 
      */
-    public void updateCoords(String sopInstanceUID, ArrayList<CoordBean> coords) { // MEJORAR ESTO!!!
+    public void updateCoords(String patientId, ArrayList<CoordBean> coords) { // MEJORAR ESTO!!!
         try {
-            conn.createStatement().execute("delete from coords where sopuid ='" + sopInstanceUID + "'");
+            conn.createStatement().execute("delete from coords where patientId ='" + patientId + "'");
             //deleteRow("coords","sopuid",sopInstanceUID);
             conn.commit();
-            insertCoords(sopInstanceUID, coords);
+            insertCoords(coords);
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
