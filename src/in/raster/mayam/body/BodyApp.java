@@ -19,6 +19,7 @@ import com.jme3.scene.LightNode;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Sphere;
+import com.jme3.system.AppSettings;
 
 
 
@@ -28,16 +29,14 @@ public class BodyApp extends SimpleApplication {
      * TODO: Este metodo es para testeo - borrar despues
      * @param args 
      */
-    public static void main(String[] args) {
-        BodyApp app = new BodyApp("man.j3o");
-        //AppSettings settings = new AppSettings();
-        //app.setSettings(settings);
-        app.setShowSettings(false);
-        app.setDisplayStatView(false); 
-        app.setDisplayFps(false);
-        app.setPauseOnLostFocus(false);
-        app.start();
-    }
+//    public static void main(String[] args) {
+//        BodyApp app = new BodyApp("man.j3o");
+//        app.setShowSettings(false);
+//        app.setDisplayStatView(false); 
+//        app.setDisplayFps(false);
+//        app.setPauseOnLostFocus(false);
+//        app.start();
+//    }
     
   public BodyApp(String modelPath) {
       this.modelPath = modelPath;
