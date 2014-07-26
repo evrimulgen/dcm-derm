@@ -42,7 +42,7 @@
                   </Group>
                   <Component id="buttonsToolbar" pref="931" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="135" pref="270" max="32767" attributes="0"/>
+                      <EmptySpace min="135" pref="288" max="32767" attributes="0"/>
                       <Component id="progressLabel" min="-2" pref="102" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="progressBar" min="-2" pref="343" max="-2" attributes="0"/>
