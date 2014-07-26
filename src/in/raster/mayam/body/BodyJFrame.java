@@ -4,11 +4,11 @@
  */
 package in.raster.mayam.body;
 
+import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import com.pixelmed.display.SourceImage;
 import in.raster.mayam.context.ApplicationContext;
 import java.awt.Canvas;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
@@ -28,6 +28,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     public static String female = "F";
     //private ArrayList<CoordBean> coordList = null;
     private String sIUID = null;
+    private String patientId = null;
     private SourceImage srcImg = null;
     private Integer selectedFrameNumber = null;
     
@@ -35,7 +36,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         initComponents();
     }
     
-    public BodyJFrame(boolean isNew, String gender, String sIUID, SourceImage srcImg) {
+    public BodyJFrame(boolean isNew, String gender, String patientId, String sIUID, SourceImage srcImg) {
         if(male.equals(gender)) {
             model = "/assets/Models/man.j3o";
         }
@@ -43,6 +44,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             model = "/assets/Models/woman.j3o";
         }
         this.sIUID = sIUID;
+        this.patientId = patientId;
         this.srcImg = srcImg;
         initComponents();
         jList1.addListSelectionListener(BodyManager.getInstance());
@@ -52,6 +54,9 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
 
     private Canvas getJmeCanvas() {
         BodyApp app = new BodyApp(model);
+        AppSettings settings = new AppSettings(true);
+        settings.setAudioRenderer(null);
+        app.setSettings(settings);
         app.setShowSettings(false);
         app.setDisplayStatView(false); 
         app.setDisplayFps(false);
@@ -231,8 +236,8 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }// </editor-fold>//GEN-END:initComponents
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        ApplicationContext.databaseRef.updateCoords(sIUID.trim(),
-               BodyManager.getInstance().getCoordList()/*coordList*/);
+        ApplicationContext.databaseRef.updateCoords(patientId,
+                BodyManager.getInstance().getCoordList()/*coordList*/);
         JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("BodyJFrame.changes.saved"));
     }//GEN-LAST:event_addButtonActionPerformed
 
@@ -254,7 +259,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
-       ApplicationContext.databaseRef.updateCoords(sIUID.trim(),
+       ApplicationContext.databaseRef.updateCoords(patientId, 
                BodyManager.getInstance().getCoordList()/*coordList*/);
        JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("BodyJFrame.changes.saved"));
        this.dispose();
@@ -269,7 +274,9 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
                 CoordBean newPoint = new CoordBean();
                 newPoint.setPoint(selectedPoint.getPoint().clone());
                 newPoint.setFrameNumber(selectedFrameNumber);
-                newPoint.setSOPId(sIUID);
+                newPoint.setPatientId(patientId);
+                newPoint.setThumb(srcImg.getBufferedImage(selectedFrameNumber));
+                newPoint.setSOPId(sIUID.trim());
                 BodyManager.getInstance().getCoordList().add(newPoint);
                 setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+
                         String.valueOf(BodyManager.getInstance().getCoordList().size()));
@@ -343,17 +350,16 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
 
     @Override
     public void update(Observable o, Object o1) {
-//        Vector3f point = ((BodyManager)o).getCoord();
         displayImgSelector();
         if (selectedFrameNumber != null) { //si el usuario cancela el ImgSelector, esta variable es nula
-            //CoordBean cb = new CoordBean();
-            //cb.setFrameNuber(selectedFrameNumber);
-            //cb.setPoint(point);
-            //cb.setSOPId(sIUID);
             BodyManager.getInstance().getCoordList().get(
                     BodyManager.getInstance().getCoordList().size()-1).setFrameNumber(selectedFrameNumber);
             BodyManager.getInstance().getCoordList().get(
-                    BodyManager.getInstance().getCoordList().size()-1).setSOPId(sIUID);
+                    BodyManager.getInstance().getCoordList().size()-1).setSOPId(sIUID.trim());
+            BodyManager.getInstance().getCoordList().get(
+                    BodyManager.getInstance().getCoordList().size()-1).setPatientId(patientId);
+            BodyManager.getInstance().getCoordList().get(
+                    BodyManager.getInstance().getCoordList().size()-1).setThumb(srcImg.getBufferedImage(selectedFrameNumber));
             setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+
                     String.valueOf(BodyManager.getInstance().getCoordList().size()));
         }
@@ -366,9 +372,9 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
     private void initCoords(boolean isNew) {
         ArrayList<CoordBean> coordList = new ArrayList<CoordBean>();
         if(!isNew) {
-            for (CoordBean bean : ApplicationContext.databaseRef.getCoords(sIUID.trim())) {
-                coordList.add(bean);
-                setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+ String.valueOf(coordList.size()));
+            for (CoordBean bean : ApplicationContext.databaseRef.getCoords(patientId)) {
+                    coordList.add(bean);
+                    setItem(ApplicationContext.currentBundle.getString("BodyJFrame.point.text")+ String.valueOf(coordList.size()));
             }
             BodyManager.getInstance().setCoordList(coordList);
         }
@@ -391,10 +397,10 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
             int i = list.getSelectedIndex();
             if(i > -1) {
                 CoordBean cb = (CoordBean) BodyManager.getInstance().getCoordList().get(i);
-                BufferedImage bi = srcImg.getBufferedImage(cb.getFrameNumber());
-                frLabel.setText(ApplicationContext.currentBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNumber()+1));
-                ((FramePreview)thumbPanel).setImage(bi);
-            }
+                frLabel.setText("<html>"+ApplicationContext.currentBundle.getString("BodyJFrame.frame.text")+(cb.getFrameNumber()+1)+"<br>"
+                            + "UID: ..."+cb.getSOPId().substring(cb.getSOPId().length()-10,cb.getSOPId().length())+"<html>");
+                ((FramePreview)thumbPanel).setImage(cb.getThumb());
+               }
         }
     }
 }
