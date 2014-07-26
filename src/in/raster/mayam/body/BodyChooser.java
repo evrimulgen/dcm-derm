@@ -1,8 +1,6 @@
 /*
  ***************** ESTA CLASE QUEDA OBSOLETA POR EL MOMENTO *****************
  * 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
  */
 package in.raster.mayam.body;
 
@@ -14,6 +12,7 @@ import java.awt.Frame;
  *
  * @author Mariano
  */
+@Deprecated
 public class BodyChooser extends javax.swing.JDialog {
 
     /**
@@ -129,7 +128,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.male, "1", null);
+                BodyJFrame frame = new BodyJFrame(false, "null", BodyJFrame.male, "1", null);
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }
@@ -141,7 +140,7 @@ public class BodyChooser extends javax.swing.JDialog {
         BodyManager.getInstance().reset();
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BodyJFrame frame = new BodyJFrame(false, BodyJFrame.female, "1", null);
+                BodyJFrame frame = new BodyJFrame(false,"null", BodyJFrame.female, "1", null);
                 BodyManager.getInstance().addObserver(frame);
                 frame.setVisible(true);
             }
