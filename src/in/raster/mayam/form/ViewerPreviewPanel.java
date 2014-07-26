@@ -555,7 +555,7 @@ public class ViewerPreviewPanel extends javax.swing.JPanel {
     }
 
     public void clearSelectedInstances() {
-        for (int i = 0; i < selectedInstances.size(); i++) {
+        for (int i = 0; i < selectedInstances.size()-1; i++) {
             if (totalImages <= 3 || selectedButton.equals(all) || selectedInstances.get(i) == 0 || (!selectedButton.equals(one) && selectedInstances.get(i) == totalImages / 2) || (!selectedButton.equals(one) && selectedInstances.get(i) == totalImages - 1)) {
                 labelList.get(selectedInstances.get(i)).setBackground(Color.BLUE);
             } else {
