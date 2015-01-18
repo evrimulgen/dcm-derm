@@ -557,7 +557,7 @@ public class ImageToDicom {
 	 */
         public ImageToDicom(String inputFile, String outputFile,String patientName,String patientID,String studyID,
                 Date dateOfBirth, String patientSex, String accessionNumber, Date studyDate, String studyDesc,
-                String seriesNumber, String instanceNumber, String modality, String sopClass)
+                String seriesNumber, String instanceNumber, String modality, String sopClass, String physicianName)
 			throws IOException, DicomException {
             
             AttributeList list = generateDICOMPixelModuleFromConsumerImageFile(inputFile);
@@ -588,7 +588,7 @@ public class ImageToDicom {
                 { Attribute a = new ShortStringAttribute(TagFromName.StudyDate); a.addValue(new java.text.SimpleDateFormat("yyyyMMdd").format(studyDate)); list.put(a); }
                 { Attribute a = new ShortStringAttribute(TagFromName.StudyDescription); a.addValue(studyDesc); list.put(a); }
                 
-		{ Attribute a = new PersonNameAttribute(TagFromName.ReferringPhysicianName); a.addValue("^^^^"); list.put(a); }
+		{ Attribute a = new PersonNameAttribute(TagFromName.ReferringPhysicianName); a.addValue(physicianName); list.put(a); }
 		{ Attribute a = new ShortStringAttribute(TagFromName.AccessionNumber); a.addValue(accessionNumber); list.put(a); }
 		{ Attribute a = new IntegerStringAttribute(TagFromName.SeriesNumber); a.addValue(seriesNumber); list.put(a); }
 		{ Attribute a = new IntegerStringAttribute(TagFromName.InstanceNumber); a.addValue(instanceNumber); list.put(a); }
