@@ -322,18 +322,23 @@ public class CreateDicomFrame extends javax.swing.JFrame {
             
             if(jfc.getSelectedFile() != null) {
                 
-//                System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
+//           System.out.println("You chose to open this file: " + jfc.getSelectedFile().getName());
                 
                 try {
                     dstFilePath = jfc.getSelectedFile().getAbsolutePath();
+                    
+                    String nextAccessionNo = null;
+                    if (accesionNumber.getText()==null || accesionNumber.getText().trim().isEmpty()) {
+                         nextAccessionNo = ApplicationContext.databaseRef.getNextAccessionNo(patientId.getText(), studyId.getText());
+                    }
+                    
                     ImageToDicom itd = new ImageToDicom(srcFilePath, dstFilePath,
                             patientName.getText(), patientId.getText(), studyId.getText(), dob.getDate(), 
-                            (String)patientSex.getSelectedItem(), 
-                            accesionNumber.getText()!=null&&!accesionNumber.getText().trim().isEmpty()?accesionNumber.getText():null,
+                            (String)patientSex.getSelectedItem(), nextAccessionNo,
                             studyDate.getDate(), studyDesc.getText(), 
                             seriesNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?seriesNumber.getText():null,
                             InstanceNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?InstanceNumber.getText():null,
-                            (String)modality.getSelectedItem(), null);
+                            (String)modality.getSelectedItem(), "1.2.840.10008.5.1.4.1.1.7"/*Secondary Capture Image Storage*/,phyName.getText());
                     this.setAlwaysOnTop(false);
                     int result = JOptionPane.showConfirmDialog(null, ApplicationContext.currentBundle.getString("CreateDicomFrame.open_file"),
                         ApplicationContext.currentBundle.getString("CreateDicomFrame.file_created"), JOptionPane.YES_NO_OPTION);

@@ -170,7 +170,7 @@ public class DatabaseHandler {
     private void createTables() {
         try {
             statement.executeUpdate("create table patient (PatientId varchar(255) NOT NULL CONSTRAINT PatientId_pk PRIMARY KEY," + "PatientName varchar(255)," + "PatientBirthDate varchar(30)," + "PatientSex varchar(10))");
-            statement.executeUpdate("create table study (StudyInstanceUID varchar(255) NOT NULL CONSTRAINT StudyInstanceUID_pk PRIMARY KEY," + "StudyDate varchar(30)," + "StudyTime varchar(30)," + "AccessionNo varchar(50)," + "RefferingPhysicianName varchar(255)," + "StudyDescription varchar(80)," + "ModalitiesInStudy varchar(10)," + "NoOfSeries integer," + "NoOfInstances integer," + "RecdImgCnt integer," + "SendImgCnt integer," + "RetrieveAET varchar(50)," + "StudyType varchar(75)," + "DownloadStatus boolean," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId))");
+            statement.executeUpdate("create table study (StudyInstanceUID varchar(255) NOT NULL CONSTRAINT StudyInstanceUID_pk PRIMARY KEY," + "StudyDate varchar(30)," + "StudyTime varchar(30)," + "AccessionNo varchar(50)," + "RefferingPhysicianName varchar(255)," + "StudyDescription varchar(80)," + "ModalitiesInStudy varchar(10)," + "NoOfSeries integer," + "NoOfInstances integer," + "RecdImgCnt integer," + "SendImgCnt integer," + "RetrieveAET varchar(50)," + "StudyType varchar(75)," + "DownloadStatus boolean," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId),"+"StudyId varchar(255) NOT NULL)");
             statement.executeUpdate("create table series (SeriesInstanceUID varchar(255) NOT NULL CONSTRAINT SeriesInstanceUID_pk PRIMARY KEY," + "SeriesNo varchar(50)," + "SeriesDate varchar(30)," + "SeriesTime varchar(30)," + "Modality varchar(10)," + "SeriesDescription varchar(100)," + "BodyPartExamined varchar(100)," + "InstitutionName varchar(255)," + "NoOfSeriesRelatedInstances integer," + "PatientId varchar(255), foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255),foreign key(StudyInstanceUID) references Study(StudyInstanceUID))");
             statement.executeUpdate("create table image (SopUID varchar(255) NOT NULL CONSTRAINT SopUID_pk PRIMARY KEY," + "SOPClassUID varchar(255)," + "InstanceNo integer," + "multiframe boolean," + "totalframe varchar(50)," + "SendStatus varchar(50)," + "ForwardDateTime varchar(30)," + "ReceivedDateTime varchar(30)," + "ReceiveStatus varchar(50)," + "FileStoreUrl varchar(1000)," + "SliceLocation integer," + "EncapsulatedDocument varchar(50)," + "ThumbnailStatus boolean," + "FrameOfReferenceUID varchar(128)," + "ImagePosition varchar(64)," + "ImageOrientation varchar(128)," + "ImageType varchar(30)," + "PixelSpacing varchar(64)," + "SliceThickness varchar(16)," + "NoOfRows integer," + "NoOfColumns integer," + "ReferencedSopUid varchar(128)," + "PatientId varchar(255),foreign key(PatientId) references Patient(PatientId)," + "StudyInstanceUID varchar(255),foreign key(StudyInstanceUID) references Study(StudyInstanceUID)," + "SeriesInstanceUID varchar(255),foreign key(SeriesInstanceUID) references Series(SeriesInstanceUID))");
             statement.executeUpdate("create table listener (pk integer primary key GENERATED ALWAYS AS IDENTITY,aetitle varchar(255),port varchar(255),storagelocation varchar(255))");
@@ -375,8 +375,9 @@ public class DatabaseHandler {
                 String refName = (dataset.getString(Tags.ReferringPhysicianName) != null && dataset.getString(Tags.ReferringPhysicianName).length() > 0) ? dataset.getString(Tags.ReferringPhysicianName) : "";
                 String retAe = (dataset.getString(Tags.RetrieveAET) != null && dataset.getString(Tags.RetrieveAET).length() > 0) ? dataset.getString(Tags.RetrieveAET) : "";
                 String studyDesc = (dataset.getString(Tags.StudyDescription) != null && dataset.getString(Tags.StudyDescription).length() > 0) ? dataset.getString(Tags.StudyDescription) : "";
+                String studyId = (dataset.getString(Tags.StudyID) != null && dataset.getString(Tags.StudyID).length() > 0) ? dataset.getString(Tags.StudyID) : "";
                 String studyType = saveAsLink ? "link" : "local";
-                conn.createStatement().execute("insert into study values('" + dataset.getString(Tags.StudyInstanceUID) + "','" + date + "','" + time + "','" + accessionNo + "','" + refName + "','" + studyDesc.replace('/', ' ') + "','" + dataset.getString(Tags.Modality) + "'," + 0 + "," + 0 + "," + 0 + "," + 0 + ",'" + retAe + "','" + studyType + "'," + "false,'" + dataset.getString(Tags.PatientID) + "')");
+                conn.createStatement().execute("insert into study values('" + dataset.getString(Tags.StudyInstanceUID) + "','" + date + "','" + time + "','" + accessionNo + "','" + refName + "','" + studyDesc.replace('/', ' ') + "','" + dataset.getString(Tags.Modality) + "'," + 0 + "," + 0 + "," + 0 + "," + 0 + ",'" + retAe + "','" + studyType + "'," + "false,'" + dataset.getString(Tags.PatientID) + "','"+studyId+"')");
                 conn.commit();
             } catch (SQLException ex) {
                 System.out.println("Exception in inserting study info");
@@ -1635,5 +1636,25 @@ public class DatabaseHandler {
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    /**
+     * MDIAZ
+     */
+    public String getNextAccessionNo(String patientId, String studyId) {
+        String nextNo = null;
+        try {
+            ResultSet pathInfo = conn.createStatement().executeQuery("select ACCESSIONNO from STUDY where PATIENTID='" + patientId + "' and STUDYID='"+studyId+"' order by ACCESSIONNO desc");
+            pathInfo.next();
+            nextNo = pathInfo.getString("ACCESSIONNO");
+            if (nextNo != null) {
+                int accessionNo = Integer.parseInt(nextNo);
+                accessionNo++;
+                return String.valueOf(accessionNo);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return nextNo;
     }
 }
