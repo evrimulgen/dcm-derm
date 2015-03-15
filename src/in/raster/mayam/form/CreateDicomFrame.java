@@ -1,5 +1,6 @@
 package in.raster.mayam.form;
 
+import com.pixelmed.dicom.SOPClass;
 import in.raster.mayam.delegates.HL7QueryRetrieve;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.ImportDcmDirDelegate;
@@ -326,19 +327,18 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                 
                 try {
                     dstFilePath = jfc.getSelectedFile().getAbsolutePath();
-                    
-                    String nextAccessionNo = null;
-                    if (accesionNumber.getText()==null || accesionNumber.getText().trim().isEmpty()) {
-                         nextAccessionNo = ApplicationContext.databaseRef.getNextAccessionNo(patientId.getText(), studyId.getText());
-                    }
-                    
+//                    String nextAccessionNo = null;
+//                    if (accesionNumber.getText()==null || accesionNumber.getText().trim().isEmpty()) {
+//                         nextAccessionNo = ApplicationContext.databaseRef.getNextAccessionNo(patientId.getText(), studyId.getText());
+//                    }
                     ImageToDicom itd = new ImageToDicom(srcFilePath, dstFilePath,
                             patientName.getText(), patientId.getText(), studyId.getText(), dob.getDate(), 
-                            (String)patientSex.getSelectedItem(), nextAccessionNo,
+                            (String)patientSex.getSelectedItem(), null,
                             studyDate.getDate(), studyDesc.getText(), 
                             seriesNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?seriesNumber.getText():null,
                             InstanceNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?InstanceNumber.getText():null,
-                            (String)modality.getSelectedItem(), "1.2.840.10008.5.1.4.1.1.7"/*Secondary Capture Image Storage*/,phyName.getText());
+                            (String)modality.getSelectedItem(),SOPClass.SecondaryCaptureImageStorage/*Secondary Capture Image Storage*/,phyName.getText());
+                    //Modality:  XC - External-camera photography
                     this.setAlwaysOnTop(false);
                     int result = JOptionPane.showConfirmDialog(null, ApplicationContext.currentBundle.getString("CreateDicomFrame.open_file"),
                         ApplicationContext.currentBundle.getString("CreateDicomFrame.file_created"), JOptionPane.YES_NO_OPTION);
