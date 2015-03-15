@@ -265,4 +265,52 @@ public class StudyModel {
     public void setRetAET(String retAET) {
         this.retAET = retAET;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 59 * hash + (this.patientId != null ? this.patientId.hashCode() : 0);
+        hash = 59 * hash + (this.patientName != null ? this.patientName.hashCode() : 0);
+        hash = 59 * hash + (this.dob != null ? this.dob.hashCode() : 0);
+        hash = 59 * hash + (this.sex != null ? this.sex.hashCode() : 0);
+        hash = 59 * hash + (this.accessionNo != null ? this.accessionNo.hashCode() : 0);
+        hash = 59 * hash + (this.studyDescription != null ? this.studyDescription.hashCode() : 0);
+        hash = 59 * hash + (this.studyUID != null ? this.studyUID.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final StudyModel other = (StudyModel) obj;
+        if ((this.patientId == null) ? (other.patientId != null) : !this.patientId.equals(other.patientId)) {
+            return false;
+        }
+        if ((this.patientName == null) ? (other.patientName != null) : !this.patientName.equals(other.patientName)) {
+            return false;
+        }
+        if ((this.dob == null) ? (other.dob != null) : !this.dob.equals(other.dob)) {
+            return false;
+        }
+        if ((this.sex == null) ? (other.sex != null) : !this.sex.equals(other.sex)) {
+            return false;
+        }
+        if ((this.accessionNo == null) ? (other.accessionNo != null) : !this.accessionNo.equals(other.accessionNo)) {
+            return false;
+        }
+        if ((this.studyDescription == null) ? (other.studyDescription != null) : !this.studyDescription.equals(other.studyDescription)) {
+            return false;
+        }
+        if ((this.studyUID == null) ? (other.studyUID != null) : !this.studyUID.equals(other.studyUID)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }
