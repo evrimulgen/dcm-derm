@@ -87,8 +87,10 @@ public class ImportDcmDirDelegate extends Thread {
     @Override
     public void run() {
         if (isDirectory) {
-            setImportFolder(file);
-            readAndUpdateByFolder();
+//            setImportFolder(file); Modificado MDIAZ
+//            readAndUpdateByFolder();
+            JOptionPane.showConfirmDialog(ApplicationContext.mainScreenObj, 
+                    "Debe seleccionar un archivo", "Titulo", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE);
         } else if (isDicomFile(file)) {
             checkIsLink();
             if (!skip) {
@@ -155,17 +157,37 @@ public class ImportDcmDirDelegate extends Thread {
         }
     }
 
+    /** Modificado MDIAZ */
     private void readAndImportDicomFile(File parseFile) throws CompressedDcmOnMacException {
         DicomInputStream dis = null;
         try {
             dis = new DicomInputStream(parseFile);
-            DicomObject data = new BasicDicomObject();
-            data = dis.readDicomObject();
+            DicomObject data = dis.readDicomObject();
+            
             if (data != null) {
+                //buscar en BD segun SopUID para verificar si existe id local de paciente:
+                String localPatientId = ApplicationContext.databaseRef.getLocalPatientIdBySopInstanceUid(data.getString(Tags.SOPInstanceUID));
+                if (localPatientId == null) {
+                    boolean inputValid = false;
+                    while (!inputValid) { 
+                        localPatientId = JOptionPane.showInputDialog(ApplicationContext.mainScreenObj, "Ingrese Identificador del Paciente (numérico)", 
+                        "Identificador de Paciente Necesario", JOptionPane.QUESTION_MESSAGE);
+                        if (localPatientId == null) { //Cancel
+                            return;
+                        }
+                        try {
+                            Integer.parseInt(localPatientId);
+                            inputValid = true;
+                        } catch (Exception e) {
+                            JOptionPane.showMessageDialog(ApplicationContext.mainScreenObj, "El identificador debe ser numérico");
+                        }
+                    }
+                }
+                                
                 if (Platform.getCurrentPlatform().equals(Platform.MAC)) {
                     if (data.getString(Tags.TransferSyntaxUID).equalsIgnoreCase(TransferSyntax.ExplicitVRLittleEndian.uid()) || data.getString(Tags.TransferSyntaxUID).equalsIgnoreCase(TransferSyntax.ImplicitVRLittleEndian.uid())) {
                         if (saveAsLink) {
-                            ApplicationContext.databaseRef.writeDatasetInfo(data, saveAsLink, parseFile.getAbsolutePath(), true);
+                            ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, parseFile.getAbsolutePath(), true);
                         } else {
                             File destination = new File(dest + File.separator + data.getString(Tags.StudyInstanceUID) + File.separator + data.getString(Tags.SeriesInstanceUID));
                             if (!destination.exists()) {
@@ -173,14 +195,14 @@ public class ImportDcmDirDelegate extends Thread {
                             }
                             File destinationFile = new File(destination, data.getString(Tags.SOPInstanceUID));
                             copy(parseFile, destinationFile);
-                            ApplicationContext.databaseRef.writeDatasetInfo(data, saveAsLink, destinationFile.getAbsolutePath(), true);
+                            ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, destinationFile.getAbsolutePath(), true);
                         }
                     } else {
                         throw new CompressedDcmOnMacException();
                     }
                 } else {
                     if (saveAsLink) {
-                        ApplicationContext.databaseRef.writeDatasetInfo(data, saveAsLink, parseFile.getAbsolutePath(), true);
+                        ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, parseFile.getAbsolutePath(), true);
                     } else {
                         File destination = new File(dest + File.separator + data.getString(Tags.StudyInstanceUID) + File.separator + data.getString(Tags.SeriesInstanceUID));
                         if (!destination.exists()) {
@@ -188,7 +210,7 @@ public class ImportDcmDirDelegate extends Thread {
                         }
                         File destinationFile = new File(destination, data.getString(Tags.SOPInstanceUID));
                         copy(parseFile, destinationFile);
-                        ApplicationContext.databaseRef.writeDatasetInfo(data, saveAsLink, destinationFile.getAbsolutePath(), true);
+                        ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, destinationFile.getAbsolutePath(), true);
                     }
                 }
             }
@@ -241,14 +263,15 @@ public class ImportDcmDirDelegate extends Thread {
         }
     }
 
+    /** comentado MDIAZ */
     public void checkIsLink() {
-        int link = JOptionPane.showOptionDialog(null, ApplicationContext.currentBundle.getString("MainScreen.importConfirmation.text"), ApplicationContext.currentBundle.getString("MainScreen.importConfirmation.title.text"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{ApplicationContext.currentBundle.getString("MainScreen.import.copy.text"), ApplicationContext.currentBundle.getString("MainScreen.import.link.text")}, "default");
-        if (link == 0) {
-            saveAsLink = false;
-        } else if (link == 1) {
-            saveAsLink = true;
-        } else {
-            skip = true;
-        }
+//        int link = JOptionPane.showOptionDialog(null, ApplicationContext.currentBundle.getString("MainScreen.importConfirmation.text"), ApplicationContext.currentBundle.getString("MainScreen.importConfirmation.title.text"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{ApplicationContext.currentBundle.getString("MainScreen.import.copy.text"), ApplicationContext.currentBundle.getString("MainScreen.import.link.text")}, "default");
+//        if (link == 0) {
+//            saveAsLink = false;
+//        } else if (link == 1) {
+//            saveAsLink = true;
+//        } else {
+//            skip = true;
+//        }
     }
 }
