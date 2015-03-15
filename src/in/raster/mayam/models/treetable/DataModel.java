@@ -48,8 +48,8 @@ import in.raster.mayam.context.ApplicationContext;
  */
 public class DataModel extends AbstractTreeTableModel {
 
-    static protected String[] columnNames = {"", "", "Patient Id", "Patient Name", "DOB", "Acc no", "Study Date", "Study Desc", "Modality", "Images"};
-    static protected Class<?>[] columnTypes = {TreeTableModel.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class};
+    static protected String[] columnNames = {"", "", "Patient Id", "Patient Name", "DOB", "Acc no", "Study Date", "Study Desc", "Modality"/*, "Images"*/};
+    static protected Class<?>[] columnTypes = {TreeTableModel.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class/*, String.class*/};
 
     public DataModel(DataNode rootnode) {
         super(rootnode);
