@@ -32,7 +32,7 @@
               <Component id="ok" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="111" max="-2" attributes="0"/>
               <Component id="cancel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="207" max="32767" attributes="0"/>
+              <EmptySpace pref="187" max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
@@ -63,7 +63,7 @@
           <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="WadoInformation.okButton.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[82, 29]"/>
+          <Dimension value="[92, 29]"/>
         </Property>
       </Properties>
       <Events>
@@ -76,7 +76,7 @@
           <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="WadoInformation.cancelButton.text" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[82, 29]"/>
+          <Dimension value="[92, 29]"/>
         </Property>
       </Properties>
       <Events>
