@@ -21,11 +21,11 @@ public class StudyListDialog extends javax.swing.JDialog {
     /**
      * Creates new form StudyListDialog
      */
-    public StudyListDialog(java.awt.Frame parent, boolean modal) {
+    public StudyListDialog(java.awt.Frame parent, boolean modal, String localPatientId) {
         super(parent, modal);
         initComponents();
         StudyDetailTableModel model = new StudyDetailTableModel();
-        model.setData(ApplicationContext.databaseRef.listAllLocalStudies());
+        model.setData(ApplicationContext.databaseRef.listLocalStudiesByPatientId(localPatientId));
         jTable1.setModel(model);
     }
 
@@ -48,7 +48,7 @@ public class StudyListDialog extends javax.swing.JDialog {
         setResizable(false);
 
         ok.setText(ApplicationContext.currentBundle.getString("WadoInformation.okButton.text")); // NOI18N
-        ok.setPreferredSize(new java.awt.Dimension(82, 29));
+        ok.setPreferredSize(new java.awt.Dimension(92, 29));
         ok.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okActionPerformed(evt);
@@ -56,7 +56,7 @@ public class StudyListDialog extends javax.swing.JDialog {
         });
 
         cancel.setText(ApplicationContext.currentBundle.getString("WadoInformation.cancelButton.text")); // NOI18N
-        cancel.setPreferredSize(new java.awt.Dimension(82, 29));
+        cancel.setPreferredSize(new java.awt.Dimension(92, 29));
         cancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelActionPerformed(evt);
@@ -85,7 +85,7 @@ public class StudyListDialog extends javax.swing.JDialog {
                 .addComponent(ok, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(111, 111, 111)
                 .addComponent(cancel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(207, Short.MAX_VALUE))
+                .addContainerGap(187, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane1)
@@ -125,47 +125,7 @@ public class StudyListDialog extends javax.swing.JDialog {
     public StudyModel getSelectedStudy() {
         return study;
     }
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(StudyListDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(StudyListDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(StudyListDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(StudyListDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                StudyListDialog dialog = new StudyListDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancel;
     private javax.swing.JScrollPane jScrollPane1;
