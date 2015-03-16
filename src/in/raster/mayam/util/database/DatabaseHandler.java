@@ -856,14 +856,15 @@ public class DatabaseHandler {
         ArrayList<PresetModel> presets = new ArrayList<PresetModel>();
         try {
             ResultSet modalityInfo = conn.createStatement().executeQuery("select pk from modality where shortname='" + modality + "'");
-            modalityInfo.next();
-            ResultSet presetInfo = conn.createStatement().executeQuery("select * from presets where modality_fk=" + modalityInfo.getInt("pk"));
-            while (presetInfo.next()) {
-                PresetModel preset = new PresetModel(presetInfo.getInt("pk"), modality, presetInfo.getString("presetname"), presetInfo.getString("windowwidth"), presetInfo.getString("windowlevel"));
-                presets.add(preset);
+            if (modalityInfo.next()) {
+                ResultSet presetInfo = conn.createStatement().executeQuery("select * from presets where modality_fk=" + modalityInfo.getInt("pk"));
+                while (presetInfo.next()) {
+                    PresetModel preset = new PresetModel(presetInfo.getInt("pk"), modality, presetInfo.getString("presetname"), presetInfo.getString("windowwidth"), presetInfo.getString("windowlevel"));
+                    presets.add(preset);
+                }
+                modalityInfo.close();
+                presetInfo.close();
             }
-            modalityInfo.close();
-            presetInfo.close();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
