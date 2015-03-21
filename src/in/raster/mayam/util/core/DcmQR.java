@@ -45,6 +45,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.Executor;
+import javax.swing.JOptionPane;
 import org.apache.commons.cli.*;
 import org.dcm4che.dict.Tags;
 import org.dcm4che2.data.*;
@@ -1337,6 +1338,26 @@ public class DcmQR {
                         String cuid = rq.getString(Tag.AffectedSOPClassUID);
                         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
                         DicomObject data = dataStream.readDataset();
+                        
+                        //buscar en BD segun SopUID para verificar si existe id local de paciente:
+                        String localPatientId = ApplicationContext.databaseRef.getLocalPatientIdBySopInstanceUid(data.getString(Tags.SOPInstanceUID));
+                        if (localPatientId == null) {
+                            boolean inputValid = false;
+                            while (!inputValid) { 
+                                localPatientId = JOptionPane.showInputDialog(ApplicationContext.mainScreenObj, "Ingrese Identificador del Paciente (numérico)", 
+                                    "Identificador de Paciente Necesario", JOptionPane.QUESTION_MESSAGE);
+                                if (localPatientId == null) { //Cancel
+                                    return;
+                                }
+                                try {
+                                    Integer.parseInt(localPatientId);
+                                    inputValid = true;
+                                } catch (Exception e) {
+                                    JOptionPane.showMessageDialog(ApplicationContext.mainScreenObj, "El identificador debe ser numérico");
+                                }
+                            }
+                        }
+                        
                         suid = data.getString(Tag.StudyInstanceUID);
                         String serUid = data.getString(Tags.SeriesInstanceUID);
                         Calendar today = Calendar.getInstance();
@@ -1354,8 +1375,8 @@ public class DcmQR {
                         DicomOutputStream dos = new DicomOutputStream(bos);
                         dos.writeFileMetaInformation(fmi);
                         dos.writeDataset(data, tsuid);
-//                        infoUpdateDelegate.updateFileDetails(file);
-                        ApplicationContext.databaseRef.writeDatasetInfo(data, false, file.getAbsolutePath(), false);
+//                      infoUpdateDelegate.updateFileDetails(file);
+                        ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, file.getAbsolutePath(), false);
                         dos.close();
                     } catch (IOException e) {
                         throw new DicomServiceException(rq, Status.ProcessingFailure, e.getMessage());
