@@ -1318,6 +1318,10 @@ public class DcmQR {
         }
     }
 
+    /**
+     * MDIAZ
+     * @return 
+     */
     private DicomService createStorageService() {
         String[] cuids = new String[storeTransferCapability.size()];
         int i = 0;
