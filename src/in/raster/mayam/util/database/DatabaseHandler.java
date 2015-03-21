@@ -199,8 +199,27 @@ public class DatabaseHandler {
                 rs.close();
                 return true;
             }
-        } catch (SQLException e) {
-        } catch (NullPointerException npe) {
+        } catch (Exception e) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, e);
+        } 
+        return false;
+    }
+
+    /**
+     * MDIAZ
+     * @param studyInstanceUID
+     * @return 
+     */
+    public boolean checkStudyRecordExists(String studyInstanceUID) {
+        try {
+            ResultSet rs = conn.createStatement().executeQuery("select count(*) from STUDY where StudyInstanceUID = '" + studyInstanceUID.trim() + "' and Visible=1");
+            rs.next();
+            if (rs.getInt(1) > 0) {
+                rs.close();
+                return true;
+            }
+        } catch (Exception e) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, e);
         }
         return false;
     }
