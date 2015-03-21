@@ -740,22 +740,28 @@ public class MainScreen extends javax.swing.JFrame {
      * MDIAZ
      */
     private void doSend() {
-        ServerListDialog configuredServer = new ServerListDialog(this, true);
-        configuredServer.setLocationRelativeTo(this);
-        configuredServer.setVisible(true);
-        if (configuredServer.getSelectedServer() != null) {
-            ServerModel ae = configuredServer.getSelectedServer();
-            StudyListDialog studyList = new StudyListDialog(this, true,null);
+        PatientListDialog patientList = new PatientListDialog(this, true);
+        patientList.setLocationRelativeTo(this);
+        patientList.setVisible(true);
+        if (patientList.getSelectedPatient() != null) {
+            StudyListDialog studyList = new StudyListDialog(this, true, patientList.getSelectedPatient().getPatientId());
             studyList.setLocationRelativeTo(this);
             studyList.setVisible(true);
             if (studyList.getSelectedStudy() != null) {
-                ArrayList<Series> allSeriesOfStudy = ApplicationContext.databaseRef.getSeriesList(studyList.getSelectedStudy().getStudyUID());
-                try {
-                    SendingDelegate sendingDelegate = new SendingDelegate();
-                    sendingDelegate.send(studyList.getSelectedStudy().getStudyUID(), allSeriesOfStudy.size(), ae);
-                } catch(Exception e) {
-                    JOptionPane.showMessageDialog(this,ApplicationContext.currentBundle.getString("Alert.studyNotSent"),
-                        ApplicationContext.currentBundle.getString("Alert.error.text"),JOptionPane.ERROR_MESSAGE);
+                ServerListDialog configuredServer = new ServerListDialog(this, true);
+                configuredServer.setLocationRelativeTo(this);
+                configuredServer.setVisible(true);
+                if (configuredServer.getSelectedServer() != null) {
+                    ServerModel ae = configuredServer.getSelectedServer();
+            
+                    ArrayList<Series> allSeriesOfStudy = ApplicationContext.databaseRef.getSeriesList(studyList.getSelectedStudy().getStudyUID());
+                    try {
+                        SendingDelegate sendingDelegate = new SendingDelegate();
+                        sendingDelegate.send(studyList.getSelectedStudy().getStudyUID(), allSeriesOfStudy.size(), ae);
+                    } catch(Exception e) {
+                        JOptionPane.showMessageDialog(this,ApplicationContext.currentBundle.getString("Alert.studyNotSent"),
+                            ApplicationContext.currentBundle.getString("Alert.error.text"),JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         }
