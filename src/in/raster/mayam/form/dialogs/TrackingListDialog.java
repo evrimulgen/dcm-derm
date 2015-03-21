@@ -53,7 +53,7 @@ public class TrackingListDialog extends javax.swing.JDialog {
         addButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(ApplicationContext.currentBundle.getString("PatientDialog.title")); // NOI18N
+        setTitle(ApplicationContext.currentBundle.getString("TrackingDialog.title")); // NOI18N
         setResizable(false);
 
         newButton.setText(ApplicationContext.currentBundle.getString("MainScreen.importHandler.text_1")); // NOI18N
