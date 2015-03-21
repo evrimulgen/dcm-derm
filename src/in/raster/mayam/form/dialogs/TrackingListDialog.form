@@ -4,7 +4,7 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-      <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="PatientDialog.title" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
+      <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="TrackingDialog.title" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
     </Property>
     <Property name="resizable" type="boolean" value="false"/>
   </Properties>
