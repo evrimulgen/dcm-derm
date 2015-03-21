@@ -56,6 +56,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import org.dcm4che.dict.Tags;
+import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.TransferSyntax;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomInputStream;
@@ -158,6 +161,11 @@ public class WadoRetriever implements Runnable {
         }
     }
 
+    /**
+     * MDIAZ
+     * @param seriesUid
+     * @param iuid 
+     */
     private void responseSuccess(String seriesUid, String iuid) {
         InputStream in = null;
         try {
@@ -168,9 +176,30 @@ public class WadoRetriever implements Runnable {
             File struturedDestination = new File(destinationPath + File.separator + today.get(Calendar.YEAR) + File.separator + today.get(Calendar.MONTH) + File.separator + today.get(Calendar.DATE) + File.separator + studyUid + File.separator + seriesUid);
             struturedDestination.mkdirs();
             File storeLocation = new File(struturedDestination, iuid);
+            DicomObject data = new DicomInputStream(storeLocation).readDicomObject();
+            
+            //buscar en BD segun SopUID para verificar si existe id local de paciente:
+            String localPatientId = ApplicationContext.databaseRef.getLocalPatientIdBySopInstanceUid(data.getString(Tags.SOPInstanceUID));
+            if (localPatientId == null) {
+                boolean inputValid = false;
+                while (!inputValid) { 
+                    localPatientId = JOptionPane.showInputDialog(ApplicationContext.mainScreenObj, "Ingrese Identificador del Paciente (numérico)", 
+                        "Identificador de Paciente Necesario", JOptionPane.QUESTION_MESSAGE);
+                    if (localPatientId == null) { //Cancel
+                        return;
+                    }
+                    try {
+                        Integer.parseInt(localPatientId);
+                        inputValid = true;
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(ApplicationContext.mainScreenObj, "El identificador debe ser numérico");
+                    }
+                }
+            }
+
             out = new FileOutputStream(storeLocation);
             copy(in, out);
-            ApplicationContext.databaseRef.writeDatasetInfo(new DicomInputStream(storeLocation).readDicomObject(), false, storeLocation.getAbsolutePath(), false);
+            ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, storeLocation.getAbsolutePath(), false);
         } catch (IOException ex) {
             Logger.getLogger(WadoRetriever.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
