@@ -160,7 +160,7 @@ public class TreeTableMouseListener extends MouseAdapter {
                     i--;
                     studyUid = (String) ((TreeTableModelAdapter) ApplicationContext.currentTreeTable.getModel()).getValueAt(i, 10);
                 }
-                if (!studyUid.equals(imagePreviewPanel.getPreviousStudyUid())) {
+                if (imagePreviewPanel != null && !studyUid.equals(imagePreviewPanel.getPreviousStudyUid())) {
                     imagePreviewPanel.resetImagePreviewPanel();
                 }
             }
@@ -354,7 +354,7 @@ public class TreeTableMouseListener extends MouseAdapter {
     }
 
     private void retrieveStudyToLocal() {
-        if (!ApplicationContext.databaseRef.checkRecordExists("study", "StudyInstanceUID", studyDetails.getStudyUID())) {
+        if (!ApplicationContext.databaseRef.checkStudyRecordExists(studyDetails.getStudyUID())) {
             ApplicationContext.mainScreenObj.setProgressText("Downloading");
             ApplicationContext.mainScreenObj.initializeProgressBar(Integer.parseInt(studyDetails.getStudyLevelInstances()));
             boolean previewsEnabled = ApplicationContext.databaseRef.isPreviewsEnabled(serverDetails.getDescription());
