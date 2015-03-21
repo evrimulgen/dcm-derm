@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.Executor;
+import javax.swing.JOptionPane;
 import org.apache.commons.cli.*;
 import org.dcm4che.dict.Tags;
 import org.dcm4che2.data.*;
@@ -1082,6 +1083,17 @@ public class DcmRcv {
         return ae.getAETitle() != null && cache.getCacheRootDir() != null;
     }
 
+    /**
+     * MDIAZ
+     * 
+     * @param as
+     * @param pcid
+     * @param rq
+     * @param dataStream
+     * @param tsuid
+     * @param rsp
+     * @throws IOException 
+     */
     void onCStoreRQ(Association as, int pcid, DicomObject rq,
             PDVInputStream dataStream, String tsuid, DicomObject rsp)
             throws IOException {
@@ -1089,6 +1101,26 @@ public class DcmRcv {
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
 
         DicomObject data = dataStream.readDataset(); //You have one shot to get the data. You can't read twice with readDataset method.
+        
+         //buscar en BD segun SopUID para verificar si existe id local de paciente:
+         String localPatientId = ApplicationContext.databaseRef.getLocalPatientIdBySopInstanceUid(data.getString(Tags.SOPInstanceUID));
+         if (localPatientId == null) {
+            boolean inputValid = false;
+            while (!inputValid) { 
+                localPatientId = JOptionPane.showInputDialog(ApplicationContext.mainScreenObj, "Ingrese Identificador del Paciente (numérico)", 
+                    "Identificador de Paciente Necesario", JOptionPane.QUESTION_MESSAGE);
+                if (localPatientId == null) { //Cancel
+                    return;
+                }
+                try {
+                    Integer.parseInt(localPatientId);
+                    inputValid = true;
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(ApplicationContext.mainScreenObj, "El identificador debe ser numérico");
+                }
+            }
+        }
+
         String suid = data.getString(Tag.StudyInstanceUID);
         String serUid = data.getString(Tag.SeriesInstanceUID);
         Calendar today = Calendar.getInstance();
@@ -1110,7 +1142,7 @@ public class DcmRcv {
                 dos.writeFileMetaInformation(fmi);
                 // dataStream.copyTo(dos);                
                 dos.writeDataset(data, tsuid);
-                ApplicationContext.databaseRef.writeDatasetInfo(data, false, file.getAbsolutePath(), false);
+                ApplicationContext.databaseRef.writeDatasetInfo(data, localPatientId, file.getAbsolutePath(), false);
             } finally {
                 CloseUtils.safeClose(dos);
             }
