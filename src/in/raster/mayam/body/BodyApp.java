@@ -58,13 +58,14 @@ public class BodyApp extends SimpleApplication {
     
     Spatial model = assetManager.loadModel(modelPath);
     model.scale(18.0f);
-    
+    model.rotate(-0.03f, 1.1f, 0.0f);
+
     AmbientLight ambient = new AmbientLight();
-    ambient.setColor(ColorRGBA.White);
+    ambient.setColor(ColorRGBA.Magenta.mult(0.6f));
     rootNode.addLight(ambient);
 
     PointLight sun1 = new PointLight();
-    sun1.setRadius(28.0f);
+    sun1.setRadius(58.0f);
     rootNode.addLight(sun1);
     
     light = new LightNode("parentLight",sun1);
@@ -115,7 +116,7 @@ public class BodyApp extends SimpleApplication {
     Sphere sphere = new Sphere(30, 30, 0.2f);
     mark = new Geometry("Mark", sphere);
     Material mark_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-    mark_mat.setColor("Color", ColorRGBA.Red);
+    mark_mat.setColor("Color", ColorRGBA.Green);
     mark.setMaterial(mark_mat);
   }
   
