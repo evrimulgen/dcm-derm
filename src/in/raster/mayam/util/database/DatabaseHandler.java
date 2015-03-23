@@ -1836,7 +1836,7 @@ public class DatabaseHandler {
     public ArrayList<PatientModel> listAllLocalPatients() {
         ArrayList<PatientModel> patients = new ArrayList<PatientModel>();
         try {
-            ResultSet patientInfo = conn.createStatement().executeQuery("select * from patient");
+            ResultSet patientInfo = conn.createStatement().executeQuery("select p.* from patient p where exists (select s.studyid from study s where p.patientid = s.patientid and s.visible=1)");
             while (patientInfo.next()) {
                 PatientModel patient = new PatientModel();
                 patient.setPatientId(patientInfo.getString("PatientId"));
