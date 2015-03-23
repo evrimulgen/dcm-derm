@@ -91,6 +91,7 @@ public class BodyJFrame extends javax.swing.JFrame  implements Observer, ListSel
         addAtPoint = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(ApplicationContext.currentBundle.getString("BodyJFrame.title")); // NOI18N
         setResizable(false);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
