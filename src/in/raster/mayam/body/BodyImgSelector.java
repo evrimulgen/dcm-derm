@@ -47,6 +47,7 @@ public class BodyImgSelector extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(ApplicationContext.currentBundle.getString("BodyImgSelector.title")); // NOI18N
 
         jScrollPane1.setViewportView(jList1);
 
