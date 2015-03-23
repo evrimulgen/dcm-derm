@@ -592,12 +592,13 @@ public class ImageToDicom {
 		{ Attribute a = new ShortStringAttribute(TagFromName.AccessionNumber); a.addValue(accessionNumber); list.put(a); }
 		{ Attribute a = new IntegerStringAttribute(TagFromName.SeriesNumber); a.addValue(seriesNumber); list.put(a); }
 		{ Attribute a = new IntegerStringAttribute(TagFromName.InstanceNumber); a.addValue(instanceNumber); list.put(a); }
-		{ Attribute a = new LongStringAttribute(TagFromName.Manufacturer); list.put(a); }
+		{ Attribute a = new LongStringAttribute(TagFromName.Manufacturer); a.addValue("Mayam Derm"); list.put(a); }
 		{ Attribute a = new CodeStringAttribute(TagFromName.PatientOrientation); list.put(a); }
 		{ Attribute a = new CodeStringAttribute(TagFromName.Laterality); list.put(a); }
 		{ Attribute a = new CodeStringAttribute(TagFromName.BurnedInAnnotation); a.addValue("YES"); list.put(a); }
 		{ Attribute a = new CodeStringAttribute(TagFromName.ImageType); a.addValue("DERIVED"); a.addValue("SECONDARY"); list.put(a); }
-		
+                { Attribute a = new CodeStringAttribute(TagFromName.LossyImageCompression); list.put(a); }
+		{ Attribute a = new CodeStringAttribute(TagFromName.ConceptNameCodeSequence); list.put(a); }
 		{
                         if (studyDate == null) {
                             studyDate = new java.util.Date();
