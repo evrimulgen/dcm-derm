@@ -94,6 +94,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
         patientName = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(ApplicationContext.currentBundle.getString("CreateTrackFrame.title")); // NOI18N
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
