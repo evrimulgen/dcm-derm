@@ -337,7 +337,7 @@ public class CreateDicomFrame extends javax.swing.JFrame {
                             studyDate.getDate(), studyDesc.getText(), 
                             seriesNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?seriesNumber.getText():null,
                             InstanceNumber.getText()!=null&&!seriesNumber.getText().trim().isEmpty()?InstanceNumber.getText():null,
-                            (String)modality.getSelectedItem(),SOPClass.SecondaryCaptureImageStorage/*Secondary Capture Image Storage*/,phyName.getText());
+                            (String)modality.getSelectedItem(), SOPClass.VisibleLightPhotographicImageStorage, phyName.getText());
                     //Modality:  XC - External-camera photography
                     this.setAlwaysOnTop(false);
                     int result = JOptionPane.showConfirmDialog(null, ApplicationContext.currentBundle.getString("CreateDicomFrame.open_file"),
