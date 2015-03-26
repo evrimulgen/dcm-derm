@@ -12,8 +12,6 @@ import javax.media.jai.TiledImage;
 import objeto.Objeto;
 import objeto.Pixel;
 import objeto.PixelComparator;
-import procesamiento.clasificacion.EvaluadorClase;
-import procesamiento.clasificacion.ObjetoReferencia;
 
 /**
  * Comando que detecta el contorno de 1 pixel exterior de los objetos de una
@@ -98,13 +96,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	 * Rango HSV del color del fondo
 	 */
 	private HSVRange rangeFondo = null;
-	
-	private EvaluadorClase evaluadorObjetoReferencia;
-//	private Objeto valor_MM_Pixel;
-	//private double aspectRadioMejor;
-	//private double circularidadMejor;
-	private double areaMejor;
-	
+
 	/**
 	 * Flag que indica se se debe tratar de separar objetos pegados
 	 */
@@ -1014,12 +1006,12 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 	
 	public void isObjSpecial(Objeto objeto){
-		if ( isBuscarObjetoReferencia() && getEvaluadorObjetoReferencia().pertenece(objeto, false)){
-			if (areaMejor < objeto.getArea()){
-				areaMejor = objeto.getArea();
-				ObjetoReferencia.setObjetoReferencia(objeto);
-			}
-		}
+//		if ( isBuscarObjetoReferencia() && getEvaluadorObjetoReferencia().pertenece(objeto, false)){
+//			if (areaMejor < objeto.getArea()){
+//				areaMejor = objeto.getArea();
+//				ObjetoReferencia.setObjetoReferencia(objeto);
+//			}
+//		}
 	}
 
 	/**
@@ -1193,16 +1185,6 @@ public class DetectarContorno extends AbstractImageCommand {
 		this.buscarObjetoReferencia = buscarObjetoReferencia;
 	}
 
-	public EvaluadorClase getEvaluadorObjetoReferencia() {
-		if (evaluadorObjetoReferencia == null){
-			evaluadorObjetoReferencia = getClasificador().getEvaluadorClaseObjetoReferencia();
-		}
-		return evaluadorObjetoReferencia;
-	}
-
-	public void setEvaluadorObjetoReferencia(EvaluadorClase evaluadorObjetoReferencia) {
-		this.evaluadorObjetoReferencia = evaluadorObjetoReferencia;
-	}
 
 }
 

@@ -3,21 +3,13 @@ package procesamiento;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
-import objeto.ClaseObjeto;
 import objeto.Objeto;
 import objeto.Pixel;
-import procesamiento.clasificacion.ClaseObjetoComparator;
-import procesamiento.clasificacion.Clasificador;
-import procesamiento.clasificacion.EvaluadorClase;
-import procesamiento.clasificacion.EvaluadorClaseComparator;
-import procesamiento.clasificacion.ObjetoReferencia;
 
 /**
  * Comando que realiza la detección de los objetos. 
@@ -39,7 +31,7 @@ public class DetectarObjetos extends AbstractImageCommand {
 	 */
 	@SuppressWarnings("static-access")
 	public DetectarObjetos(PlanarImage image, PlanarImage originalImage,
-			HSVRange hsvRange,Clasificador clasificador) throws Exception {
+			HSVRange hsvRange) throws Exception {
 		super(image);
 		this.originalImage = originalImage;
 		this.hsvRange = hsvRange;
@@ -51,8 +43,6 @@ public class DetectarObjetos extends AbstractImageCommand {
 	 * @throws Exception 
 	 */
 	protected void init() throws Exception{
-		//getClasificador().inicializarClasificacion();
-
 	}
 
 	/**
@@ -127,105 +117,6 @@ public class DetectarObjetos extends AbstractImageCommand {
 
 	}
 	
-	/**
-	 * Pinta el interior de los objetos detectados
-	 * 
-	 * @param objetos
-	 * @return
-	 */
-	public PlanarImage pintarInterior(PlanarImage image) {
-		if (getOriginalImage() != null){
-			TiledImage ti = ImageUtil.createTiledImage(image, ImageUtil.tileWidth, ImageUtil.tileHeight);
-			Set<EvaluadorClase> clases = getClasificador().getClasificacion().keySet();
-			for(EvaluadorClase c: clases){
-				List<Objeto> objetosClase = getClasificador().getClasificacion().get(c);
-				for (Objeto obj: objetosClase) {
-					if (obj.getName().equals("68_1"))
-					for (Pixel p : obj.getPuntos()) {
-						pintarPixel(ti, p.getX(), p.getY(), c.getColor());
-					}
-					
-				}
-			}
-			
-			
-			return ti;
-		}
-		return null;
-
-	}
-
-	
-	/**
-	 * Recorre la lista de objetos y los clasifica
-	 * @param objetos
-	 */
-	protected void clasificarObjetos(List<Objeto> objetos) {
-		EvaluadorClase indeterminado = getClasificador().getEvaluadorClaseIndeterminado();
-		indeterminado.setColor(Color.RED);
-		List<Objeto> objetosIndeterminados = new ArrayList<Objeto>();
-		
-		for (Objeto obj : objetos) {
-			
-			Set<EvaluadorClase> clases = getClasificador().getClasificacion().keySet();
-			List<EvaluadorClase> clasesOrdenadas = new ArrayList<EvaluadorClase>(clases);
-			Collections.sort(clasesOrdenadas, new EvaluadorClaseComparator());
-			boolean sinclasificacion = true;
-			for(EvaluadorClase c: clasesOrdenadas){
-				if (!c.getClase().isIndeterminado() && !c.getClase().isObjetoReferencia() && c.pertenece(obj,true)){
-					ClaseObjeto claseObjeto = new ClaseObjeto(c.getClase());
-					obj.addClase(claseObjeto);
-					sinclasificacion = false;
-					
-					claseObjeto.setDistanciaPromedio(c.getClase().distanciaPromedio(obj));
-					//break;
-				}
-			}
-			if (sinclasificacion){
-				objetosIndeterminados.add(obj);
-				ClaseObjeto claseObjeto = new ClaseObjeto(indeterminado.getClase());
-				obj.addClase(claseObjeto);
-			}
-			else{
-				if (obj.getClases().size() > 1){
-					asignarClaseMasCercana(obj);
-				}
-				List<Objeto> objetosClase = getClasificador().getObjetosClase(obj.getClases().get(0).getClase());
-				objetosClase.add(obj);
-
-			}
-		}
-		
-		getClasificador().getClasificacion().put(indeterminado, objetosIndeterminados);
-		
-		if (ObjetoReferencia.getReferencia() != null){
-			EvaluadorClase objetoReferenciaClase = getClasificador().getEvaluadorClaseObjetoReferencia();
-			objetoReferenciaClase.pertenece(ObjetoReferencia.getReferencia(), true);
-			List<Objeto> objetosReferencia = new ArrayList<Objeto>();
-			objetosReferencia.add(ObjetoReferencia.getReferencia());
-			ObjetoReferencia.getReferencia().addClase(objetoReferenciaClase.getClase());
-			getClasificador().getClasificacion().put(objetoReferenciaClase, objetosReferencia);
-		}
-		
-		getClasificador().setClasificacionInicial(objetos);
-	}
-	
-	/**
-	 * Si un objeto está asignado a más de una clase se busca asignarlo a la clase
-	 * cuyos valores medios de rasgos están mas cerca de los rasgos del objeto 
-	 * @param obj
-	 */
-	private void asignarClaseMasCercana(Objeto obj) {
-		List<ClaseObjeto> clases = obj.getClases();
-		if (clases != null && clases.size() > 0){
-			Collections.sort(clases, new ClaseObjetoComparator());
-			ClaseObjeto claseMasCercana = clases.get(0); 
-			clases.clear();
-			clases.add(claseMasCercana);
-			obj.setClases(clases);
-		}
-				
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -270,17 +161,4 @@ public class DetectarObjetos extends AbstractImageCommand {
 		objetos = null;
 	}
 
-	/**
-	 * Retorna información sobre la cantidad de objetos detectados
-	 */
-	public String getInfo() {
-		String info = "Objetos detectados: " + getObjetos().size();
-		Set<EvaluadorClase> clases = getClasificador().getClasificacion().keySet();
-		for(EvaluadorClase c: clases){
-			List<Objeto> objetosClase = getClasificador().getClasificacion().get(c);
-			info += "\n" + c.getClase().getNombre() + ": " + objetosClase.size();
-		}
-		return info;
-	}
-	
 }

@@ -201,7 +201,7 @@ public class SumaAngulos extends EvaluadorRasgo {
 		System.out.println(distancia);*/
 		Double angulo = c.calcularAngulo(pInicio, pMedio, pFin);
 		
-		
+		System.out.println(lado+"-"+angulo);
 	}
 
 }

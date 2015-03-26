@@ -1,25 +1,11 @@
 package javaimagesGUI;
 
 import java.awt.Color;
-import java.awt.Point;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.renderable.ParameterBlock;
-import java.util.ArrayList;
-import java.util.List;
 
-import javax.media.jai.InterpolationBilinear;
-import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
-import javax.media.jai.RasterFactory;
-import javax.media.jai.TiledImage;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
@@ -29,16 +15,15 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
 import objeto.Objeto;
-import objeto.ObjetoUtil;
 import objeto.Pixel;
 import procesamiento.Binarizar;
 import procesamiento.DetectarObjetos;
 import procesamiento.HSVRange;
 import procesamiento.ImageUtil;
-import procesamiento.ManejoDeColores;
 import procesamiento.RgbHsv;
 import procesamiento.SobelFilter;
 import JavaImages.ImageProcessing;
@@ -52,18 +37,12 @@ import JavaImages.ImageProcessing_Resize.ScaleType;
 import JavaImages.ImageProcessing_SaveImage;
 import JavaImages.ImageProcessing_TransformFormatImages;
 
-import javax.swing.JTextPane;
-
 
 public class MainForm extends javax.swing.JFrame {
 	static{
 		System.setProperty("com.sun.media.jai.disableMediaLib", "true");
 	}
 	
-	private static final int ORIENTACION_ABAJO = 90;
-	public static final int DEFAULT_IMAGE_WIDTH = 206;
-	public static final int DEFAULT_IMAGE_HEIGHT = 206;
-
 	private static final long serialVersionUID = 6600005232377093167L;
 
 	private ImageProcessing ObjProcessing;
@@ -164,23 +143,19 @@ public class MainForm extends javax.swing.JFrame {
 	private void saveImage() {
 		if (this.jLabelImage.getIcon() != null) {
 			ImageProcessing.imageFormat extension;
-			switch (this.jComboBox1.getSelectedItem().toString()) {
-			case "BMP":
+			String extSelected = this.jComboBox1.getSelectedItem().toString(); 
+			if("BMP".equals(extSelected)){
 				extension = ImageProcessing.imageFormat.bmp;
-				break;
-			case "GIF":
+			}else if("GIF".equals(extSelected)){
 				extension = ImageProcessing.imageFormat.gif;
-				break;
-			case "JPG":
+			}else if("JPG".equals(extSelected)){
 				extension = ImageProcessing.imageFormat.jpg;
-				break;
-			case "PNG":
+			}else if("PNG".equals(extSelected)){
 				extension = ImageProcessing.imageFormat.png;
-				break;
-			default:
+			}else{
 				extension = ImageProcessing.imageFormat.jpg;
-				break;
 			}
+			
 			ObjSaveImage.saveFile((BufferedImage) ObjTransformFormats
 					.iconToImage(jLabelImage.getIcon()), extension);
 		}
@@ -239,28 +214,26 @@ public class MainForm extends javax.swing.JFrame {
 	private void invertColors() {
 		this.bufferImageTemp = ObjTransformFormats
 				.iconToBufferedImage(this.jLabelImage.getIcon());
-		switch (jComboBox_Invert.getSelectedItem().toString()) {
-		case "RGB":
+		String modelColorSelected = jComboBox_Invert.getSelectedItem().toString();
+		if("RGB".equals(modelColorSelected)){
 			this.bufferImageTemp = ObjBasicFilters.invertColorsRGB(
 					this.bufferImageTemp,
 					ImageProcessing_BasicFilters.invertColorsAvailable.RGB);
-			break;
-		case "RED":
+		}else if("RED".equals(modelColorSelected)){
 			this.bufferImageTemp = ObjBasicFilters.invertColorsRGB(
 					this.bufferImageTemp,
 					ImageProcessing_BasicFilters.invertColorsAvailable.red);
-			break;
-		case "GREEN":
+		}else if("GREEN".equals(modelColorSelected)){
 			this.bufferImageTemp = ObjBasicFilters.invertColorsRGB(
 					this.bufferImageTemp,
 					ImageProcessing_BasicFilters.invertColorsAvailable.green);
-			break;
-		case "BLUE":
+			
+		}else if("BLUE".equals(modelColorSelected)){
 			this.bufferImageTemp = ObjBasicFilters.invertColorsRGB(
 					this.bufferImageTemp,
 					ImageProcessing_BasicFilters.invertColorsAvailable.blue);
-			break;
 		}
+		
 		this.jLabelImage.setIcon(ObjTransformFormats
 				.bufferedImageToImageIcon(this.bufferImageTemp));
 	}
@@ -268,23 +241,20 @@ public class MainForm extends javax.swing.JFrame {
 	private void basicFilters() {
 		this.bufferImageTemp = ObjTransformFormats
 				.iconToBufferedImage(this.jLabelImage.getIcon());
-		switch (jComboBox_BasicFilters.getSelectedItem().toString()) {
-		case "RED":
+
+		String filterSelected = jComboBox_BasicFilters.getSelectedItem().toString(); 
+		
+		if("RED".equals(filterSelected)){
 			this.bufferImageTemp = ObjBasicFilters.basicFilters(
-					this.bufferImageTemp,
-					ImageProcessing_BasicFilters.filtersAvailable.red);
-			break;
-		case "GREEN":
+					this.bufferImageTemp, ImageProcessing_BasicFilters.filtersAvailable.red);
+		}else if("GREEN".equals(filterSelected)){
 			this.bufferImageTemp = ObjBasicFilters.basicFilters(
-					this.bufferImageTemp,
-					ImageProcessing_BasicFilters.filtersAvailable.green);
-			break;
-		case "BLUE":
+					this.bufferImageTemp, ImageProcessing_BasicFilters.filtersAvailable.green);
+		}else if("BLUE".equals(filterSelected)){
 			this.bufferImageTemp = ObjBasicFilters.basicFilters(
-					this.bufferImageTemp,
-					ImageProcessing_BasicFilters.filtersAvailable.blue);
-			break;
+					this.bufferImageTemp,ImageProcessing_BasicFilters.filtersAvailable.blue);
 		}
+		
 		this.jLabelImage.setIcon(ObjTransformFormats
 				.bufferedImageToImageIcon(this.bufferImageTemp));
 	}
@@ -292,28 +262,25 @@ public class MainForm extends javax.swing.JFrame {
 	private void RGBto() {
 		this.bufferImageTemp = ObjTransformFormats
 				.iconToBufferedImage(this.jLabelImage.getIcon());
-		switch (jComboBox_RGB.getSelectedItem().toString()) {
-		case "GBR":
-			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
-					ImageProcessing_BasicFilters.RGBTransformAvailable.GBR);
-			break;
-		case "GRB":
+
+		String destSelected = jComboBox_RGB.getSelectedItem().toString(); 
+		if("GBR".equals(destSelected)){
 			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
 					ImageProcessing_BasicFilters.RGBTransformAvailable.GRB);
-			break;
-		case "BRG":
+		}else if("BRG".equals(destSelected)){
 			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
 					ImageProcessing_BasicFilters.RGBTransformAvailable.BRG);
-			break;
-		case "BGR":
+		}else if("GRB".equals(destSelected)){
+			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
+					ImageProcessing_BasicFilters.RGBTransformAvailable.GRB);
+		}else if("BGR".equals(destSelected)){
 			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
 					ImageProcessing_BasicFilters.RGBTransformAvailable.BGR);
-			break;
-		case "RBG":
+		}else if("RBG".equals(destSelected)){
 			this.bufferImageTemp = ObjBasicFilters.RGBto(this.bufferImageTemp,
 					ImageProcessing_BasicFilters.RGBTransformAvailable.RBG);
-			break;
 		}
+		
 		this.jLabelImage.setIcon(ObjTransformFormats
 				.bufferedImageToImageIcon(this.bufferImageTemp));
 	}
@@ -340,23 +307,19 @@ public class MainForm extends javax.swing.JFrame {
 
 	private ScaleType scaleTypeSelect(String scaleType) {
 		ScaleType scaleTypeSelected = ScaleType.SCALE_DEFAULT;
-		switch (scaleType) {
-		case "SCALE_AREA_AVERAGING":
+		
+		if("SCALE_AREA_AVERAGING".equals(scaleType)){
 			scaleTypeSelected = ScaleType.SCALE_AREA_AVERAGING;
-			break;
-		case "SCALE_DEFAULT":
+		}else if("SCALE_DEFAULT".equals(scaleType)){
 			scaleTypeSelected = ScaleType.SCALE_DEFAULT;
-			break;
-		case "SCALE_FAST":
+		}else if("SCALE_FAST".equals(scaleType)){
 			scaleTypeSelected = ScaleType.SCALE_FAST;
-			break;
-		case "SCALE_REPLICATE":
+		}else if("SCALE_REPLICATE".equals(scaleType)){
 			scaleTypeSelected = ScaleType.SCALE_REPLICATE;
-			break;
-		case "SCALE_SMOOTH":
+		}else if("SCALE_SMOOTH".equals(scaleType)){
 			scaleTypeSelected = ScaleType.SCALE_SMOOTH;
-			break;
 		}
+		
 		return scaleTypeSelected;
 	}
 
@@ -395,38 +358,34 @@ public class MainForm extends javax.swing.JFrame {
 	private void showHistogram() {
 		int[] histogram;
 		CreateHistogram.availableChannel histogramColor;
-		switch (this.jComboBoxHistogram.getSelectedItem().toString()) {
-		case "RED":
+		String histogramPaletteSelected = this.jComboBoxHistogram.getSelectedItem().toString();
+		if("RED".equals(histogramPaletteSelected)){
 			histogram = ObjHistogram.histogramRed(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.red;
-			break;
-		case "GREEN":
+
+		}else if("GREEN".equals(histogramPaletteSelected)){
 			histogram = ObjHistogram.histogramGreen(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.green;
-			break;
-		case "BLUE":
+		}else if("BLUE".equals(histogramPaletteSelected)){
 			histogram = ObjHistogram.histogramBlue(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.blue;
-			break;
-		case "ALPHA":
+		}else if("ALPHA".equals(histogramPaletteSelected)){
 			histogram = ObjHistogram.histogramAlpha(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.alpha;
-			break;
-		case "GRAYSCALE":
+		}else if("GRAYSCALE".equals(histogramPaletteSelected)){
 			histogram = ObjHistogram.histogramGrayscale(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.grayscale;
-			break;
-		default:
+		}else{
 			histogram = ObjHistogram.histogramGrayscale(ObjTransformFormats
 					.iconToBufferedImage(this.jLabelImage.getIcon()));
 			histogramColor = CreateHistogram.availableChannel.grayscale;
-			break;
 		}
+
 		ObjBarHistogram.createHistogramBarChart(histogram, jPanelHistogram,
 				histogramColor);
 		this.jLabel_MaxHistogram.setText("Max value "
@@ -1881,8 +1840,7 @@ public class MainForm extends javax.swing.JFrame {
 		PlanarImage output = ef.execute();
 
 		try {
-			DetectarObjetos detectar = new DetectarObjetos(output, PlanarImage.wrapRenderedImage(this.bufferImageTemp),
-					range, null);
+			DetectarObjetos detectar = new DetectarObjetos(output, PlanarImage.wrapRenderedImage(this.bufferImageTemp), range);
 			output = detectar.execute();
 			
 			Objeto mancha = detectar.getObjetos().get(0);
@@ -2213,6 +2171,5 @@ public class MainForm extends javax.swing.JFrame {
 	private JLabel lblD;
 	private JTextField textField_3;
 	private JTextField textField_4;
-	private JLabel lblAtencin;
 	private JTextPane textPane;
 }

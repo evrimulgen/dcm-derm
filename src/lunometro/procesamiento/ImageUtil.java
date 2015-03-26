@@ -94,6 +94,7 @@ public class ImageUtil {
 	 *            Dimensiones de los tiles ej: 256 x 256
 	 * @return
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static RenderedOp reformatImage(PlanarImage img, Dimension tileDim) {
 		int tileWidth = tileDim.width;
 		int tileHeight = tileDim.height;

@@ -11,14 +11,14 @@ import javax.swing.JTextArea;
 public class ImageProcessing {
 
         static private String status;
-        static private ArrayList<String> allStatus=new ArrayList<>();
+        static private ArrayList<String> allStatus=new ArrayList<String>();
         static private BufferedImage currentImage;
-        static private ArrayList<BufferedImage> allImages=new ArrayList<>();
-        static private ArrayList<String> activityLog=new ArrayList<>();
+        static private ArrayList<BufferedImage> allImages=new ArrayList<BufferedImage>();
+        static private ArrayList<String> activityLog=new ArrayList<String>();
         static private String infolastOpenedImage;
         static private BufferedImage lastOpenedImage;
-        static private ArrayList<String> allInfoOpenedImages=new ArrayList<>();
-        static private ArrayList<BufferedImage> allOpenedImages=new ArrayList<>();
+        static private ArrayList<String> allInfoOpenedImages=new ArrayList<String>();
+        static private ArrayList<BufferedImage> allOpenedImages=new ArrayList<BufferedImage>();
         static private int counterOpenedImages=-1;
         static private int counterImages=-1;
         static private JTextArea txtArea;

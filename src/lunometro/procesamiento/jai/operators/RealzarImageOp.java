@@ -15,6 +15,7 @@ import javax.media.jai.PointOpImage;
 import procesamiento.HSVRange;
 import procesamiento.RgbHsv;
 
+@SuppressWarnings("unchecked")
 public class RealzarImageOp extends PointOpImage {
 
 	public RealzarImageOp(RenderedImage source, ImageLayout layout,

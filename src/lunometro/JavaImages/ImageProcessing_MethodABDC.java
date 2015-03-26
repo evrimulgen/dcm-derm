@@ -16,6 +16,11 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 	private int indicadorC = 0;
 	private Double indicadorD = 0.0;
 	
+	private static final int MIN_H_RED = 0;
+	private static final int MAX_H_RED = 7;
+	private static final int MIN_H_MARRON = 23;
+	private static final int MAX_H_MARRON = 39;
+	private static final double SIMECTRIC_VALUE = 0.5;
 	
 	public ImageProcessing_MethodABDC() {
 	}
@@ -112,9 +117,9 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 			
 			if(p.getCol().equals(Color.WHITE)){//Blanco
 				colorCantidad[0]++;
-			}else if(hsvRange[0] > 0 && hsvRange[0] < 7){//Rojo
+			}else if(hsvRange[0] > MIN_H_RED && hsvRange[0] < MAX_H_RED){//Rojo
 				colorCantidad[1]++;
-			}else if(hsvRange[0] > 23 && hsvRange[0] < 39){//Marrón Claro
+			}else if(hsvRange[0] > MIN_H_MARRON && hsvRange[0] < MAX_H_MARRON){//Marrón Claro
 				colorCantidad[2]++;
 			}else if(p.getCol().equals(new Color(114, 35, 14))){//Marrón oscuro
 				colorCantidad[3]++;
@@ -162,9 +167,9 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 			}
 		}
 		
-		super.updateActivityLog("Calcula si un objeto es simetrico o no (A= "+ (arriba/abajo < 0.5?'1':'0')+")");
+		super.updateActivityLog("Calcula si un objeto es simetrico o no (A= "+ (arriba/abajo < SIMECTRIC_VALUE?'1':'0')+")");
 		
-		if(arriba/abajo < 0.5) return 1;
+		if(arriba/abajo < SIMECTRIC_VALUE) return 1;
 		return 0;
 	}
 	
