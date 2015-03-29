@@ -810,11 +810,6 @@ public class MainScreen extends javax.swing.JFrame {
                      */
 
                     final String sex;
-    //              String[] sValues = list.get(TagFromName.PatientSex).getOriginalStringValues();
-    //              if (sValues != null && (BodyJFrame.male.equals(sValues[0])
-    //                         || BodyJFrame.female.equals(sValues[0]))) {
-    //                     sex = sValues[0];
-    //              }
                     if (selectedStudy.getSex() != null && (BodyJFrame.male.equals(selectedStudy.getSex())
                              || BodyJFrame.female.equals(selectedStudy.getSex()))) {
                         sex = selectedStudy.getSex();
@@ -836,6 +831,7 @@ public class MainScreen extends javax.swing.JFrame {
                             BodyJFrame frame = new BodyJFrame(!exists, sex, patientId, sopInstanceUID, srcImg); //exists determina si tiene puntos previos o no 
                             BodyManager.getInstance().deleteObservers();
                             BodyManager.getInstance().addObserver(frame);
+                            frame.setLocationRelativeTo(null);
                             frame.setVisible(true);
                         }
                     });
