@@ -21,6 +21,8 @@ public class Erode extends AbstractImageCommand {
 		0, 1, 1, 1, 1, 1, 0, 
 		0, 0, 1, 1, 1, 0, 0 };
 
+	private float[] kernelMatrix3x3 = {0, 0, 1, 1, 1, 0, 0, 0, 1};
+	
 
 	public Erode(PlanarImage image) {
 		super(image);
@@ -29,15 +31,15 @@ public class Erode extends AbstractImageCommand {
 	
 	public Erode(PlanarImage image, float[] kernel) {
 		super(image);
-		this.kernelMatrix = kernel;
+		this.kernelMatrix3x3 = kernel;
 	}
 
 	public float[] getKernel() {
-		return kernelMatrix;
+		return kernelMatrix3x3;
 	}
 
 	public void setKernel(float[] kernel) {
-		this.kernelMatrix = kernel;
+		this.kernelMatrix3x3 = kernel;
 	}
 	/*
 	 * (non-Javadoc)
@@ -46,11 +48,13 @@ public class Erode extends AbstractImageCommand {
 	public PlanarImage execute() {
 		RenderingHints hints = JAI.getDefaultInstance().getRenderingHints();
 		// Create the kernel using the array.
-		KernelJAI k = new KernelJAI(7, 7, kernelMatrix);
+		//KernelJAI k = new KernelJAI(7, 7, kernelMatrix);
+		KernelJAI k3 = new KernelJAI(3, 3, kernelMatrix3x3);
+		
 		// Create a ParameterBlock with that kernel and image.
 		ParameterBlock p = new ParameterBlock();
 		p.addSource(getImage());
-		p.add(k);
+		p.add(k3);
 		return JAI.create("erode", p, hints);
 	}
 

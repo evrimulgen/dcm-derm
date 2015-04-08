@@ -22,8 +22,12 @@ import objeto.Objeto;
 import objeto.Pixel;
 import procesamiento.Binarizar;
 import procesamiento.DetectarObjetos;
+import procesamiento.Dilate;
+import procesamiento.Erode;
+import procesamiento.GrayScale;
 import procesamiento.HSVRange;
 import procesamiento.ImageUtil;
+import procesamiento.OtsuBinarize;
 import procesamiento.RgbHsv;
 import procesamiento.SobelFilter;
 import JavaImages.ImageProcessing;
@@ -36,6 +40,7 @@ import JavaImages.ImageProcessing_Resize;
 import JavaImages.ImageProcessing_Resize.ScaleType;
 import JavaImages.ImageProcessing_SaveImage;
 import JavaImages.ImageProcessing_TransformFormatImages;
+import javax.swing.SwingConstants;
 
 
 public class MainForm extends javax.swing.JFrame {
@@ -1829,15 +1834,28 @@ public class MainForm extends javax.swing.JFrame {
 	 */
 	protected void calcularABCD() {
 
-		HSVRange range = new HSVRange();
-		Color c = calcularPromedioColorPunto(new Pixel(10,10,null), 4);
-		float[] hsvRangeFondo = RgbHsv.RGBtoHSV(c.getRed(), c.getGreen(), c.getBlue());
-		range.setHMin(hsvRangeFondo[0]);
-		range.setSMin(hsvRangeFondo[1]);
-		range.setVMin(hsvRangeFondo[2]);
+//		HSVRange range = new HSVRange();
+//		Color c = calcularPromedioColorPunto(new Pixel(10,10,null), 4);
+//		float[] hsvRangeFondo = RgbHsv.RGBtoHSV(c.getRed(), c.getGreen(), c.getBlue());
+//		range.setHMin(hsvRangeFondo[0]);
+//		range.setSMin(hsvRangeFondo[1]);
+//		range.setVMin(hsvRangeFondo[2]);
 		
-		Binarizar ef = new Binarizar(PlanarImage.wrapRenderedImage(this.bufferImageTemp), null, null);
-		PlanarImage output = ef.execute();
+		GrayScale gs = new GrayScale(PlanarImage.wrapRenderedImage(this.bufferImageTemp));
+		PlanarImage output = gs.execute();
+		
+		OtsuBinarize ob = new OtsuBinarize(output);
+		output = ob.execute();
+
+//		Erode er = new Erode(output);
+//		output = er.execute();
+		
+		this.bufferImageTemp = output.getAsBufferedImage();
+		this.jLabelImage.setIcon(new ImageIcon(output.getAsBufferedImage()));
+
+		
+		/*Binarizar ef = new Binarizar(PlanarImage.wrapRenderedImage(this.bufferImageTemp), null, null);
+		output = ef.execute();
 
 		try {
 			DetectarObjetos detectar = new DetectarObjetos(output, PlanarImage.wrapRenderedImage(this.bufferImageTemp), range);
@@ -1871,7 +1889,7 @@ public class MainForm extends javax.swing.JFrame {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		
 	}
@@ -2125,6 +2143,7 @@ public class MainForm extends javax.swing.JFrame {
 	private javax.swing.JLabel jLabel5;
 	private javax.swing.JLabel jLabel6;
 	private javax.swing.JLabel jLabelImage;
+	private javax.swing.JLabel labelImage2;
 	private javax.swing.JLabel jLabel_Contrast;
 	private javax.swing.JLabel jLabel_MaxHistogram;
 	private javax.swing.JLabel jLabel_MinHistogram;
