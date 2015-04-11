@@ -78,7 +78,7 @@ public class StudyModel {
         this.patientName = patientName;
         this.accessionNo = accessionNo;
         DateFormat df1 = DateFormat.getDateInstance(DateFormat.DEFAULT, ApplicationContext.currentLocale);
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat(ApplicationContext.DATE_FORMAT);
         try {
             this.studyDate = df1.format(sdf.parse(studyDate));
         } catch (ParseException ex) {
@@ -105,7 +105,7 @@ public class StudyModel {
     }
 
     public StudyModel(Dataset dataSet) {
-        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat dateFormatter = new SimpleDateFormat(ApplicationContext.DATE_FORMAT);
         SimpleDateFormat dateParser = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm:ss");
         SimpleDateFormat timeParser = new SimpleDateFormat("hhmmss");
