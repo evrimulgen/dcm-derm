@@ -16,7 +16,11 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -66,6 +70,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
         this.patientName.setText(ApplicationContext.databaseRef.getPatientNameByLocalId(localPatientId));
         this.localPatientId = localPatientId;
         this.trackingModel = trackingModel;
+        autoOrderState();
     }    
 
     /**
@@ -92,6 +97,9 @@ public class CreateTrackFrame extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         patientName = new javax.swing.JTextField();
+        addAllButton = new javax.swing.JButton();
+        clearButton = new javax.swing.JButton();
+        autoOrderButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(ApplicationContext.currentBundle.getString("CreateTrackFrame.title")); // NOI18N
@@ -134,6 +142,28 @@ public class CreateTrackFrame extends javax.swing.JFrame {
 
         patientName.setEnabled(false);
 
+        addAllButton.setText(">>");
+        addAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addAllButtonActionPerformed(evt);
+            }
+        });
+
+        clearButton.setText("<<");
+        clearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearButtonActionPerformed(evt);
+            }
+        });
+
+        autoOrderButton.setText(ApplicationContext.currentBundle.getString("autoOrderTitle")); // NOI18N
+        autoOrderButton.setPreferredSize(new java.awt.Dimension(92, 29));
+        autoOrderButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autoOrderButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -147,15 +177,20 @@ public class CreateTrackFrame extends javax.swing.JFrame {
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2)
                                     .addComponent(jLabel1))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(description, javax.swing.GroupLayout.PREFERRED_SIZE, 569, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(dateCreation, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3)
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 34, Short.MAX_VALUE)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(addAllButton)
+                                            .addComponent(clearButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(jLabel3))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel4)
@@ -165,8 +200,10 @@ public class CreateTrackFrame extends javax.swing.JFrame {
                                         .addComponent(patientName, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE))))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(autoOrderButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
                         .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(34, 34, 34)
+                        .addGap(18, 18, 18)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(11, 11, 11)))
                 .addGap(16, 16, 16))
@@ -188,14 +225,24 @@ public class CreateTrackFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(122, 122, 122)
+                        .addComponent(addAllButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(clearButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(createButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(autoOrderButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -263,9 +310,64 @@ public class CreateTrackFrame extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("Tracking.changes.saved"));
     }//GEN-LAST:event_createButtonActionPerformed
 
+    private void addAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAllButtonActionPerformed
+        for (int i=0; i< patientStudies.getModel().getSize(); i++) {
+            StudyModel study = (StudyModel) patientStudies.getModel().getElementAt(i);
+            ((DefaultListModel)patientTrackList.getModel()).addElement(study);
+        }
+        ((DefaultListModel)patientStudies.getModel()).clear();
+        autoOrderState();
+    }//GEN-LAST:event_addAllButtonActionPerformed
+
+    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
+        for (int i=0; i< patientTrackList.getModel().getSize(); i++) {
+            StudyModel study = (StudyModel) patientTrackList.getModel().getElementAt(i);
+            ((DefaultListModel)patientStudies.getModel()).addElement(study);
+        }
+        ((DefaultListModel)patientTrackList.getModel()).clear();
+        autoOrderState();
+    }//GEN-LAST:event_clearButtonActionPerformed
+
+    private void autoOrderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoOrderButtonActionPerformed
+       List<StudyModel> list = new ArrayList<StudyModel>();
+       for (int i=0; i< patientTrackList.getModel().getSize(); i++) {
+           StudyModel study = (StudyModel) patientTrackList.getModel().getElementAt(i);
+           list.add(study);
+       }
+       if (!list.isEmpty()) {
+           Collections.sort(list, new Comparator<Object>() {
+               @Override
+               public int compare(Object o1, Object o2) {
+                   try {
+                       SimpleDateFormat sdf = new SimpleDateFormat(ApplicationContext.DATE_FORMAT);
+                       Date d1 = sdf.parse(((StudyModel)o1).getStudyDate());
+                       Date d2 = sdf.parse(((StudyModel)o2).getStudyDate());
+                       return  d1.compareTo(d2);
+                   } catch (ParseException ex) {
+                       return 0;
+                   }
+               }
+           });
+           ((DefaultListModel)patientTrackList.getModel()).clear();
+           for (StudyModel m : list) {
+               ((DefaultListModel)patientTrackList.getModel()).addElement(m);
+           }
+       }
+    }//GEN-LAST:event_autoOrderButtonActionPerformed
+
+    private void autoOrderState() {
+        if (patientTrackList.getModel().getSize() > 0) {
+            this.autoOrderButton.setEnabled(true);
+        } else {
+            this.autoOrderButton.setEnabled(false);
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addAllButton;
+    private javax.swing.JButton autoOrderButton;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JButton clearButton;
     private javax.swing.JButton createButton;
     private com.toedter.calendar.JDateChooser dateCreation;
     private javax.swing.JTextField description;
@@ -283,6 +385,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
     private String localPatientId;
     private TrackingModel trackingModel;
+ 
     
     private class ListTransferHandler extends TransferHandler {
         private int selectedIndex = -1;
@@ -363,6 +466,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
 
             if (action == TransferHandler.MOVE && selectedIndex != -1 && !reorder) {
                 listModel.remove(selectedIndex);
+                autoOrderState();
             }
             selectedIndex = -1;
             reorder=false;
