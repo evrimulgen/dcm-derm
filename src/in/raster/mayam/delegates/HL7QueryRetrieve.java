@@ -332,7 +332,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
     private void setSpinnerDateModel() {
         SpinnerDateModel spm3 = new SpinnerDateModel();
         birthDateSpinner.setModel(spm3);
-        birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "dd/MM/yyyy"));
+        birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, ApplicationContext.DATE_FORMAT));
     }
     
     private void queryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryButtonActionPerformed
@@ -366,7 +366,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
             qs.setSubprotocol(sm.getSubprotocol());
             qs.find(queryParam);
             Vector studyList = new Vector();
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat sdf = new SimpleDateFormat(ApplicationContext.DATE_FORMAT);
             
             for (int pos = 0; pos < qs.getDatasetVector().size(); pos++) {
                 try {
