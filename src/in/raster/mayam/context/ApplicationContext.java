@@ -114,7 +114,8 @@ public class ApplicationContext {
     public static JTabbedPane tabbedPane;
     public static Buffer buffer = null;
     static ReceiveDelegate rcvDelegate;
-
+    public static String DATE_FORMAT="dd/MM/yyyy";
+    
     public static String getAppDirectory() {
         return Platform.getAppDirectory(applicationName).getAbsolutePath();
     }
