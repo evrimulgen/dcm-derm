@@ -89,7 +89,7 @@ public class DatabaseHandler {
     //Datasouce declaration
     private EmbeddedSimpleDataSource ds;
     //Other variables
-    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"), timeFormat = new SimpleDateFormat("kk:mm:ss");
+    DateFormat dateFormat = new SimpleDateFormat(ApplicationContext.DATE_FORMAT), timeFormat = new SimpleDateFormat("kk:mm:ss");
     ExecutorService executor = null;
 
     public static DatabaseHandler getInstance() {
