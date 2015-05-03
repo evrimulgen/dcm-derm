@@ -82,10 +82,12 @@ public class MainScreen extends javax.swing.JFrame {
     ArrayList<String> serverLabels = new ArrayList<String>();
     ArrayList<StudySeriesMatch> studySeriesMatchs;
     JPopupMenu preferencesPopup;
+    JMenu trackingMenu; //MDIAZ
     JMenuItem preferencesItem, resetItem, importItem;
     JMenuItem sendStudyItem; //MDIAZ
     JMenuItem localizationItem; //MDIAZ
     JMenuItem trackingItem; //MDIAZ
+    JMenuItem trackingViewItem; //MDIAZ
     //Listeners
     QueryButtonListener queryButtonListener = null;
     ServerTabChangeListener serverTabChangeListener = null;
@@ -338,7 +340,7 @@ public class MainScreen extends javax.swing.JFrame {
             Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     private void setSystemTheme() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -713,6 +715,11 @@ public class MainScreen extends javax.swing.JFrame {
         });
         preferencesPopup.add(localizationItem);
         
+        //submenu de seguimiento
+        trackingMenu = new JMenu(ApplicationContext.currentBundle.getString("TrackingMenu.title"));
+        trackingMenu.setFont(textFont);
+        trackingMenu.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        
         //agrego opcion para registro de seguimiento
         trackingItem = new JMenuItem(ApplicationContext.currentBundle.getString("TrackingRegister.title"));
         trackingItem.setFont(textFont);
@@ -722,8 +729,23 @@ public class MainScreen extends javax.swing.JFrame {
                 doTrackingRegister();
             }
         });
-        preferencesPopup.add(trackingItem);
         
+        trackingMenu.add(trackingItem);
+        
+        //agrego opcion para ver seguimiento (E)
+        trackingViewItem = new JMenuItem(ApplicationContext.currentBundle.getString("TrackingView.title"));
+        trackingViewItem.setFont(textFont);
+        trackingViewItem.addActionListener(new ActionListener() {
+             @Override
+            public void actionPerformed(ActionEvent e) {
+                doTrackingView();
+            }
+        });
+        
+        trackingMenu.add(trackingViewItem);
+        
+        preferencesPopup.add(trackingMenu);
+                
         // agrego opcion para envio de estudio a PACS
         sendStudyItem = new JMenuItem(ApplicationContext.currentBundle.getString("MainScreen.sendstudy.text"));
         sendStudyItem.setFont(textFont);
@@ -843,6 +865,13 @@ public class MainScreen extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * MDIAZ
+     */
+    
+    private void doTrackingView() {
+        
+    }
     /**
      * MDIAZ
      */
