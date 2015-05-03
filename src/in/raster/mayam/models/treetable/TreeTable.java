@@ -73,8 +73,8 @@ public class TreeTable extends JTable {
         setDefaultEditor(TreeTableModel.class, new TreeTableCellEditor(tree, this));
         getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         getTableHeader().setFont(new Font("Lucida Grande", Font.BOLD, 14));
-        getTableHeader().setForeground(new Color(255, 138, 0));
-        getTableHeader().setBackground(new Color(0, 0, 0));
+//        getTableHeader().setForeground(new Color(255, 138, 0));
+//        getTableHeader().setBackground(new Color(0, 0, 0));
         setShowGrid(false);
 //        setShowGrid(true);
 //        setShowVerticalLines(true);
