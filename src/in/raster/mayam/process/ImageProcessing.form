@@ -459,6 +459,9 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="ImageProcessing.saveInDicom" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="ImageProcessing.saveInDicom.tooltip" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
+        </Property>
       </Properties>
     </Component>
   </SubComponents>
