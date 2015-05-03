@@ -60,8 +60,8 @@ public class IconRenderer extends DefaultTableCellRenderer {
     ImageIcon localIcon = new ImageIcon(getClass().getResource("/in/raster/mayam/form/images/local.png"));
     ImageIcon downloadingIcon = new ImageIcon(getClass().getResource("/in/raster/mayam/form/images/downloading.png"));
     private TreeTable treeTable;
-    private Color selectedColor = new Color(171, 20, 20);
-    private Color alternateColor = new Color(237, 243, 254);
+//    private Color selectedColor = new Color(171, 20, 20);
+//    private Color alternateColor = new Color(237, 243, 254);
 
     public IconRenderer(TreeTable treeTable) {
         this.treeTable = treeTable;
@@ -122,15 +122,16 @@ public class IconRenderer extends DefaultTableCellRenderer {
                     comp.setText(ApplicationContext.currentBundle.getString("MainScreen.imagesColumn.text"));
                     break;
             }
-            comp.setForeground(selectedColor);
-        } else if (isSelected) {
-            if (ApplicationContext.isLocal && row == 0) {
-                comp.setForeground(Color.BLACK);
-                comp.setBackground(alternateColor);
-            }
-        } else {
-            comp.setForeground(Color.BLACK);
-        }
+//            comp.setForeground(selectedColor);
+        } 
+//          else if (isSelected) {
+//            if (ApplicationContext.isLocal && row == 0) {
+//                comp.setForeground(Color.BLACK);
+//                comp.setBackground(alternateColor);
+//            }
+//        } else {
+//            comp.setForeground(Color.BLACK);
+//        }
         return comp;
     }
 }
