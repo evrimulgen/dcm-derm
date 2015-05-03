@@ -186,7 +186,7 @@ public class DatabaseHandler {
             statement.executeUpdate("create table patient_sopuid (patientId varchar(255) NOT NULL, sopuid varchar(255) NOT NULL)"); //MDIAZ - relaciona un id local de paciente con un SOP Instance UID
             statement.executeUpdate("create table tracking (trackId integer primary key GENERATED ALWAYS AS IDENTITY, description varchar(255), createDate varchar(30),patientId varchar(255), foreign key(patientId) references Patient(patientId))"); //MDIAZ
             statement.executeUpdate("create table tracking_study(trackId integer, foreign key(trackId) references tracking(trackId), studyUID varchar(255), orderNumber integer)"); //MDIAZ
-            statement.executeUpdate("create table study_results(sr_id integer primary key GENERATED ALWAYS AS IDENTITY, patientId varchar(255), foreign key(patientId) references patient(patientId), studyIUID varchar(255), foreign key(studyIUID) references study(StudyInstanceUID), valueA varchar(10), valueB varchar(10), valueC varchar(10), valueD varchar(10))"); //MDIAZ
+            statement.executeUpdate("create table study_results(sr_id integer primary key GENERATED ALWAYS AS IDENTITY, patientId varchar(255), foreign key(patientId) references patient(patientId), studyIUID varchar(255), foreign key(studyIUID) references study(StudyInstanceUID), valueA varchar(10), valueB varchar(10), valueC varchar(10), valueD varchar(10), TDS varchar(10))"); //MDIAZ
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1935,8 +1935,8 @@ public class DatabaseHandler {
     public void insertResult(ResultModel result) {
         try {
             conn.createStatement().
-                executeUpdate("insert into study_results (patientId, studyIUID, valueA, valueB, valueC, valueD) values('" + result.getPatientId()+ "','" + result.getStudyIUID() + "','" + result.getValueA() 
-                    + "','" + result.getValueB() + "','" + result.getValueC() + "','" + result.getValueD()  + "')");
+                executeUpdate("insert into study_results (patientId, studyIUID, valueA, valueB, valueC, valueD, TDS) values('" + result.getPatientId()+ "','" + result.getStudyIUID() + "','" + result.getValueA() 
+                    + "','" + result.getValueB() + "','" + result.getValueC() + "','" + result.getValueD() + "','"+ result.getTDS() + "')");
             conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -1969,7 +1969,7 @@ public class DatabaseHandler {
     public void updateResult(ResultModel result) {
         try {
             conn.createStatement().
-                executeUpdate("update study_results set valueA='"+result.getValueA()+"',valueB='"+result.getValueB()+"',valueC='"+ result.getValueC()+"',valueD='"+result.getValueD()+"' where patientId='"+result.getPatientId()+"' and studyIUID='"+result.getStudyIUID()+"'");
+                executeUpdate("update study_results set valueA='"+result.getValueA()+"',valueB='"+result.getValueB()+"',valueC='"+ result.getValueC()+"',valueD='"+result.getValueD()+"', TDS='"+result.getTDS()+"' where patientId='"+result.getPatientId()+"' and studyIUID='"+result.getStudyIUID()+"'");
             conn.commit();
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
