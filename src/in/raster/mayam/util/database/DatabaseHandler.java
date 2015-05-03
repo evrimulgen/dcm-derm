@@ -186,6 +186,7 @@ public class DatabaseHandler {
             statement.executeUpdate("create table patient_sopuid (patientId varchar(255) NOT NULL, sopuid varchar(255) NOT NULL)"); //MDIAZ - relaciona un id local de paciente con un SOP Instance UID
             statement.executeUpdate("create table tracking (trackId integer primary key GENERATED ALWAYS AS IDENTITY, description varchar(255), createDate varchar(30),patientId varchar(255), foreign key(patientId) references Patient(patientId))"); //MDIAZ
             statement.executeUpdate("create table tracking_study(trackId integer, foreign key(trackId) references tracking(trackId), studyUID varchar(255), orderNumber integer)"); //MDIAZ
+            statement.executeUpdate("create table study_results(sr_id integer primary key GENERATED ALWAYS AS IDENTITY, patientId varchar(255), foreign key(patientId) references patient(patientId), studyIUID varchar(255), foreign key(studyIUID) references study(StudyInstanceUID), valueA varchar(10), valueB varchar(10), valueC varchar(10), valueD varchar(10))"); //MDIAZ
         } catch (SQLException ex) {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1899,7 +1900,11 @@ public class DatabaseHandler {
         return tracks;
     }
     
-    
+    /**
+     * 
+     * @param trackId
+     * @return 
+     */
     public ArrayList<StudyModel> listStudiesByTrackId(int trackId) {
         ArrayList<StudyModel> studies = new ArrayList<StudyModel>();
         try {
@@ -1921,6 +1926,54 @@ public class DatabaseHandler {
             Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
         return studies;
+    }
+
+    /**
+     * 
+     * @param result 
+     */
+    public void insertResult(ResultModel result) {
+        try {
+            conn.createStatement().
+                executeUpdate("insert into study_results (patientId, studyIUID, valueA, valueB, valueC, valueD) values('" + result.getPatientId()+ "','" + result.getStudyIUID() + "','" + result.getValueA() 
+                    + "','" + result.getValueB() + "','" + result.getValueC() + "','" + result.getValueD()  + "')");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * 
+     * @param result
+     * @return 
+     */
+    public boolean checkResultExists(ResultModel result) {
+         try {
+            ResultSet rs = conn.createStatement().executeQuery("select count(*) from STUDY_RESULTS where StudyIUID = '" + result.getStudyIUID() + "' and patientId='" + result.getPatientId() + "'");
+            rs.next();
+            if (rs.getInt(1) > 0) {
+                rs.close();
+                return true;
+            }
+        } catch (Exception e) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+
+    /**
+     * 
+     * @param result 
+     */
+    public void updateResult(ResultModel result) {
+        try {
+            conn.createStatement().
+                executeUpdate("update study_results set valueA='"+result.getValueA()+"',valueB='"+result.getValueB()+"',valueC='"+ result.getValueC()+"',valueD='"+result.getValueD()+"' where patientId='"+result.getPatientId()+"' and studyIUID='"+result.getStudyIUID()+"'");
+            conn.commit();
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
 }
