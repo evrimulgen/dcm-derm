@@ -296,6 +296,7 @@ public class ImageProcessing extends javax.swing.JDialog {
         });
 
         saveInDicom.setText(ApplicationContext.currentBundle.getString("ImageProcessing.saveInDicom")); // NOI18N
+        saveInDicom.setToolTipText(ApplicationContext.currentBundle.getString("ImageProcessing.saveInDicom.tooltip")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
