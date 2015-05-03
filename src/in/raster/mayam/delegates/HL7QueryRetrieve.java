@@ -177,7 +177,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(8, Short.MAX_VALUE)
                 .add(jPanel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -238,16 +238,12 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
         studyListTable.getTableHeader().setBackground(new Color(0,0,0));
         jScrollPane2.setViewportView(studyListTable);
 
-        headerLabel.setBackground(new java.awt.Color(0, 0, 0));
         headerLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
-        headerLabel.setForeground(new java.awt.Color(255, 138, 0));
         headerLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         headerLabel.setText(ApplicationContext.currentBundle.getString("Preferences.emrServersPanel.text")); // NOI18N
         headerLabel.setOpaque(true);
 
-        queryFilterLabel.setBackground(new java.awt.Color(0, 0, 0));
         queryFilterLabel.setFont(new java.awt.Font("Lucida Grande", 1, 14)); // NOI18N
-        queryFilterLabel.setForeground(new java.awt.Color(255, 138, 0));
         queryFilterLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         queryFilterLabel.setText(ApplicationContext.currentBundle.getString("HL7QueryRetrieve.queryFilterLabel.text")); // NOI18N
         queryFilterLabel.setOpaque(true);
@@ -286,7 +282,7 @@ public class HL7QueryRetrieve extends javax.swing.JFrame {
                         .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(serverlistScroll, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 253, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
