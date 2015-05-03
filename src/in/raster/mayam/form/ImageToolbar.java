@@ -39,6 +39,7 @@
  * ***** END LICENSE BLOCK ***** */
 package in.raster.mayam.form;
 
+import in.raster.mayam.process.ImageProcessing;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.delegates.Buffer;
 import in.raster.mayam.delegates.CineTimer;
@@ -48,12 +49,14 @@ import in.raster.mayam.dicomtags.DicomTagsReader;
 import in.raster.mayam.form.dialogs.ExportDialog;
 import in.raster.mayam.form.display.Display;
 import in.raster.mayam.models.PresetModel;
+import in.raster.mayam.models.StudyAnnotation;
 import in.raster.mayam.param.TextOverlayParam;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Timer;
@@ -79,6 +82,7 @@ public class ImageToolbar extends javax.swing.JPanel {
      */
     public ImageToolbar() {
         initComponents();
+        this.synchronizeButton.setVisible(false);
     }
 
     public ImageToolbar(ImageView imgView) {
@@ -87,6 +91,7 @@ public class ImageToolbar extends javax.swing.JPanel {
         layoutButton.setArrowPopupMenu(jPopupMenu1);
         layoutPopupDesign = new LayoutPopupDesign(jPopupMenu1);
         textOverlayContext();
+        this.synchronizeButton.setVisible(false);
     }
 
     public void addKeyEventDispatcher() {
@@ -837,7 +842,8 @@ public class ImageToolbar extends javax.swing.JPanel {
     }//GEN-LAST:event_stackButtonActionPerformed
 
     private void scoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scoutButtonActionPerformed
-        doScout();
+        //doScout();
+        doAnalyze();
     }//GEN-LAST:event_scoutButtonActionPerformed
 
     private void synchronizeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_synchronizeButtonActionPerformed
@@ -1361,5 +1367,12 @@ public class ImageToolbar extends javax.swing.JPanel {
             exportButton.setEnabled(true);
             synchronizeButton.setEnabled(true);
         }
+    }
+
+    private void doAnalyze() {
+        BufferedImage bi = ApplicationContext.layeredCanvas.imgpanel.getCurrentbufferedimage();
+        ImageProcessing ip = new ImageProcessing(bi);
+//        ip.setExtendedState(Frame.MAXIMIZED_BOTH);
+        ip.setVisible(true);
     }
 }
