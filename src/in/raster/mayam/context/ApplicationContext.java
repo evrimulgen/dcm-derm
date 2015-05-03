@@ -91,7 +91,6 @@ public class ApplicationContext {
     public static MainScreen mainScreenObj = null;
     public static Locale currentLocale = null;
     public static ResourceBundle currentBundle = null;
-    public static DatabaseHandler databaseRef = DatabaseHandler.getInstance();
     public static CommunicationDelegate communicationDelegate = new CommunicationDelegate();
     public static String applicationName = "MayamDerm";
     public static String[] listenerDetails;
@@ -115,6 +114,7 @@ public class ApplicationContext {
     public static Buffer buffer = null;
     static ReceiveDelegate rcvDelegate;
     public static String DATE_FORMAT="dd/MM/yyyy";
+    public static DatabaseHandler databaseRef = DatabaseHandler.getInstance();
     
     public static String getAppDirectory() {
         return Platform.getAppDirectory(applicationName).getAbsolutePath();
