@@ -1259,8 +1259,8 @@ public class SettingsForm extends javax.swing.JFrame {
         serverListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         serverListTable.getTableHeader().setFont(ApplicationContext.labelFont);
         serverListTable.setRowHeight(25);
-        serverListTable.getTableHeader().setForeground(new Color(255, 138, 0));
-        serverListTable.getTableHeader().setBackground(new Color(0, 0, 0));
+//        serverListTable.getTableHeader().setForeground(new Color(255, 138, 0));
+//        serverListTable.getTableHeader().setBackground(new Color(0, 0, 0));
         serverListTable.getColumnModel().getColumn(5).setCellRenderer(new CheckBoxRenderer());
 
         for (int i = 0; i < serverListTable.getColumnCount() - 2; i++) {
@@ -1277,8 +1277,8 @@ public class SettingsForm extends javax.swing.JFrame {
         emrServerListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         emrServerListTable.getTableHeader().setFont(ApplicationContext.labelFont);
         emrServerListTable.setRowHeight(25);
-        emrServerListTable.getTableHeader().setForeground(new Color(255, 138, 0));
-        emrServerListTable.getTableHeader().setBackground(new Color(0, 0, 0));
+//        emrServerListTable.getTableHeader().setForeground(new Color(255, 138, 0));
+//        emrServerListTable.getTableHeader().setBackground(new Color(0, 0, 0));
         for (int i = 0; i < emrServerListTable.getColumnCount() - 2; i++) {
             TableColumn tc = emrServerListTable.getColumnModel().getColumn(i);
             tc.setCellEditor(new ServerTableCellEditor(new JTextField()));
@@ -1290,15 +1290,15 @@ public class SettingsForm extends javax.swing.JFrame {
         buttonListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         buttonListTable.getTableHeader().setFont(ApplicationContext.labelFont);
         buttonListTable.setRowHeight(25);
-        buttonListTable.getTableHeader().setForeground(new Color(255, 138, 0));
-        buttonListTable.getTableHeader().setBackground(new Color(0, 0, 0));
+//        buttonListTable.getTableHeader().setForeground(new Color(255, 138, 0));
+//        buttonListTable.getTableHeader().setBackground(new Color(0, 0, 0));
 
         presetListTable.setDefaultRenderer(Object.class, new CellRenderer());
         presetListTable.getTableHeader().setPreferredSize(new Dimension(this.getWidth(), 25));
         presetListTable.getTableHeader().setFont(ApplicationContext.labelFont);
         presetListTable.setRowHeight(25);
-        presetListTable.getTableHeader().setForeground(new Color(255, 138, 0));
-        presetListTable.getTableHeader().setBackground(new Color(0, 0, 0));
+//        presetListTable.getTableHeader().setForeground(new Color(255, 138, 0));
+//        presetListTable.getTableHeader().setBackground(new Color(0, 0, 0));
 
         for (int i = 0; i < presetListTable.getColumnCount(); i++) {
             TableColumn tc = presetListTable.getColumnModel().getColumn(i);
