@@ -116,7 +116,7 @@ public class Series {
         this.instanceUID = instanceUid;
         this.seriesRelatedInstance = noOfInstances;
         try {
-            this.seriesDate = DateFormat.getDateInstance(DateFormat.DEFAULT, ApplicationContext.currentLocale).format(new SimpleDateFormat("dd/MM/yyyy").parse(seriesDate));
+            this.seriesDate = DateFormat.getDateInstance(DateFormat.DEFAULT, ApplicationContext.currentLocale).format(new SimpleDateFormat(ApplicationContext.DATE_FORMAT).parse(seriesDate));
         } catch (ParseException ex) {
             this.seriesDate = seriesDate;
         }
