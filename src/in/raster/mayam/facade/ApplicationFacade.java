@@ -61,6 +61,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 
 /**
  *
@@ -183,7 +184,7 @@ public class ApplicationFacade {
             uIDefaults.put("OptionPane.buttonFont", ApplicationContext.labelFont);
             uIDefaults.put("ToolTip.font", ApplicationContext.labelFont);
         } catch (UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -191,21 +192,21 @@ public class ApplicationFacade {
         try {
             UIManager.setLookAndFeel(new MotifLookAndFeel());
         } catch (UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     private static void setSystemTheme() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
