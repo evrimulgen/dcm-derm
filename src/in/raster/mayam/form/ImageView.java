@@ -68,7 +68,8 @@ import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 public class ImageView extends javax.swing.JFrame {
 
     public HashMap<String, StudyAnnotation> studyAnnotaions = null;
-
+    private String[] patientInfo = null;
+    
     /**
      * Creates new form ImageView
      */
@@ -294,5 +295,13 @@ public class ImageView extends javax.swing.JFrame {
 
     public StudyAnnotation getStudyAnnotaion(String studyUid) {
         return studyAnnotaions.get(studyUid);
+    }
+    
+    public void setPatientInfo(String[] patientInfo) {
+        this.patientInfo = patientInfo;
+    }
+    
+    public String[] getPatientInfo() {
+        return patientInfo;
     }
 }
