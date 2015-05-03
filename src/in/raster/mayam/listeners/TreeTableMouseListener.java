@@ -122,6 +122,7 @@ public class TreeTableMouseListener extends MouseAdapter {
                             ApplicationContext.setAllSeriesIdentification(studyDetails.getStudyUID());
                             try {
                                 ApplicationContext.imgView.getImageToolbar().enableMultiSeriesTools();
+                                ApplicationContext.imgView.setPatientInfo(patientInfo); //agregado tesis
                             } catch (NullPointerException ex) {
                                 //ignore : null pointer exception occurs if the study is video and it was played using the default media player.
                             }
@@ -169,7 +170,7 @@ public class TreeTableMouseListener extends MouseAdapter {
     }
 
     public String[] constructPatientInfo(int row) {
-        String labelInfo[] = new String[5];
+        String labelInfo[] = new String[6];
         pos = 0;
         size = 0;
         labelInfo[0] = studyDetails.getPatientName();
@@ -177,6 +178,7 @@ public class TreeTableMouseListener extends MouseAdapter {
         labelInfo[2] = studyDetails.getStudyDescription();
         labelInfo[3] = ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(row, 6) + " " + ((StudyModel) ((TreeTableModelAdapter) treeTable.getModel()).getValueAt(row, 11)).getStudyTime();
         labelInfo[4] = studyDetails.getNumberOfSeries() + " Series";
+        labelInfo[5] = studyDetails.getStudyUID();
         return labelInfo;
     }
 
