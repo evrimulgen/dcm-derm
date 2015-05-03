@@ -4,6 +4,12 @@
  */
 package in.raster.mayam.process;
 
+import com.pixelmed.dicom.Attribute;
+import com.pixelmed.dicom.AttributeList;
+import com.pixelmed.dicom.AttributeTag;
+import com.pixelmed.dicom.DecimalStringAttribute;
+import com.pixelmed.dicom.DicomException;
+import com.pixelmed.dicom.LongStringAttribute;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.models.ResultModel;
 import java.awt.Dimension;
@@ -14,6 +20,9 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -76,6 +85,7 @@ public class ImageProcessing extends javax.swing.JDialog {
         analyzeButton = new javax.swing.JButton();
         undoButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
+        saveInDicom = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(ApplicationContext.currentBundle.getString("ImageProcessing.window.title")); // NOI18N
@@ -276,11 +286,16 @@ public class ImageProcessing extends javax.swing.JDialog {
         });
 
         saveButton.setText("Guardar");
+        saveButton.setMaximumSize(new java.awt.Dimension(78, 27));
+        saveButton.setMinimumSize(new java.awt.Dimension(78, 27));
+        saveButton.setPreferredSize(new java.awt.Dimension(78, 27));
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveButtonActionPerformed(evt);
             }
         });
+
+        saveInDicom.setText(ApplicationContext.currentBundle.getString("ImageProcessing.saveInDicom")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -299,8 +314,10 @@ public class ImageProcessing extends javax.swing.JDialog {
                         .addComponent(undoButton, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(saveButton)))
+                        .addGap(24, 24, 24)
+                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(saveInDicom)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -312,7 +329,8 @@ public class ImageProcessing extends javax.swing.JDialog {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(undoButton)
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(saveButton)))
+                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(saveInDicom)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -380,15 +398,19 @@ public class ImageProcessing extends javax.swing.JDialog {
         result.setValueB("1.5");
         result.setValueC("0.5");
         result.setValueD("0.1");
+        result.setTDS("2.5");
         if (ApplicationContext.databaseRef.checkResultExists(result)) {
-           int r = JOptionPane.showConfirmDialog(this, ApplicationContext.currentBundle.getString("ImageProcessing.result.overwrite"),
-                   ApplicationContext.currentBundle.getString("ImageProcessing.result.warning"), JOptionPane.OK_CANCEL_OPTION);
-           if (JOptionPane.CANCEL_OPTION == r) {
-               return;
-           }
-           ApplicationContext.databaseRef.updateResult(result);
+            int r = JOptionPane.showConfirmDialog(this, ApplicationContext.currentBundle.getString("ImageProcessing.result.overwrite"),
+                    ApplicationContext.currentBundle.getString("ImageProcessing.result.warning"), JOptionPane.OK_CANCEL_OPTION);
+            if (JOptionPane.CANCEL_OPTION == r) {
+                return;
+            }
+            ApplicationContext.databaseRef.updateResult(result);
         } else {
             ApplicationContext.databaseRef.insertResult(result);
+        }
+        if (saveInDicom.isSelected()) {
+            saveInDicom(result);
         }
         JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("ImageProcessing.result.saved"));
     }//GEN-LAST:event_saveButtonActionPerformed
@@ -420,10 +442,63 @@ public class ImageProcessing extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel patienNameLabel;
     private javax.swing.JButton saveButton;
+    private javax.swing.JCheckBox saveInDicom;
     private javax.swing.JLabel studyDateLabel;
     private javax.swing.JLabel studyDescLabel;
     private javax.swing.JButton undoButton;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Guarda resultados de ABCD en el archivo DICOM
+     * @param result 
+     */
+    private void saveInDicom(ResultModel result) {
+        String srcFilePath = ApplicationContext.layeredCanvas.imgpanel.getDicomFileUrl();
+        try {
+            AttributeList list = new AttributeList();
+            list.read(srcFilePath);
+            
+            AttributeTag abcdTag = new AttributeTag(0x0019,0x0010);
+            Attribute abcdAttr = new LongStringAttribute(abcdTag);
+            abcdAttr.addValue("ABCD Result values");
+            list.put(abcdAttr);
+            
+            AttributeTag aTag = new AttributeTag(0x0019,0x1010);
+            Attribute aAttr = new DecimalStringAttribute(aTag);
+            aAttr.addValue(result.getValueA());
+            list.put(aAttr);
+            
+            AttributeTag bTag = new AttributeTag(0x0019,0x1020);
+            Attribute bAttr = new DecimalStringAttribute(bTag);
+            bAttr.addValue(result.getValueB());
+            list.put(bAttr);
+            
+            AttributeTag cTag = new AttributeTag(0x0019,0x1030);
+            Attribute cAttr = new DecimalStringAttribute(cTag);
+            cAttr.addValue(result.getValueC());
+            list.put(cAttr);
+            
+            AttributeTag dTag = new AttributeTag(0x0019,0x1040);
+            Attribute dAttr = new DecimalStringAttribute(dTag);
+            dAttr.addValue(result.getValueD());
+            list.put(dAttr);
+            
+            AttributeTag rTag = new AttributeTag(0x0019,0x1050);
+            Attribute rAttr = new DecimalStringAttribute(rTag);
+            rAttr.addValue(result.getTDS());
+            list.put(rAttr);
+//          System.out.println(ClinicalTrialsAttributes.isSafePrivateAttribute(e.getTag().),list));
+//            for (AttributeTag tag : list.keySet()) {
+//                System.out.println(tag.toString()+":"+list.get(tag).getVRAsString()+list.get(tag).getVM());
+//            }
+            list.write(srcFilePath);
+        } catch (IOException ex) {
+            Logger.getLogger(ImageProcessing.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (DicomException ex) {
+            Logger.getLogger(ImageProcessing.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
 
     private class ZoomListener implements MouseWheelListener {
         @Override
