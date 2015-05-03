@@ -22,6 +22,8 @@ public class ResultModel {
     
     private String valueD;
 
+    private String TDS;
+    
     public String getPatientId() {
         return patientId;
     }
@@ -68,6 +70,14 @@ public class ResultModel {
 
     public void setValueD(String valueD) {
         this.valueD = valueD;
+    }
+
+    public String getTDS() {
+        return TDS;
+    }
+
+    public void setTDS(String TDS) {
+        this.TDS = TDS;
     }
     
 }
