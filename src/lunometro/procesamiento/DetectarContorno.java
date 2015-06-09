@@ -704,7 +704,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Retorna si un pixel es fondo de la imagen
+	 * Retorna si un pixel es fondo de la imagen (fondo Blanco)
 	 * 
 	 * @param pixel
 	 * @return

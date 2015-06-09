@@ -47,9 +47,10 @@ public class DetectarObjetos extends AbstractImageCommand {
 
 	/**
 	 * Implementa el algoritmo de detección de los objetos.
-	 * Reliza la siguiente secuencia de procesamiento:
-	 * 	1- Elimina el fondo de la imagen
-	 * 	2- Binariza la imagen
+	 * Realiza la siguiente secuencia de procesamiento:
+	 * 	1- Convierte a escala de gris
+	 * 	2- Binariza la imagen usando el otsuMethod
+	 * 	3- Rellena huecos (fillHole)
 	 * 	3- Opening de la imagen
 	 * 	4- Closing de la imagen
 	 * 	5- Detecta el contorno el contorno grueso de los objetos
@@ -57,10 +58,14 @@ public class DetectarObjetos extends AbstractImageCommand {
 	 */
 	public PlanarImage execute() {
 		if (getOriginalImage() != null && getHsvRange() != null) {
-			Binarizar ef = new Binarizar(getOriginalImage(), getHsvRange());
-			PlanarImage binaryImage = ef.execute();
-			PlanarImage output = binaryImage;
-			ef.postExecute();
+			
+			GrayScale gs = new GrayScale(this.getImage());
+			OtsuBinarize obRed = new OtsuBinarize(gs.execute(), "RED");
+			
+			PlanarImage binaryImage = obRed.execute();
+			
+			FillHole fh = new FillHole(binaryImage, 0);
+			PlanarImage output = fh.execute(); 
 			
 			DetectarContorno dc = new DetectarContorno(output, getOriginalImage(), new Color(0, 0, 0), Color.RED);
 			dc.setBinaryImage(binaryImage);

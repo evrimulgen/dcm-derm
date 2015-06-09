@@ -24,10 +24,12 @@ import procesamiento.Binarizar;
 import procesamiento.DetectarObjetos;
 import procesamiento.Dilate;
 import procesamiento.Erode;
+import procesamiento.FillHole;
 import procesamiento.GrayScale;
 import procesamiento.HSVRange;
 import procesamiento.ImageUtil;
 import procesamiento.OtsuBinarize;
+import procesamiento.Resta;
 import procesamiento.RgbHsv;
 import procesamiento.SobelFilter;
 import JavaImages.ImageProcessing;
@@ -40,6 +42,7 @@ import JavaImages.ImageProcessing_Resize;
 import JavaImages.ImageProcessing_Resize.ScaleType;
 import JavaImages.ImageProcessing_SaveImage;
 import JavaImages.ImageProcessing_TransformFormatImages;
+
 import javax.swing.SwingConstants;
 
 
@@ -1834,34 +1837,17 @@ public class MainForm extends javax.swing.JFrame {
 	 */
 	protected void calcularABCD() {
 
-//		HSVRange range = new HSVRange();
-//		Color c = calcularPromedioColorPunto(new Pixel(10,10,null), 4);
-//		float[] hsvRangeFondo = RgbHsv.RGBtoHSV(c.getRed(), c.getGreen(), c.getBlue());
-//		range.setHMin(hsvRangeFondo[0]);
-//		range.setSMin(hsvRangeFondo[1]);
-//		range.setVMin(hsvRangeFondo[2]);
-		
-		GrayScale gs = new GrayScale(PlanarImage.wrapRenderedImage(this.bufferImageTemp));
-		PlanarImage output = gs.execute();
-		
-		OtsuBinarize ob = new OtsuBinarize(output);
-		output = ob.execute();
-
-//		Erode er = new Erode(output);
-//		output = er.execute();
-		
-		this.bufferImageTemp = output.getAsBufferedImage();
-		this.jLabelImage.setIcon(new ImageIcon(output.getAsBufferedImage()));
-
-		
-		/*Binarizar ef = new Binarizar(PlanarImage.wrapRenderedImage(this.bufferImageTemp), null, null);
-		output = ef.execute();
+		PlanarImage output = null;
 
 		try {
-			DetectarObjetos detectar = new DetectarObjetos(output, PlanarImage.wrapRenderedImage(this.bufferImageTemp), range);
+			DetectarObjetos detectar = new DetectarObjetos(PlanarImage.wrapRenderedImage(this.bufferImageTemp), 
+														   PlanarImage.wrapRenderedImage(this.bufferImageTemp), 
+														   null);
+			
 			output = detectar.execute();
 			
 			Objeto mancha = detectar.getObjetos().get(0);
+			
 			ObjMethodABDC.calcularABCD(mancha);
 			this.textField.setText(String.valueOf(ObjMethodABDC.getIndicadorA()));
 			this.textField_1.setText(String.valueOf(ObjMethodABDC.getIndicadorB()));
@@ -1889,7 +1875,7 @@ public class MainForm extends javax.swing.JFrame {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}*/
+		}
 		
 		
 	}

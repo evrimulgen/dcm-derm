@@ -12,27 +12,47 @@ import javax.media.jai.TiledImage;
  *
  */
 public class OtsuBinarize extends AbstractImageCommand {
-
-	public OtsuBinarize(PlanarImage image) {
+	
+	protected String color;
+	private static String RED   = "RED";
+	private static String GREEN = "GREEN";
+	
+	public OtsuBinarize(PlanarImage image, String c) {
 		super(image);
+		color = c;
 	}
 	
 	// Return histogram of grayscale image
-    public static int[] imageHistogram(BufferedImage input) {
+    public int[] imageHistogram(BufferedImage input) {
         int[] histogram = new int[256];
         for(int i=0; i<histogram.length; i++) histogram[i] = 0;
  
         for(int i=0; i<input.getWidth(); i++) {
             for(int j=0; j<input.getHeight(); j++) {
-                int red = new Color(input.getRGB(i, j)).getRed();
-                histogram[red]++;
+            	int color = getColor(input.getRGB(i, j));
+                histogram[color]++;
             }
         }
         return histogram;
     }
     
-    // Get binary treshold using Otsu's method
-    private static int otsuTreshold(BufferedImage original) {
+    /**
+     * 
+     * @param rgb
+     * @return
+     */
+    private int getColor(int rgb) {
+    	if(RED.equals(color)){
+    		return new Color(rgb).getRed();
+    	}else if(GREEN.equals(color)){
+    		return new Color(rgb).getGreen();
+    	}else{
+    		return new Color(rgb).getBlue();
+    	}
+	}
+
+	// Get binary treshold using Otsu's method
+    private int otsuTreshold(BufferedImage original) {
  
         int[] histogram = imageHistogram(original);
         int total = original.getHeight() * original.getWidth();
@@ -65,7 +85,7 @@ public class OtsuBinarize extends AbstractImageCommand {
                 threshold = i;
             }
         }
- 
+        
         return threshold;
     }
 
@@ -84,7 +104,7 @@ public class OtsuBinarize extends AbstractImageCommand {
     }
     
 	public PlanarImage execute() {
-		if (getImage() != null) {
+		if (getImage() != null) { 
 			TiledImage tiledImage = ImageUtil.createTiledImage(getImage(), ImageUtil.tileWidth, ImageUtil.tileHeight);
 			int tWidth = ImageUtil.tileWidth;
 			int tHeight =  ImageUtil.tileHeight;
@@ -122,9 +142,16 @@ public class OtsuBinarize extends AbstractImageCommand {
 									}
 									
 					                // Get pixels
-					                int red = new Color(r,g,b).getRed();
+									int color;
+									if(RED.equals(this.color)){
+										color = new Color(r,g,b).getRed();
+									}else if(GREEN.equals(this.color)){
+										color = new Color(r,g,b).getGreen();
+									}else{
+										color = new Color(r,g,b).getBlue();
+									}
 					                int alpha = new Color(r,g,b).getAlpha();
-					                if(red > threshold) {
+					                if(color > threshold) {
 					                	newPixel = 255;
 					                }
 					                else {
@@ -147,6 +174,7 @@ public class OtsuBinarize extends AbstractImageCommand {
 				}
 			return tiledImage;
 		}
+		
 		return null;
 	}
 
