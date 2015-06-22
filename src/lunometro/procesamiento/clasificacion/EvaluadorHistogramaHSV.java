@@ -1,9 +1,9 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.List;
 
-import objeto.Histograma;
-import objeto.Objeto;
+import lunometro.objeto.Histograma;
+import lunometro.objeto.Objeto;
 
 public class EvaluadorHistogramaHSV extends EvaluadorHistograma {
 	public static final double CORRELACION_MINIMA = 0.7;

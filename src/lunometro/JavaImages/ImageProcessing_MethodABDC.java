@@ -1,11 +1,11 @@
-package JavaImages;
+package lunometro.JavaImages;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
+import lunometro.procesamiento.RgbHsv;
 
-import objeto.Objeto;
-import objeto.Pixel;
-import procesamiento.RgbHsv;
 
 public class ImageProcessing_MethodABDC extends ImageProcessing{
     
@@ -71,9 +71,9 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 		
 		this.setIndicadorC(getCantColores(mancha));
 		
-		/*El valor de las Diferencias estructurales, D, depende del número de estructuras que
-		posee la lesión. Desde áreas homogéneas, cadenas, venas, puntos y/o glóbulos, por lo
-		que el valor de D varía entre 1 y 5.*/
+		/*El valor de las Diferencias estructurales, D, depende del nï¿½mero de estructuras que
+		posee la lesiï¿½n. Desde ï¿½reas homogï¿½neas, cadenas, venas, puntos y/o glï¿½bulos, por lo
+		que el valor de D varï¿½a entre 1 y 5.*/
 		this.setIndicadorD(Math.rint(mancha.getRadio()*2*0.2645833333333*100)/100);
 		
         //super.updateImage("Calculo Metodo ABDC ", imageTemp);
@@ -119,11 +119,11 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 				colorCantidad[0]++;
 			}else if(hsvRange[0] > MIN_H_RED && hsvRange[0] < MAX_H_RED){//Rojo
 				colorCantidad[1]++;
-			}else if(hsvRange[0] > MIN_H_MARRON && hsvRange[0] < MAX_H_MARRON){//Marrón Claro
+			}else if(hsvRange[0] > MIN_H_MARRON && hsvRange[0] < MAX_H_MARRON){//Marrï¿½n Claro
 				colorCantidad[2]++;
-			}else if(p.getCol().equals(new Color(114, 35, 14))){//Marrón oscuro
+			}else if(p.getCol().equals(new Color(114, 35, 14))){//Marrï¿½n oscuro
 				colorCantidad[3]++;
-			}else if(p.getCol().equals(new Color(30, 85, 83))){//Azul Grisáceo,
+			}else if(p.getCol().equals(new Color(30, 85, 83))){//Azul Grisï¿½ceo,
 				colorCantidad[4]++;
 			}else if(p.getCol().equals(Color.BLACK)){//Negro
 				colorCantidad[5]++;
@@ -174,7 +174,7 @@ public class ImageProcessing_MethodABDC extends ImageProcessing{
 	}
 	
 	/**
-	 * Calcular el indicador FDS = A × 1.3 + B × 0.1 + C × 0.5 + D × 0.5
+	 * Calcular el indicador FDS = A ï¿½ 1.3 + B ï¿½ 0.1 + C ï¿½ 0.5 + D ï¿½ 0.5
 	 *  FDS > 5.45 -> Probable "melanoma maligno"
 	 *  4.75 < FDS < 5.45 ->  Moderada de ser melanoma maligno
 	 *  FDS < 4.75 -> Tipo benigno

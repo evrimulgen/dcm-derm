@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.util.List;
 
@@ -29,9 +29,9 @@ public class RasgoObjetoHistograma extends RasgoObjeto {
 	}
 	
 	/**
-	 * Retorna el valor 1 para todos los histogramas ya que valor ideal de comparación de dos histogramas es 1.
+	 * Retorna el valor 1 para todos los histogramas ya que valor ideal de comparaciï¿½n de dos histogramas es 1.
 	 * Esto asegura que al decidir si un objeto pertece a una de dos clases, se seleccione aquella clase para la cual
-	 * el valor de comparación del histograma en la clase se mas cercano a 1 (@see objeto.clase#distanciaPromedio(Objeto)). 
+	 * el valor de comparaciï¿½n del histograma en la clase se mas cercano a 1 (@see objeto.clase#distanciaPromedio(Objeto)). 
 	 * @see objeto.RasgoObjeto#getValorRasgoClase()
 	 */
 	public Double getValorRasgoClase() {

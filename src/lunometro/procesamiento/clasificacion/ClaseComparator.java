@@ -1,8 +1,8 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.Comparator;
+import lunometro.objeto.Clase;
 
-import objeto.Clase;
 
 public class ClaseComparator implements Comparator<Clase> {
 

@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.RenderingHints;
 import java.awt.image.renderable.ParameterBlock;
@@ -8,7 +8,7 @@ import javax.media.jai.KernelJAI;
 import javax.media.jai.PlanarImage;
 
 /**
- * Comando que realiza la operación de dilatación sobre una imagen binaria
+ * Comando que realiza la operaciï¿½n de dilataciï¿½n sobre una imagen binaria
  *
  */
 public class Dilate extends AbstractImageCommand {
@@ -58,7 +58,7 @@ public class Dilate extends AbstractImageCommand {
 	 * @see procesamiento.ImageComand#getCommandName()
 	 */
 	public String getCommandName() {
-		return "Dilatación";
+		return "Dilataciï¿½n";
 	}
 
 	/*

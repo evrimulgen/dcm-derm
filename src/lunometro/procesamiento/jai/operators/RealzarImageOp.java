@@ -1,4 +1,4 @@
-package procesamiento.jai.operators;
+package lunometro.procesamiento.jai.operators;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -7,13 +7,11 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.util.Map;
-
 import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
 import javax.media.jai.PointOpImage;
+import lunometro.procesamiento.HSVRange;
+import lunometro.procesamiento.RgbHsv;
 
-import procesamiento.HSVRange;
-import procesamiento.RgbHsv;
 
 @SuppressWarnings("unchecked")
 public class RealzarImageOp extends PointOpImage {

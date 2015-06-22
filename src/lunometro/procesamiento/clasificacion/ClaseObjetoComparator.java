@@ -1,12 +1,12 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.Comparator;
 import java.util.List;
+import lunometro.objeto.ClaseObjeto;
+import lunometro.objeto.RasgoClase;
 
-import objeto.ClaseObjeto;
-import objeto.RasgoClase;
 /**
- * Comparador de clases de un objeto según la distancia promedio
+ * Comparador de clases de un objeto segï¿½n la distancia promedio
  *
  */
 public class ClaseObjetoComparator implements Comparator<ClaseObjeto> {
