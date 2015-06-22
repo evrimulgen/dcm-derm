@@ -1,13 +1,12 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
+import lunometro.objeto.Pixel;
 
-import objeto.Pixel;
 
 public class Skeleton extends AbstractImageCommand {
 
@@ -49,7 +48,7 @@ public class Skeleton extends AbstractImageCommand {
 	}
 
 	/**
-	 * Pinta el pixel (x,y) de la imagen con el color pasado como parámetro
+	 * Pinta el pixel (x,y) de la imagen con el color pasado como parï¿½metro
 	 * 
 	 * @param image
 	 * @param x
@@ -123,12 +122,12 @@ public class Skeleton extends AbstractImageCommand {
 	}
 
 	/**
-	 * Retorna el pixel adyacente a uno dado en una dirección determinada
+	 * Retorna el pixel adyacente a uno dado en una direcciï¿½n determinada
 	 * 
 	 * @param pixel
 	 *            Pixel actual
 	 * @param direccion
-	 *            Dirección para recuperar el adyacente
+	 *            Direcciï¿½n para recuperar el adyacente
 	 * @return Pixel adyacente
 	 */
 	public Pixel getAdyacente(Pixel pixel, int direccion, PlanarImage image) {
@@ -156,7 +155,7 @@ public class Skeleton extends AbstractImageCommand {
 	}
 	
 	/**
-	 * Retorna el número de transiciones 0-1 en una secuencia ordenada P2 , P3 , P4 , P5 , P6 , P7 , P8, P9
+	 * Retorna el nï¿½mero de transiciones 0-1 en una secuencia ordenada P2 , P3 , P4 , P5 , P6 , P7 , P8, P9
 	 * @param pixel
 	 * @param image
 	 * @return

@@ -1,4 +1,4 @@
-package procesamiento.filtros;
+package lunometro.procesamiento.filtros;
 
 public class Matriz {
 	private String nombre;

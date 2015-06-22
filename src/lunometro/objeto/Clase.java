@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class Clase implements HistogramaContainer{
 	private Integer colorRgb;
 	
 	/**
-	 * Orden de evaluación entre las clases
+	 * Orden de evaluaciï¿½n entre las clases
 	 */
 	private Integer ordenEvaluacion;
 	

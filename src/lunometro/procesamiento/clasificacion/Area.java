@@ -1,8 +1,9 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import objeto.Objeto;
-import objeto.RasgoClase;
-import objeto.RasgoObjeto;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.RasgoClase;
+import lunometro.objeto.RasgoObjeto;
+
 
 public class Area extends EvaluadorRasgo {
 	

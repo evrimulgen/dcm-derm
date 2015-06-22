@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 public class RubroCalidad {
 	
@@ -10,7 +10,7 @@ public class RubroCalidad {
 	private String nombre;
 	
 	/**
-	 * Descripción
+	 * Descripciï¿½n
 	 */
 	private String descripcion;
 	
