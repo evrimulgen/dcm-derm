@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,18 +10,15 @@ import java.awt.image.WritableRaster;
 import java.awt.image.renderable.ParameterBlock;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.media.jai.ImageLayout;
 import javax.media.jai.Interpolation;
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.TiledImage;
-
-import objeto.Objeto;
-import objeto.Pixel;
-
 import com.sun.media.jai.codec.TIFFEncodeParam;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
 
 public class ImageUtil {
 	public static final int tileWidth = 256;

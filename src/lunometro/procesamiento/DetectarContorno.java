@@ -1,17 +1,16 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
+import lunometro.objeto.PixelComparator;
 
-import objeto.Objeto;
-import objeto.Pixel;
-import objeto.PixelComparator;
 
 /**
  * Comando que detecta el contorno de 1 pixel exterior de los objetos de una
@@ -95,7 +94,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	/**
 	 * Rango HSV del color del fondo
 	 */
-	private HSVRange rangeFondo = null;
+//	private HSVRange rangeFondo = null;
 
 	/**
 	 * Flag que indica se se debe tratar de separar objetos pegados
@@ -606,7 +605,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Pinta el pixel (x,y) de la imagen con el color pasado como parámetro
+	 * Pinta el pixel (x,y) de la imagen con el color pasado como parï¿½metro
 	 * 
 	 * @param image
 	 * @param x
@@ -619,14 +618,14 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Retorna el próximo pixel que forma el contorno de un objeto
+	 * Retorna el prï¿½ximo pixel que forma el contorno de un objeto
 	 * 
 	 * @param pixel
 	 *            Pixel actual que es contorno
 	 * @param pixelAnt
 	 *            Pixel anterior al actual que es contorno
 	 * @param origen
-	 *            Pixel desde el cuál se partió
+	 *            Pixel desde el cuï¿½l se partiï¿½
 	 * @param offset
 	 *            Offset de la imagen
 	 * @return
@@ -663,14 +662,14 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Retorna el próximo pixel que forma el contorno interno de un objeto
+	 * Retorna el prï¿½ximo pixel que forma el contorno interno de un objeto
 	 * 
 	 * @param pixel
 	 *            Pixel actual que es contorno
 	 * @param pixelAnt
 	 *            Pixel anterior al actual que es contorno
 	 * @param origen
-	 *            Pixel desde el cuál se partió
+	 *            Pixel desde el cuï¿½l se partiï¿½
 	 * @return
 	 */
 	public List<Pixel> getNextContornoInterno(Pixel pixel, Pixel pixelAnt, Pixel origen, boolean horario, Pixel origenExterior, Pixel finExterior) {
@@ -737,12 +736,12 @@ public class DetectarContorno extends AbstractImageCommand {
 
 
 	/**
-	 * Retorna el pixel adyacente a uno dado en una dirección determinada
+	 * Retorna el pixel adyacente a uno dado en una direcciï¿½n determinada
 	 * 
 	 * @param pixel
 	 *            Pixel actual
 	 * @param direccion
-	 *            Dirección para recuperar el adyacente
+	 *            Direcciï¿½n para recuperar el adyacente
 	 * @return Pixel adyacente
 	 */
 	public Pixel getAdyacente(Pixel pixel, int direccion, PlanarImage image) {
@@ -759,7 +758,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	 * @param pixel
 	 *            Pixel actual
 	 * @param direccion
-	 *            Dirección para recuperar el adyacente
+	 *            Direcciï¿½n para recuperar el adyacente
 	 * @return Pixel adyacente
 	 */
 	public boolean isPuntoFinalLinea(Pixel pixel, PlanarImage image) {
@@ -786,12 +785,12 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Retorna el pixel adyacente a uno dado en una dirección determinada
+	 * Retorna el pixel adyacente a uno dado en una direcciï¿½n determinada
 	 * 
 	 * @param pixel
 	 *            Pixel actual
 	 * @param direccion
-	 *            Dirección para recuperar el adyacente
+	 *            Direcciï¿½n para recuperar el adyacente
 	 * @return Pixel adyacente
 	 */
 	public Pixel getAdyacenteNuevo(Pixel pixel, int direccion, PlanarImage image) {
@@ -803,7 +802,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Devuelve el lado con el cuál pixel es contorno: si tiene un vecino que es
+	 * Devuelve el lado con el cuï¿½l pixel es contorno: si tiene un vecino que es
 	 * fondo
 	 * 
 	 * @param pixel
@@ -1015,7 +1014,7 @@ public class DetectarContorno extends AbstractImageCommand {
 	}
 
 	/**
-	 * Método encargado de detectar los objetos de la imagen
+	 * Mï¿½todo encargado de detectar los objetos de la imagen
 	 */
 	public List<Objeto> detectarObjetos() {
 		List<Objeto> objetos = new ArrayList<Objeto>();
@@ -1145,13 +1144,13 @@ public class DetectarContorno extends AbstractImageCommand {
 		this.binaryImage = binaryImage;
 	}
 
-	public HSVRange getRangeFondo() {
-		return rangeFondo;
-	}
-
-	public void setRangeFondo(HSVRange rangeFondo) {
-		this.rangeFondo = rangeFondo;
-	}
+//	public HSVRange getRangeFondo() {
+//		return rangeFondo;
+//	}
+//
+//	public void setRangeFondo(HSVRange rangeFondo) {
+//		this.rangeFondo = rangeFondo;
+//	}
 
 	public boolean isSepararObjetos() {
 		return separarObjetos;
