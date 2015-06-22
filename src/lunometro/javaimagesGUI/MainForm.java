@@ -1,10 +1,9 @@
-package javaimagesGUI;
+package lunometro.javaimagesGUI;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-
 import javax.media.jai.PlanarImage;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -17,33 +16,25 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
-
-import objeto.Objeto;
-import objeto.Pixel;
-import procesamiento.Binarizar;
-import procesamiento.DetectarObjetos;
-import procesamiento.Dilate;
-import procesamiento.Erode;
-import procesamiento.FillHole;
-import procesamiento.GrayScale;
-import procesamiento.HSVRange;
-import procesamiento.ImageUtil;
-import procesamiento.OtsuBinarize;
-import procesamiento.Resta;
-import procesamiento.RgbHsv;
-import procesamiento.SobelFilter;
-import JavaImages.ImageProcessing;
-import JavaImages.ImageProcessing_AdvancedFilters;
-import JavaImages.ImageProcessing_BasicFilters;
-import JavaImages.ImageProcessing_Histogram;
-import JavaImages.ImageProcessing_MethodABDC;
-import JavaImages.ImageProcessing_OpenImage;
-import JavaImages.ImageProcessing_Resize;
-import JavaImages.ImageProcessing_Resize.ScaleType;
-import JavaImages.ImageProcessing_SaveImage;
-import JavaImages.ImageProcessing_TransformFormatImages;
-
-import javax.swing.SwingConstants;
+import lunometro.objeto.Pixel;
+import lunometro.procesamiento.Binarizar;
+import lunometro.procesamiento.GrayScale;
+import lunometro.procesamiento.ImageUtil;
+import lunometro.procesamiento.OtsuBinarize;
+import lunometro.procesamiento.SobelFilter;
+import lunometro.JavaImages.ImageProcessing;
+import lunometro.JavaImages.ImageProcessing_AdvancedFilters;
+import lunometro.JavaImages.ImageProcessing_BasicFilters;
+import lunometro.JavaImages.ImageProcessing_Histogram;
+import lunometro.JavaImages.ImageProcessing_MethodABDC;
+import lunometro.JavaImages.ImageProcessing_OpenImage;
+import lunometro.JavaImages.ImageProcessing_Resize;
+import lunometro.JavaImages.ImageProcessing_Resize.ScaleType;
+import lunometro.JavaImages.ImageProcessing_SaveImage;
+import lunometro.JavaImages.ImageProcessing_TransformFormatImages;
+import lunometro.objeto.Objeto;
+import lunometro.procesamiento.DetectarObjetos;
+import lunometro.procesamiento.FillHole;
 
 
 public class MainForm extends javax.swing.JFrame {
@@ -1837,17 +1828,47 @@ public class MainForm extends javax.swing.JFrame {
 	 */
 	protected void calcularABCD() {
 
-		PlanarImage output = null;
+//		HSVRange range = new HSVRange();
+//		Color c = calcularPromedioColorPunto(new Pixel(10,10,null), 4);
+//		float[] hsvRangeFondo = RgbHsv.RGBtoHSV(c.getRed(), c.getGreen(), c.getBlue());
+//		range.setHMin(hsvRangeFondo[0]);
+//		range.setSMin(hsvRangeFondo[1]);
+//		range.setVMin(hsvRangeFondo[2]);
+		
+		GrayScale gs = new GrayScale(PlanarImage.wrapRenderedImage(this.bufferImageTemp));
+		PlanarImage output = gs.execute();
+		
+		OtsuBinarize ob = new OtsuBinarize(output,"RED");
+		output = ob.execute();
+
+//                FillHole fh = new FillHole(output, 255);
+//                output = fh.execute();
+               
+                try {
+                    DetectarObjetos dob = new DetectarObjetos(output, 
+                        output, null);
+                    output = dob.execute();
+                    Objeto mancha = dob.getObjetos().get(0);
+                    output = mancha.getOriginalImage();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
+//		Erode er = new Erode(output);
+//		output = er.execute();
+		
+		this.bufferImageTemp = output.getAsBufferedImage();
+		this.jLabelImage.setIcon(new ImageIcon(output.getAsBufferedImage()));
+
+		
+		/*Binarizar ef = new Binarizar(PlanarImage.wrapRenderedImage(this.bufferImageTemp), null, null);
+		output = ef.execute();
 
 		try {
-			DetectarObjetos detectar = new DetectarObjetos(PlanarImage.wrapRenderedImage(this.bufferImageTemp), 
-														   PlanarImage.wrapRenderedImage(this.bufferImageTemp), 
-														   null);
-			
+			DetectarObjetos detectar = new DetectarObjetos(output, PlanarImage.wrapRenderedImage(this.bufferImageTemp), range);
 			output = detectar.execute();
 			
 			Objeto mancha = detectar.getObjetos().get(0);
-			
 			ObjMethodABDC.calcularABCD(mancha);
 			this.textField.setText(String.valueOf(ObjMethodABDC.getIndicadorA()));
 			this.textField_1.setText(String.valueOf(ObjMethodABDC.getIndicadorB()));
@@ -1857,17 +1878,17 @@ public class MainForm extends javax.swing.JFrame {
 			Double indicadorFDS = ObjMethodABDC.calcularFDS(); 
 			this.textField_4.setText(String.valueOf(indicadorFDS));
 			if(indicadorFDS > 5.45) {
-				this.textPane.setText("Atención: La lesión tiene una gran probabilidad de ser un cáncer de piel \n "
-						+ "de tipo melanoma maligno. Por tanto, requiere una extirpación lo antes posible y su \n"
+				this.textPane.setText("Atenciï¿½n: La lesiï¿½n tiene una gran probabilidad de ser un cï¿½ncer de piel \n "
+						+ "de tipo melanoma maligno. Por tanto, requiere una extirpaciï¿½n lo antes posible y su \n"
 						+ "tratamiento depende del estadio en el que se encuentre el melanoma");
 			}else if(indicadorFDS > 4.75 && indicadorFDS < 5.45) {
-				this.textPane.setText("Atención: La lesión tiene probabilidad moderada de ser melanoma maligno. \n"
-						+ "En este caso, es necesaria una vigilancia constante de la evolución de la lesión para\n"
+				this.textPane.setText("Atenciï¿½n: La lesiï¿½n tiene probabilidad moderada de ser melanoma maligno. \n"
+						+ "En este caso, es necesaria una vigilancia constante de la evoluciï¿½n de la lesiï¿½n para\n"
 						+ " verificar si puede convertirse o no en un melanoma maligno.");
 			}else{
-				this.textPane.setText("Atención: Es probable que la lesión sea un cáncer de piel de tipo benigno. \n"
-						+ "Por lo que no es necesaria una extirpación, pero quizás requiera un tratamiento diferente, \n"
-						+ "dependiendo del cáncer que sea.");
+				this.textPane.setText("Atenciï¿½n: Es probable que la lesiï¿½n sea un cï¿½ncer de piel de tipo benigno. \n"
+						+ "Por lo que no es necesaria una extirpaciï¿½n, pero quizï¿½s requiera un tratamiento diferente, \n"
+						+ "dependiendo del cï¿½ncer que sea.");
 			}
 			
 			this.bufferImageTemp = output.getAsBufferedImage();
@@ -1875,7 +1896,7 @@ public class MainForm extends javax.swing.JFrame {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		
 	}
@@ -2084,7 +2105,7 @@ public class MainForm extends javax.swing.JFrame {
 		});
 	}
 
-	// Variables declaration - do not modify//GEN-BEGIN:variables
+	// Variables declaration - do not modify                     
 	private javax.swing.JTextField JTexfield_lastOpened;
 	private javax.swing.JTextField JTextfield_URL;
 	private javax.swing.JButton jButton1;
