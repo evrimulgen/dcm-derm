@@ -1,9 +1,9 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import javax.media.jai.PlanarImage;
 
 /**
- * Clase abstracta que define el comportamiento común para implementar comandos
+ * Clase abstracta que define el comportamiento comï¿½n para implementar comandos
  * sobre una imagen
  *
  */
@@ -18,8 +18,7 @@ public abstract class AbstractImageCommand implements ImageComand {
 	 * @param image Imagen a procesar
 	 */
 	public AbstractImageCommand(PlanarImage image) {
-		super();
-		setImage(image);
+		this.image = image;
 	}
 
 	/*

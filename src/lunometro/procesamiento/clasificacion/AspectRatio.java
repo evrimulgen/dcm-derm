@@ -1,13 +1,13 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.ArrayList;
 import java.util.List;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
+import lunometro.objeto.Rasgo;
+import lunometro.objeto.RasgoClase;
+import lunometro.objeto.RasgoObjeto;
 
-import objeto.Objeto;
-import objeto.Pixel;
-import objeto.Rasgo;
-import objeto.RasgoClase;
-import objeto.RasgoObjeto;
 
 public class AspectRatio extends EvaluadorRasgo {
 

@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.util.ArrayList;
 import java.util.List;

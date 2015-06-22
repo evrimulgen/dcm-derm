@@ -10,6 +10,10 @@ import com.pixelmed.dicom.AttributeTag;
 import com.pixelmed.dicom.DecimalStringAttribute;
 import com.pixelmed.dicom.DicomException;
 import com.pixelmed.dicom.LongStringAttribute;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.measure.Measurements;
+import ij.process.ImageStatistics;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.models.ResultModel;
 import java.awt.Dimension;
@@ -66,6 +70,8 @@ public class ImageProcessing extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        areaField = new javax.swing.JTextField();
+        perimeterField = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
@@ -119,14 +125,22 @@ public class ImageProcessing extends javax.swing.JDialog {
                     .addComponent(jLabel2)
                     .addComponent(jLabel3)
                     .addComponent(jLabel4))
-                .addContainerGap(173, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(areaField)
+                    .addComponent(perimeterField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
+                .addGap(37, 37, 37))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jLabel1)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(areaField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(perimeterField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -336,7 +350,7 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(imgScrollPane))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -346,8 +360,8 @@ public class ImageProcessing extends javax.swing.JDialog {
 
 //        long ini = System.currentTimeMillis();
 
-        GrayScaleConverter gs = new GrayScaleConverter(imgM);
-        gs.execute();
+//        GrayScaleConverter gs = new GrayScaleConverter(imgM);
+//        gs.execute();
 //        long end = System.currentTimeMillis();
 //        System.out.println("time: "+(end-ini)); 
 //          imgM = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -375,14 +389,23 @@ public class ImageProcessing extends javax.swing.JDialog {
 //        jg.add(new JLabel(new ImageIcon(binaryGreen)));
 //        jg.setVisible(true);
 
-        BinaryConverter br = new BinaryConverter(gs.getMaxDecomp()); //binary sobre el canal red del gris
-        BufferedImage binaryRed = br.execute();
-//        javax.swing.JFrame jr = new javax.swing.JFrame();
-//        jr.add(new JLabel(new ImageIcon(binaryRed)));
-//        jr.setVisible(true);
-//        imgM = binaryRed;
-//        imgBackground.setIcon(new ImageIcon(imgM));
-        imgPane.setImage(binaryRed);
+//        BinaryConverter br = new BinaryConverter(gs.getMaxDecomp()); //binary sobre el canal red del gris
+//        BufferedImage binaryRed = br.execute();
+        
+        ImagePlus imp = new ImagePlus("",imgM);
+        IJ.run(imp, "8-bit", "");
+        OtsuThresholding_ otsu = (OtsuThresholding_) IJ.runPlugIn(imp, "in.raster.mayam.process.OtsuThresholding_", "");
+        ImagePlus tempImp = otsu.getImp();
+        IJ.run(tempImp, "Fill Holes", "");
+        Particle_Remover pr = (Particle_Remover) IJ.runPlugIn(tempImp, "in.raster.mayam.process.Particle_Remover", "size=0-50 circularity=0.00-1.00 show=Nothing");
+        
+        CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(pr.getImp(), "in.raster.mayam.process.CustomParticleAnalyzerPlugin","size=0-infinity circularity=0.00-1.00 show=Nothing");
+        this.areaField.setText(String.valueOf(cpa.getArea()));
+        this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
+
+        RegionExtraction re = new RegionExtraction(imgM, pr.getImp().getBufferedImage());
+        
+        imgPane.setImage(re.execute());
     }//GEN-LAST:event_analyzeButtonActionPerformed
 
     private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
@@ -422,6 +445,7 @@ public class ImageProcessing extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton analyzeButton;
+    private javax.swing.JTextField areaField;
     private javax.swing.JLabel imgIcon;
     private javax.swing.JScrollPane imgScrollPane;
     private javax.swing.JComboBox jComboBox1;
@@ -442,6 +466,7 @@ public class ImageProcessing extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel patienNameLabel;
+    private javax.swing.JTextField perimeterField;
     private javax.swing.JButton saveButton;
     private javax.swing.JCheckBox saveInDicom;
     private javax.swing.JLabel studyDateLabel;

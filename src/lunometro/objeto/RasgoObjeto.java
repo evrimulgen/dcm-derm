@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

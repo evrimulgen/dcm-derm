@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package javaimagesGUI;
+package lunometro.javaimagesGUI;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;

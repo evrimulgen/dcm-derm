@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -8,7 +8,7 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
 /**
- * Comando que realiza la operación de Binarizar usando el algoritmo Otsu.
+ * Comando que realiza la operaciï¿½n de Binarizar usando el algoritmo Otsu.
  *
  */
 public class OtsuBinarize extends AbstractImageCommand {
