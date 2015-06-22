@@ -1,12 +1,12 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.List;
 
-import objeto.Histograma;
-import objeto.Objeto;
-import objeto.ObjetoUtil;
-import objeto.RasgoObjeto;
-import objeto.RasgoObjetoHistograma;
+import lunometro.objeto.Histograma;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.ObjetoUtil;
+import lunometro.objeto.RasgoObjeto;
+import lunometro.objeto.RasgoObjetoHistograma;
 
 public abstract class EvaluadorHistograma extends EvaluadorRasgo {
 	
@@ -93,7 +93,7 @@ public abstract class EvaluadorHistograma extends EvaluadorRasgo {
 
 	
 	/**
-	 * Busca el histograma con del tipo pasado como paránetro
+	 * Busca el histograma con del tipo pasado como parï¿½netro
 	 * @param tipo
 	 * @param histogramas
 	 * @return

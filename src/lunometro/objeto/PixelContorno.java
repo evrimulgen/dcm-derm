@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 public class PixelContorno {
 	private int direccion;

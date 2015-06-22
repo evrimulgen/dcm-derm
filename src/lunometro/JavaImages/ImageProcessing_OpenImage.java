@@ -1,4 +1,4 @@
-package JavaImages;
+package lunometro.JavaImages;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

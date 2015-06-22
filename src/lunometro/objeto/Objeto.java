@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.awt.Color;
 import java.awt.Polygon;
@@ -6,11 +6,10 @@ import java.awt.Shape;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.media.jai.PlanarImage;
+import lunometro.procesamiento.ImageUtil;
+import lunometro.procesamiento.RgbHsv;
 
-import procesamiento.ImageUtil;
-import procesamiento.RgbHsv;
 
 public class Objeto implements HistogramaContainer, Cloneable{
 	
@@ -433,7 +432,7 @@ public class Objeto implements HistogramaContainer, Cloneable{
 	}
 
 	/**
-	 * Calcula la longitud del perímetro del objeto
+	 * Calcula la longitud del perï¿½metro del objeto
 	 * 
 	 * @return
 	 */
@@ -520,7 +519,7 @@ public class Objeto implements HistogramaContainer, Cloneable{
 	}
 
 	/**
-	 * Cociente entre el área y la longitud del perímetro. Si es circular el
+	 * Cociente entre el ï¿½rea y la longitud del perï¿½metro. Si es circular el
 	 * cociente debe ser cercano a 4PI
 	 * 
 	 * @return
@@ -633,7 +632,7 @@ public class Objeto implements HistogramaContainer, Cloneable{
 	
 	/**
 	 * Agrega un rasgo al objeto. Si ya existe un rasgo con el mismo nombre modifica el
-	 * valor de este con el valor del rasgo pasado como parámetro.
+	 * valor de este con el valor del rasgo pasado como parï¿½metro.
 	 * @param rasgoObjeto
 	 */
 	public void addRasgo(RasgoObjeto rasgoObjeto){
@@ -828,10 +827,10 @@ public class Objeto implements HistogramaContainer, Cloneable{
 		this.pixelPunta1 = pixelPunta1;
 	}
 	/**
-	 * Calcula el color promedio del objeto alrededor del punto pasado como parámetro.
+	 * Calcula el color promedio del objeto alrededor del punto pasado como parï¿½metro.
 	 * 
 	 * @param punto Un punto del objeto
-	 * @param tamañoRec Tamaño del rectángulo alrededor del punto que se tendrá en cuenta para evaluar el colot promedio
+	 * @param tamaï¿½oRec Tamaï¿½o del rectï¿½ngulo alrededor del punto que se tendrï¿½ en cuenta para evaluar el colot promedio
 	 * @return Color promedio
 	 */
 	public Color calcularPromedioColorPunto(Pixel punto, int tamanioRec){
