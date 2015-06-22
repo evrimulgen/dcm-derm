@@ -1,10 +1,10 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.awt.Color;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.RasgoClase;
+import lunometro.objeto.RasgoObjeto;
 
-import objeto.Objeto;
-import objeto.RasgoClase;
-import objeto.RasgoObjeto;
 
 public class PorcentajeColorBlanco extends EvaluadorRasgo{
 

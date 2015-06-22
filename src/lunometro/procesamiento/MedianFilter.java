@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.RenderingHints;
 import java.awt.image.renderable.ParameterBlock;

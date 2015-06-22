@@ -1,15 +1,16 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
-import objeto.Pixel;
+import lunometro.objeto.Pixel;
 
 /**
- * Comando que realiza la operación rellenar agujero de la region de interes.
+ * Comando que realiza la operaciï¿½n rellenar agujero de la region de interes.
  *
  */
 public class FillHole extends AbstractImageCommand {
@@ -34,12 +35,12 @@ public class FillHole extends AbstractImageCommand {
 	}
 	
 	/**
-	 * Retorna el pixel adyacente a uno dado en una dirección determinada
+	 * Retorna el pixel adyacente a uno dado en una direcciï¿½n determinada
 	 * 
 	 * @param pixel
 	 *            Pixel actual
 	 * @param direccion
-	 *            Dirección para recuperar el adyacente
+	 *            Direcciï¿½n para recuperar el adyacente
 	 * @return Pixel adyacente
 	 */
 	public Pixel getAdyacente(Pixel pixel, int direccion, PlanarImage image) {
@@ -92,31 +93,47 @@ public class FillHole extends AbstractImageCommand {
 	
 	public PlanarImage execute() {
 		if (getImage() != null) {
-			TiledImage tiledImage = ImageUtil.createTiledImage(getImage(), ImageUtil.tileWidth, ImageUtil.tileHeight);
-			int width = getImage().getWidth();
-			int height = getImage().getHeight();
-
-			WritableRaster wr = tiledImage.getWritableTile(width,height);
-			for (int th = tiledImage.getMinTileY(); th <= tiledImage.getMaxTileY(); th++){
-				for (int tw = tiledImage.getMinTileX(); tw <= tiledImage.getMaxTileX(); tw++) {
-					// Get a raster for that tile.
-					Pixel pixel = getPixel(th, tw, tiledImage);
-					if (!isFondo(pixel)){
-						int vecinos = vecinosNoFondo(pixel, tiledImage);
-						if(vecinos < 3){
-							wr.setPixel(th, tw, negro);
-						}else{
-							wr.setPixel(th, tw, blanco);
-						}	
-						
-					}
-				}
-			}
+                    int width = getImage().getWidth();
+                    int height = getImage().getHeight();	
+                    BufferedImage bi = new BufferedImage(width, height, getImage().getAsBufferedImage().getType());
+		    
+                    for (int th = 0; th < width; th++){
+			for (int tw = 0; tw < height; tw++) {
+                            if (Color.WHITE.getRGB() == getImage().getAsBufferedImage().getRGB(th, tw)) {
+                                bi.setRGB(th, tw, Color.WHITE.getRGB());
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    for (int tw = 0; tw < height; tw++){
+			for (int th = 0; th < width; th++) {
+                            if (Color.WHITE.getRGB() == getImage().getAsBufferedImage().getRGB(th, tw)) {
+                                bi.setRGB(th, tw, Color.WHITE.getRGB());
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                        
+//                		Pixel pixel = getPixel(th, tw, tiledImage);
+//					if (!isFondo(pixel)){
+//						int vecinos = vecinosNoFondo(pixel, tiledImage);
+//						if(vecinos < 3){
+//							wr.setPixel(th, tw, negro);
+//						}else{
+//							wr.setPixel(th, tw, blanco);
+//						}	
+//						
+//					}
+//				}
+//			}
 					
-			tiledImage.releaseWritableTile(width, height);
-			return tiledImage;
+//			tiledImage.releaseWritableTile(width, height);
+//			return tiledImage;
+                    return PlanarImage.wrapRenderedImage(bi);
 		}
-		return null;
+                return null;
 	}
 
 	public String getCommandName() {

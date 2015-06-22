@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -11,16 +11,15 @@ import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.media.jai.InterpolationBilinear;
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterFactory;
 import javax.media.jai.TiledImage;
+import lunometro.procesamiento.ImageUtil;
+import lunometro.procesamiento.RgbHsv;
+import lunometro.procesamiento.clasificacion.CoeficientesRecta;
 
-import procesamiento.ImageUtil;
-import procesamiento.RgbHsv;
-import procesamiento.clasificacion.CoeficientesRecta;
 
 public class ObjetoUtil {
 	private static final int ORIENTACION_ABAJO = 90;
@@ -153,7 +152,7 @@ public class ObjetoUtil {
 		}
 	}
 	/**
-	 * Calcula el punto de intersección de dos rectas: <a * x + b * y + c = 0> y <d * x + e * y + f = 0> 
+	 * Calcula el punto de intersecciï¿½n de dos rectas: <a * x + b * y + c = 0> y <d * x + e * y + f = 0> 
 	 * @param a
 	 * @param b
 	 * @param c
@@ -395,7 +394,7 @@ public class ObjetoUtil {
 	}
 	
 	/**
-	 * Calcula la media del vector de valores pasado como parámetro
+	 * Calcula la media del vector de valores pasado como parï¿½metro
 	 * @param vector
 	 * @return Valor medio
 	 */
@@ -411,7 +410,7 @@ public class ObjetoUtil {
 	}
 	
 	/**
-	 * Calcula la media del vector de valores pasado como parámetro
+	 * Calcula la media del vector de valores pasado como parï¿½metro
 	 * @param vector
 	 * @return Valor medio
 	 */

@@ -1,20 +1,20 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.ArrayList;
 import java.util.List;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
+import lunometro.objeto.RasgoObjeto;
 
-import objeto.Objeto;
-import objeto.Pixel;
-import objeto.RasgoObjeto;
 
 public class Curvatura extends EvaluadorRasgo {
 	/**
-	 * Porcentaje de la longitud del contorno de objeto con el cuál se define el tamaño del segmento
+	 * Porcentaje de la longitud del contorno de objeto con el cuï¿½l se define el tamaï¿½o del segmento
 	 */
 	private int porcTamanioSegmento = 2;
 	
 	/**
-	 * Angulo de variación más allá del cuál se concidera que la dirección del contorno cambia
+	 * Angulo de variaciï¿½n mï¿½s allï¿½ del cuï¿½l se concidera que la direcciï¿½n del contorno cambia
 	 */
 	private int anguloDesvio = 30;
 

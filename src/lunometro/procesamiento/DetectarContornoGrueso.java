@@ -1,9 +1,9 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import javax.media.jai.PlanarImage;
 /**
  * Comando que detecta el contorno grueso de los objetos de una imagen.<br>
- * Realiza la resta entre una imagen binaria (blanco y negro) y su erosión.
+ * Realiza la resta entre una imagen binaria (blanco y negro) y su erosiï¿½n.
  * El resultado es una imagen con el contorno grueso de los objetos.
  *
  */

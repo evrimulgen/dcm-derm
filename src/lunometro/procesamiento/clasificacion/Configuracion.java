@@ -1,6 +1,6 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import procesamiento.HSVRange;
+import lunometro.procesamiento.HSVRange;
 
 
 public class Configuracion {
@@ -13,32 +13,32 @@ public class Configuracion {
 	private String nombreSistema;
 	
 	/**
-	 * Valor H mínimo
+	 * Valor H mï¿½nimo
 	 */
 	private Float fondoHMin;
 	
 	/**
-	 * Valor H máximo
+	 * Valor H mï¿½ximo
 	 */
 	private Float fondoHMax;
 	
 	/**
-	 * Valor S mínimo
+	 * Valor S mï¿½nimo
 	 */
 	private Float fondoSMin;
 	
 	/**
-	 * Valor S máximo
+	 * Valor S mï¿½ximo
 	 */
 	private Float fondoSMax;
 	
 	/**
-	 * Valor V mínimo
+	 * Valor V mï¿½nimo
 	 */
 	private Float fondoVMin;
 	
 	/**
-	 * Valor V máximo
+	 * Valor V mï¿½ximo
 	 */
 	private Float fondoVMax;
 	

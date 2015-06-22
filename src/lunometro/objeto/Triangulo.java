@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 public class Triangulo {
 	private Pixel p1;
@@ -37,7 +37,7 @@ public class Triangulo {
 	}
 
 	/**
-	 * Retorna si un pixel se encuentra dentro del triángulo
+	 * Retorna si un pixel se encuentra dentro del triï¿½ngulo
 	 * 
 	 * @param p
 	 * @return

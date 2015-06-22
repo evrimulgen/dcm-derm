@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.RenderingHints;
 import java.awt.image.renderable.ParameterBlock;
@@ -8,7 +8,7 @@ import javax.media.jai.KernelJAI;
 import javax.media.jai.PlanarImage;
 
 /**
- * Comando que ejecuta la operación Erosión sobre una imagen binaria
+ * Comando que ejecuta la operaciï¿½n Erosiï¿½n sobre una imagen binaria
  *
  */
 public class Erode extends AbstractImageCommand {
@@ -73,7 +73,7 @@ public class Erode extends AbstractImageCommand {
 	 * @see procesamiento.ImageComand#getCommandName()
 	 */
 	public String getCommandName() {
-		return "Erosión";
+		return "Erosiï¿½n";
 	}
 
 	/*

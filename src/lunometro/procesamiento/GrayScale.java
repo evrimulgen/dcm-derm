@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.image.WritableRaster;
@@ -7,14 +7,14 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
 /**
- * Comando que realiza la operación convertir a escala de grises una imagen
+ * Comando que realiza la operaciï¿½n convertir a escala de grises una imagen
  *
  */
 public class GrayScale extends AbstractImageCommand {
 
 	public GrayScale(PlanarImage image) {
 		super(image);
-	}
+        }
 
 	protected int colorRGBtoSRGB(Color colorValueRGB) {
 		int colorSRGB;

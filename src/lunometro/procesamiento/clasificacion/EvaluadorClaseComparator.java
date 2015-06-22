@@ -1,4 +1,4 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.Comparator;
 
