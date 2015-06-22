@@ -1,18 +1,17 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import objeto.Objeto;
-import objeto.ObjetoUtil;
-import objeto.Pixel;
-import objeto.RasgoClase;
-import objeto.RasgoObjeto;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.ObjetoUtil;
+import lunometro.objeto.Pixel;
+import lunometro.objeto.RasgoClase;
+import lunometro.objeto.RasgoObjeto;
 
 public class SumaAngulos extends EvaluadorRasgo {
 	/**
-	 * Cantidad de pixeles del contorno a utilizar para ver si un pixel se desvía 
-	 * demasiado del contorno. Lo que indicaría que pertenece a otro objeto
+	 * Cantidad de pixeles del contorno a utilizar para ver si un pixel se desvï¿½a 
+	 * demasiado del contorno. Lo que indicarï¿½a que pertenece a otro objeto
 	 */
 	private int ventanaPixeles = 10;
 	
@@ -102,7 +101,7 @@ public class SumaAngulos extends EvaluadorRasgo {
 
 	
 	/**
-	 * Retorna 1 si el Maiz esta quebrado, 0 si no lo está.
+	 * Retorna 1 si el Maiz esta quebrado, 0 si no lo estï¿½.
 	 */
 	public RasgoObjeto calcularValor(Objeto objeto) {
 		List<Pixel> contorno = objeto.getContorno();

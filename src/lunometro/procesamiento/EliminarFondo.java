@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.image.WritableRaster;
 
@@ -14,7 +14,7 @@ public class EliminarFondo extends AbstractImageCommand {
 	
 	/**
 	 * Rango de valores HSV para determinar que es un objeto y que no.
-	 * Si está seteado se usa este rango para binarizar la imagen
+	 * Si estï¿½ seteado se usa este rango para binarizar la imagen
 	 */
 	private HSVRange rangeObjeto = null;
 

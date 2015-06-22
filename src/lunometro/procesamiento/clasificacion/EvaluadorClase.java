@@ -1,13 +1,13 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lunometro.objeto.Clase;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.RasgoObjeto;
 
-import objeto.Clase;
-import objeto.Objeto;
-import objeto.RasgoObjeto;
 
 /**
  * Clase que define la interfaz necesaria para saber si un objeto

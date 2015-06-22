@@ -98,7 +98,7 @@ public class BinaryConverter {
  
             float varBetween = (float) wB * (float) wF * (mB - mF) * (mB - mF);
  
-            if(varBetween > (varMax*0.99)) {
+            if(varBetween > varMax) {
                 varMax = varBetween;
                 threshold = i;
             }

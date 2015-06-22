@@ -1,6 +1,6 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import objeto.Objeto;
+import lunometro.objeto.Objeto;
 
 public class ObjetoReferencia {
 	// /**
