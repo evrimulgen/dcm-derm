@@ -1,15 +1,13 @@
-package procesamiento;
-
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.WritableRaster;
-
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
+import lunometro.objeto.Pixel;
 
-import objeto.Pixel;
 
 
 /**
@@ -27,7 +25,7 @@ public class Binarizar extends AbstractImageCommand {
 	
 	/**
 	 * Rango de valores HSV para determinar que es un objeto y que no.
-	 * Si está seteado se usa este rango para binarizar la imagen
+	 * Si estï¿½ seteado se usa este rango para binarizar la imagen
 	 */
 	private HSVRange rangeObjeto = null;
 
@@ -127,7 +125,7 @@ public class Binarizar extends AbstractImageCommand {
 									}
 									
 									float[] hsv = RgbHsv.RGBtoHSV(r, g, b);
-									
+									//esto no!!!!
 									if(hsv[0]>7 && hsv[0]<50){
 										wr.setPixel(x, y, negro);
 									}else{

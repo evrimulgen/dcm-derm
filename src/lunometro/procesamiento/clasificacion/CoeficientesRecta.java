@@ -1,6 +1,7 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import objeto.Pixel;
+import lunometro.objeto.Pixel;
+
 
 /**
  * Clase que contiene los coeficientes a, b y c de la recta a * x + b * y + c = 0

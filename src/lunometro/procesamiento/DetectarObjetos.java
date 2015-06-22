@@ -1,31 +1,30 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
 
-import objeto.Objeto;
-import objeto.Pixel;
 
 /**
- * Comando que realiza la detección de los objetos. 
+ * Comando que realiza la detecciï¿½n de los objetos. 
  *
  */
 public class DetectarObjetos extends AbstractImageCommand { 
 	
 	private static PlanarImage originalImage;
-	private HSVRange hsvRange;
+//	private HSVRange hsvRange;
 	private List<Objeto> objetos = new ArrayList<Objeto>();
 	
 
 	/**
 	 * Constructor
 	 * @param image Imagen a procesar
-	 * @param originalImage Imagen original sin ningún procesamiento
+	 * @param originalImage Imagen original sin ningï¿½n procesamiento
 	 * @param hsvRange Rango de valores HSV para detectar el fondo de la imagen
 	 * @throws Exception 
 	 */
@@ -34,19 +33,19 @@ public class DetectarObjetos extends AbstractImageCommand {
 			HSVRange hsvRange) throws Exception {
 		super(image);
 		this.originalImage = originalImage;
-		this.hsvRange = hsvRange;
+//		this.hsvRange = hsvRange;
 		init();
 	}
 	
 	/**
-	 * Inicialización de la clase
+	 * Inicializaciï¿½n de la clase
 	 * @throws Exception 
 	 */
 	protected void init() throws Exception{
 	}
 
 	/**
-	 * Implementa el algoritmo de detección de los objetos.
+	 * Implementa el algoritmo de deteccion de los objetos.
 	 * Realiza la siguiente secuencia de procesamiento:
 	 * 	1- Convierte a escala de gris
 	 * 	2- Binariza la imagen usando el otsuMethod
@@ -57,20 +56,20 @@ public class DetectarObjetos extends AbstractImageCommand {
 	 * 	6- Detecta el contorno exterior de 1 pixel de los objetos
 	 */
 	public PlanarImage execute() {
-		if (getOriginalImage() != null && getHsvRange() != null) {
+		if (getOriginalImage() != null) {
 			
-			GrayScale gs = new GrayScale(this.getImage());
-			OtsuBinarize obRed = new OtsuBinarize(gs.execute(), "RED");
+//			GrayScale gs = new GrayScale(this.getImage());
+//			OtsuBinarize obRed = new OtsuBinarize(gs.execute(), "RED");
+//			
+//			PlanarImage binaryImage = obRed.execute();
+//			
+//			FillHole fh = new FillHole(binaryImage, 255);
+//			PlanarImage output = fh.execute(); 
 			
-			PlanarImage binaryImage = obRed.execute();
-			
-			FillHole fh = new FillHole(binaryImage, 0);
-			PlanarImage output = fh.execute(); 
-			
-			DetectarContorno dc = new DetectarContorno(output, getOriginalImage(), new Color(0, 0, 0), Color.RED);
-			dc.setBinaryImage(binaryImage);
-			dc.setRangeFondo(getHsvRange());
-			output = dc.execute();
+			DetectarContorno dc = new DetectarContorno(getOriginalImage(), getOriginalImage(), new Color(0, 0, 0), Color.RED);
+			dc.setBinaryImage(getOriginalImage());
+//			dc.setRangeFondo(getHsvRange());
+			PlanarImage output = dc.execute();
 
 			List<Objeto> objetos = dc.getObjetos();			
 			dc.postExecute();
@@ -85,7 +84,7 @@ public class DetectarObjetos extends AbstractImageCommand {
 	}
 	
 	/**
-	 * Pinta el pixel (x,y) de la imagen con el color pasado como parámetro
+	 * Pinta el pixel (x,y) de la imagen con el color pasado como parï¿½metro
 	 * 
 	 * @param image
 	 * @param x
@@ -140,13 +139,13 @@ public class DetectarObjetos extends AbstractImageCommand {
 		this.originalImage = originalImage;
 	}
 
-	public HSVRange getHsvRange() {
-		return hsvRange;
-	}
-
-	public void setHsvRange(HSVRange hsvRange) {
-		this.hsvRange = hsvRange;
-	}
+//	public HSVRange getHsvRange() {
+//		return hsvRange;
+//	}
+//
+//	public void setHsvRange(HSVRange hsvRange) {
+//		this.hsvRange = hsvRange;
+//	}
 
 	public List<Objeto> getObjetos() {
 		return objetos;

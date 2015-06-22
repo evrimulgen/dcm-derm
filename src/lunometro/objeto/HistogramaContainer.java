@@ -1,7 +1,7 @@
 /**
  * 
  */
-package objeto;
+package lunometro.objeto;
 
 import java.util.List;
 
