@@ -1,11 +1,11 @@
-package objeto;
+package lunometro.objeto;
 
 import java.util.Comparator;
 
 public class PixelComparator implements Comparator<Pixel> {
 	
 	/**
-	 * Flag que indica si se invierte la comparación
+	 * Flag que indica si se invierte la comparaciï¿½n
 	 */
 	private boolean invert = false;
 	

@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import javax.media.jai.PlanarImage;
 /**
@@ -7,13 +7,13 @@ import javax.media.jai.PlanarImage;
  */
 public interface ImageComand {
 	/**
-	 * Método que ejecuta una operación sobre la imagen
+	 * Mï¿½todo que ejecuta una operaciï¿½n sobre la imagen
 	 * @return Imagen resultante del procesamiento
 	 */
 	public PlanarImage execute();
 	
 	/**
-	 * Deshace los cambios realizados sobre la imagen en el método execute
+	 * Deshace los cambios realizados sobre la imagen en el mï¿½todo execute
 	 * @return Imagen antes de realizar el procesamiento
 	 */
 	public PlanarImage undo();
@@ -25,12 +25,12 @@ public interface ImageComand {
 	public String getCommandName();
 	
 	/**
-	 * Operaciones a realizar después de ejecutar el comando
+	 * Operaciones a realizar despuï¿½s de ejecutar el comando
 	 */
 	public void postExecute();
 	
 	/**
-	 * Retorna un texto que da información el procesamiento realizado sobre la imagen
+	 * Retorna un texto que da informaciï¿½n el procesamiento realizado sobre la imagen
 	 * @return
 	 */
 	public String getInfo();

@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.RenderingHints;
 import java.awt.image.renderable.ParameterBlock;
@@ -7,7 +7,7 @@ import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 
 /**
- * Comando que realiza la operación de resta de dos imagenes binarias
+ * Comando que realiza la operaciï¿½n de resta de dos imagenes binarias
  *
  */
 public class Resta extends AbstractImageCommand {

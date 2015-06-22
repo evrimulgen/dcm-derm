@@ -1,7 +1,7 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import objeto.Objeto;
-import objeto.Pixel;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
 /**
  * Clase que contiene la division de un objeto en dos
  *

@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Window;
 import java.awt.image.BufferedImage;
@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 import javax.media.jai.PlanarImage;
 
 /**
- * Interfaz que define métodos para administrar comandos ejecutados sobre una imagen
+ * Interfaz que define mï¿½todos para administrar comandos ejecutados sobre una imagen
  *
  */
 public interface IImageProcessing {
@@ -31,8 +31,8 @@ public interface IImageProcessing {
 	/**
 	 * Agrega un comando ejecutado sobre la imagen
 	 * @param comand Comando
-	 * @param info Información del comando
-	 * @param executeTime Tiempo de ejecución
+	 * @param info Informaciï¿½n del comando
+	 * @param executeTime Tiempo de ejecuciï¿½n
 	 */
 	public void addExecutedCommand(ImageComand comand, String info, long executeTime);
 	

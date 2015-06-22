@@ -1,4 +1,4 @@
-package lunometro.procesamiento.jai.operators;
+package lunometro.operators;
 
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -8,7 +8,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.awt.image.renderable.ParameterBlock;
 import java.awt.image.renderable.RenderedImageFactory;
-
 import javax.media.jai.ImageLayout;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.PointOpImage;
