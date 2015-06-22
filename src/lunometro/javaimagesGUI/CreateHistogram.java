@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package javaimagesGUI;
+package lunometro.javaimagesGUI;
 
 import java.awt.Color;
 import javax.swing.JPanel;
@@ -66,7 +66,7 @@ public class CreateHistogram {
         jPanelHistogram.removeAll();
         jPanelHistogram.repaint();
         jPanelHistogram.setLayout(new java.awt.BorderLayout());
-        jPanelHistogram.add(new ChartPanel(chart));
+       // jPanelHistogram.add(new ChartPanel(chart));
         jPanelHistogram.validate();    
     }
 }

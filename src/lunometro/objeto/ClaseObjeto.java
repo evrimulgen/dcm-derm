@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 
 public class ClaseObjeto implements Cloneable{

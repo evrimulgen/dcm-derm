@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 
 public class RasgoClase {
@@ -15,7 +15,7 @@ public class RasgoClase {
 	private Double media;
  
 	/**
-	 * Desvío estándar del rasgo para los objetos de la clase.
+	 * Desvï¿½o estï¿½ndar del rasgo para los objetos de la clase.
 	 */
 	private Double desvioEstandar = 0.0;
 	
@@ -36,24 +36,24 @@ public class RasgoClase {
 
 
 	/**
-	 * Valor máximo del rasgo para los objetos de la clase.
+	 * Valor mï¿½ximo del rasgo para los objetos de la clase.
 	 */
 	private Double maximo;
 
 	/**
-	 * Valor máximo real del rasgo para los objetos de la clase.
-	 * El atributo máximo puede no ser el máximo real de los objetos clasificados, esto depende de si
+	 * Valor mï¿½ximo real del rasgo para los objetos de la clase.
+	 * El atributo mï¿½ximo puede no ser el mï¿½ximo real de los objetos clasificados, esto depende de si
 	 * el rango es variable o no y del valor por defecto inicial para el valor minimo. 
 	 */
 	private Double maximoReal;
 
 	/**
-	 * Valor mínimo del rasgo para los objetos de la clase.
+	 * Valor mï¿½nimo del rasgo para los objetos de la clase.
 	 */
 	private Double minimo;
 	
 	/**
-	 * Valor mínimo real del rasgo para los objetos de la clase.
+	 * Valor mï¿½nimo real del rasgo para los objetos de la clase.
 	 * El atributo minimo puede no ser el minimo real de los objetos clasificados, esto depende de si
 	 * el rango es variable o no y del valor por defecto inicial para el valor minimo. 
 	 */

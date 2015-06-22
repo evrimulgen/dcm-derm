@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 
 import java.awt.BorderLayout;
@@ -10,17 +10,13 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
-
-
 import javax.media.jai.*;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
-
-import objeto.Objeto;
-
 import com.sun.media.jai.codecimpl.util.RasterFactory;
 import com.sun.media.jai.widget.DisplayJAI;
+import lunometro.objeto.Objeto;
 
 public class DetectarColores {
 
@@ -65,7 +61,7 @@ public class DetectarColores {
 						if (img.medida() > 2000){
 							if(img.medida() > 10000){
 								cantidadDeObjetos++;
-								System.out.println("Maiz de tamaño sano: "+cantidadDeObjetos+ " tamaño: " + img.medida());
+								System.out.println("Maiz de tamaï¿½o sano: "+cantidadDeObjetos+ " tamaï¿½o: " + img.medida());
 								Color col = img.colorPromedio();
 								System.out.println(cantidadDeObjetos+ " Color Promedio: " + col.toString());
 								
@@ -78,7 +74,7 @@ public class DetectarColores {
 									manejador.repitarImagenColor(offset, nbands, 10, 250, 10, img);
 								
 							}else{
-								System.out.println("Maiz roto de tamaño: " + img.medida());
+								System.out.println("Maiz roto de tamaï¿½o: " + img.medida());
 								manejador.repitar(offset, nbands, 250, 10, 10);
 							}
 								
@@ -115,12 +111,12 @@ public class DetectarColores {
 		String imageInfo ="Dimensions: "+image.getWidth()+"x"+image.getHeight()+ " Bands:"+image.getNumBands();
 		JFrame frame = new JFrame();
 		frame.setTitle("DisplayJAI: "+args[0]);
-		// Get the JFrame’s ContentPane.
+		// Get the JFrameï¿½s ContentPane.
 		Container contentPane = frame.getContentPane();
 		contentPane.setLayout(new BorderLayout());
 		// Create an instance of DisplayJAI.
 		DisplayJAI dj = new DisplayJAI(image);
-		// Add to the JFrame’s ContentPane an instance of JScrollPane
+		// Add to the JFrameï¿½s ContentPane an instance of JScrollPane
 		// containing the DisplayJAI instance.
 		contentPane.add(new JScrollPane(dj),BorderLayout.CENTER);
 		// Add a text label with the image information.

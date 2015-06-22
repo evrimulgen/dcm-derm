@@ -1,4 +1,4 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;

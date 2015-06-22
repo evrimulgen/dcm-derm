@@ -1,10 +1,10 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
 import java.util.Comparator;
 
 public class EvaluadorRasgoComparator implements Comparator<EvaluadorRasgo> {
 	/**
-	 * Compara los pesos de los objetos RasgoClase pasados como parámetro.
+	 * Compara los pesos de los objetos RasgoClase pasados como parï¿½metro.
 	 * Ordena en orden decreciente de peso.
 	 */
 	public int compare(EvaluadorRasgo o1, EvaluadorRasgo o2) {

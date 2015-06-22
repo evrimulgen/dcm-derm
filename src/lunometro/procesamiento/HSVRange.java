@@ -1,9 +1,9 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 
 /**
- * Clase que contiene valores mínimos y máximos de los componentes de un color HSV 
+ * Clase que contiene valores mï¿½nimos y mï¿½ximos de los componentes de un color HSV 
  *
  */
 public class HSVRange {
@@ -17,32 +17,32 @@ public class HSVRange {
 
 
 	/**
-	 * Valor H mínimo
+	 * Valor H mï¿½nimo
 	 */
 	private Float hMin;
 	
 	/**
-	 * Valor H máximo
+	 * Valor H mï¿½ximo
 	 */
 	private Float hMax;
 	
 	/**
-	 * Valor S mínimo
+	 * Valor S mï¿½nimo
 	 */
 	private Float sMin;
 	
 	/**
-	 * Valor S máximo
+	 * Valor S mï¿½ximo
 	 */
 	private Float sMax;
 	
 	/**
-	 * Valor V mínimo
+	 * Valor V mï¿½nimo
 	 */
 	private Float vMin;
 	
 	/**
-	 * Valor V máximo
+	 * Valor V mï¿½ximo
 	 */
 	private Float vMax;
 

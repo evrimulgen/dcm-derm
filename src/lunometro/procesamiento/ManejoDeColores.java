@@ -1,11 +1,10 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import objeto.Objeto;
-import objeto.Pixel;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
 
 public class ManejoDeColores {
 	private Color colorDeFondo = null;

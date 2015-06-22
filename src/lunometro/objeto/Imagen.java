@@ -1,4 +1,4 @@
-package objeto;
+package lunometro.objeto;
 
 import java.awt.Color;
 import java.util.ArrayList;

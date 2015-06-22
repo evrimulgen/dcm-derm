@@ -1,9 +1,9 @@
-package procesamiento;
+package lunometro.procesamiento;
 
 import java.awt.image.Raster;
 
 /**
- * Clase que contiene métodos para hacer conversiones entre formatos HSV y RGB
+ * Clase que contiene mï¿½todos para hacer conversiones entre formatos HSV y RGB
  * 
  * 
  */

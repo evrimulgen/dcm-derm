@@ -1,9 +1,11 @@
-package procesamiento.clasificacion;
+package lunometro.procesamiento.clasificacion;
 
-import objeto.Objeto;
-import objeto.Pixel;
-import objeto.RasgoClase;
-import objeto.RasgoObjeto;
+import lunometro.objeto.Objeto;
+import lunometro.objeto.Pixel;
+import lunometro.objeto.RasgoClase;
+import lunometro.objeto.RasgoObjeto;
+
+
 
 public class Circularidad extends EvaluadorRasgo {
 
