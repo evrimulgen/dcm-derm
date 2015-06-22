@@ -7,11 +7,12 @@ import ij.process.*;
 import ij.gui.*;
 import ij.measure.ResultsTable;
 
+
 /**	This is an extended ParticleAnalyzer that creates a copy of the
 	image that has each measured particle erased to the current foreground color.
 	For stacks, the particles are erased in place.
 */
-public class Particle_Remover implements PlugIn {
+public class ParticleRemover implements PlugIn {
 
         private ImagePlus impr = null;
         
@@ -23,7 +24,7 @@ public class Particle_Remover implements PlugIn {
 		ImageStack stack = imp.getStack();
 		int stackSize = imp.getStackSize();
 		int currentSlice = imp.getCurrentSlice();
-		CustomAnalyzer pa = new CustomAnalyzer(32,0,null,0,50);
+		CustomAnalyzer pa = new CustomAnalyzer(32,0,null,0,200);
 		int code = 415;//pa.setup(arg, imp);
 		if (code==PlugInFilter.DONE)
 			return;
@@ -59,7 +60,6 @@ public class Particle_Remover implements PlugIn {
             return impr;
         }
 }
-
 class CustomAnalyzer extends ParticleAnalyzer {
 	ImageProcessor ip2;
 	boolean error;

@@ -72,6 +72,7 @@ public class ImageProcessing extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         areaField = new javax.swing.JTextField();
         perimeterField = new javax.swing.JTextField();
+        diamField = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
@@ -128,7 +129,8 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(areaField)
-                    .addComponent(perimeterField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
+                    .addComponent(perimeterField)
+                    .addComponent(diamField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
                 .addGap(37, 37, 37))
         );
         jPanel2Layout.setVerticalGroup(
@@ -144,7 +146,9 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(diamField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Borde", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.TOP, new java.awt.Font("DejaVu Sans", 0, 12))); // NOI18N
@@ -397,15 +401,18 @@ public class ImageProcessing extends javax.swing.JDialog {
         OtsuThresholding_ otsu = (OtsuThresholding_) IJ.runPlugIn(imp, "in.raster.mayam.process.OtsuThresholding_", "");
         ImagePlus tempImp = otsu.getImp();
         IJ.run(tempImp, "Fill Holes", "");
-        Particle_Remover pr = (Particle_Remover) IJ.runPlugIn(tempImp, "in.raster.mayam.process.Particle_Remover", "size=0-50 circularity=0.00-1.00 show=Nothing");
+        ParticleRemover pr = (ParticleRemover) IJ.runPlugIn(tempImp, "in.raster.mayam.process.ParticleRemover", "size=0-50 circularity=0.00-1.00 show=Nothing");
         
         CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(pr.getImp(), "in.raster.mayam.process.CustomParticleAnalyzerPlugin","size=0-infinity circularity=0.00-1.00 show=Nothing");
         this.areaField.setText(String.valueOf(cpa.getArea()));
         this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
-
-        RegionExtraction re = new RegionExtraction(imgM, pr.getImp().getBufferedImage());
+        this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
         
-        imgPane.setImage(re.execute());
+        RegionExtraction re = new RegionExtraction(imgM, pr.getImp().getBufferedImage());
+        imp = new ImagePlus("",re.execute(cpa.getCentroid()));
+        IJ.runPlugIn(imp,"in.raster.mayam.process.ColorCounter", "");
+        
+        imgPane.setImage(imp.getBufferedImage());
     }//GEN-LAST:event_analyzeButtonActionPerformed
 
     private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
@@ -446,6 +453,7 @@ public class ImageProcessing extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton analyzeButton;
     private javax.swing.JTextField areaField;
+    private javax.swing.JTextField diamField;
     private javax.swing.JLabel imgIcon;
     private javax.swing.JScrollPane imgScrollPane;
     private javax.swing.JComboBox jComboBox1;

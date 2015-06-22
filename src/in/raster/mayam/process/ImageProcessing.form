@@ -168,7 +168,8 @@
                       <EmptySpace pref="39" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="areaField" max="32767" attributes="0"/>
-                          <Component id="perimeterField" pref="97" max="32767" attributes="0"/>
+                          <Component id="perimeterField" max="32767" attributes="0"/>
+                          <Component id="diamField" pref="97" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
                   </Group>
@@ -189,7 +190,10 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="diamField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -230,6 +234,8 @@
             <Component class="javax.swing.JTextField" name="areaField">
             </Component>
             <Component class="javax.swing.JTextField" name="perimeterField">
+            </Component>
+            <Component class="javax.swing.JTextField" name="diamField">
             </Component>
           </SubComponents>
         </Container>

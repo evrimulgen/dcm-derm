@@ -6,6 +6,7 @@ package in.raster.mayam.process;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 /**
@@ -23,7 +24,7 @@ public class RegionExtraction {
         this.binary = binary;
     }
     
-    public BufferedImage execute() {
+    public BufferedImage execute(Point centroid) {
        if (original != null) {
            
            BufferedImage copy = new BufferedImage(original.getWidth(),original.getHeight(),BufferedImage.TYPE_INT_RGB);
@@ -35,6 +36,9 @@ public class RegionExtraction {
                for (int j = 0; j < binary.getHeight(); j++) {
                    if (binary.getRGB(i, j) == Color.WHITE.getRGB()) {
                        copy.setRGB(i, j, Color.WHITE.getRGB());
+                   }
+                   if (i == centroid.x && j == centroid.y) {
+                       copy.setRGB(i, j, Color.GREEN.getRGB());
                    }
                }
            }

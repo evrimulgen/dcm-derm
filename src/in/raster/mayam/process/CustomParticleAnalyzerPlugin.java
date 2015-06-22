@@ -9,7 +9,6 @@ import ij.gui.*;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 
 /**
 * "AnalyzeParticles" for each slice of stack
@@ -34,7 +33,7 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
 		if (imp.getBitDepth()==24)
 			{IJ.error("Grayscale image required"); return;}
                 rt = new ResultsTable();
-		CustomParticleAnalyzer pa = new CustomParticleAnalyzer(32,Analyzer.getMeasurements()|Measurements.AREA|Measurements.PERIMETER,rt,0,Double.POSITIVE_INFINITY);
+		CustomParticleAnalyzer pa = new CustomParticleAnalyzer(32,Analyzer.getMeasurements()|Measurements.AREA|Measurements.PERIMETER|Measurements.CENTROID,rt,0,Double.POSITIVE_INFINITY);
 		int flags = 415; //pa.setup(args, imp);
 		if (flags==PlugInFilter.DONE)
 			return;
@@ -56,6 +55,15 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
             return new BigDecimal(rt.getValueAsDouble(ResultsTable.PERIMETER,0))
                     .setScale(2, RoundingMode.HALF_UP).doubleValue();
         }
+        
+        public Double getFeretDiam() {
+            return rt.getValueAsDouble(ResultsTable.FERET, 0);
+        }
+        
+        public Point getCentroid() {
+            return new Point (Double.valueOf(rt.getValueAsDouble(ResultsTable.X_CENTROID, 0)).intValue(),
+                Double.valueOf(rt.getValueAsDouble(ResultsTable.Y_CENTROID, 0)).intValue());
+        }
 }
 
 class CustomParticleAnalyzer extends ParticleAnalyzer {
@@ -76,7 +84,7 @@ class CustomParticleAnalyzer extends ParticleAnalyzer {
 		rt.addValue("Ytopl", y);
 		rt.addValue("nCoord", coordinates);
 		//if (showResults)
-		//	analyzer.displayResults();
+			analyzer.displayResults();
 	}
 	    
 }
