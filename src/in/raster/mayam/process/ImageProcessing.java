@@ -12,10 +12,12 @@ import com.pixelmed.dicom.DicomException;
 import com.pixelmed.dicom.LongStringAttribute;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.measure.Measurements;
-import ij.process.ImageStatistics;
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.models.ResultModel;
+import in.raster.mayam.process.rgrowing.MultiRegionManagerModel;
+import in.raster.mayam.process.rgrowing.MultiRegionManagerView;
+import in.raster.mayam.process.rgrowing.RegionGrowingModel;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -27,6 +29,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JColorChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -37,15 +41,22 @@ import javax.swing.JScrollPane;
  */
 public class ImageProcessing extends javax.swing.JDialog {
 
-    private BufferedImage imgM = null;
+    private BufferedImage originalImage = null;
+    private BufferedImage isolatedImage = null;
+    private BufferedImage outlinedImage = null;
+    private BufferedImage binaryImage = null;
     private ImagePanel imgPane = null;
     private double scale = 1.0;
+    private static int SEG_OPT_NONE = 0;
+    private static int SEG_OPT_OTSU = 1;
+    private static int SEG_OPT_RGROWING = 2;
+    
     /**
      * Creates new form ImageProcessing
      */
     public ImageProcessing(BufferedImage img) {
         setModal(true);
-        imgM = img;
+        originalImage = img;
         imgPane = new ImagePanel(img);
         imgPane.addMouseWheelListener(new ZoomListener());
         initComponents();
@@ -73,9 +84,12 @@ public class ImageProcessing extends javax.swing.JDialog {
         areaField = new javax.swing.JTextField();
         perimeterField = new javax.swing.JTextField();
         diamField = new javax.swing.JTextField();
+        symField = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        circField = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
+        jTextField1 = new javax.swing.JTextField();
         jPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
@@ -87,16 +101,35 @@ public class ImageProcessing extends javax.swing.JDialog {
         patienNameLabel = new javax.swing.JLabel();
         studyDateLabel = new javax.swing.JLabel();
         studyDescLabel = new javax.swing.JLabel();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanel4 = new javax.swing.JPanel();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        grayFromButton = new javax.swing.JButton();
+        grayToButton = new javax.swing.JButton();
+        redFromButton = new javax.swing.JButton();
+        redToButton = new javax.swing.JButton();
+        brownFromButton = new javax.swing.JButton();
+        javax.swing.JButton brownToButton = new javax.swing.JButton();
+        grayFromIcon = new javax.swing.JPanel();
+        redFromIcon = new javax.swing.JPanel();
+        brownFromIcon = new javax.swing.JPanel();
+        grayToIcon = new javax.swing.JPanel();
+        redToIcon = new javax.swing.JPanel();
+        brownToIcon = new javax.swing.JPanel();
         imgScrollPane = new JScrollPane(imgPane);
-        jComboBox1 = new javax.swing.JComboBox();
+        algoCombo = new javax.swing.JComboBox();
         analyzeButton = new javax.swing.JButton();
         undoButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
         saveInDicom = new javax.swing.JCheckBox();
+        showCombo = new javax.swing.JComboBox();
+        jLabel15 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(ApplicationContext.currentBundle.getString("ImageProcessing.window.title")); // NOI18N
-        setAlwaysOnTop(true);
         setResizable(false);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -115,6 +148,11 @@ public class ImageProcessing extends javax.swing.JDialog {
         jLabel4.setFont(new java.awt.Font("DejaVu Sans", 0, 10)); // NOI18N
         jLabel4.setText("Diametro");
 
+        jLabel11.setFont(new java.awt.Font("DejaVu Sans", 0, 10)); // NOI18N
+        jLabel11.setText("Circularidad");
+
+        circField.setEditable(false);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -125,13 +163,16 @@ public class ImageProcessing extends javax.swing.JDialog {
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(areaField)
                     .addComponent(perimeterField)
-                    .addComponent(diamField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
-                .addGap(37, 37, 37))
+                    .addComponent(diamField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
+                    .addComponent(symField)
+                    .addComponent(circField))
+                .addGap(34, 34, 34))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -144,11 +185,18 @@ public class ImageProcessing extends javax.swing.JDialog {
                     .addComponent(jLabel2)
                     .addComponent(perimeterField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(symField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
-                    .addComponent(diamField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(diamField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel11)
+                    .addComponent(circField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Borde", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.TOP, new java.awt.Font("DejaVu Sans", 0, 12))); // NOI18N
@@ -164,25 +212,17 @@ public class ImageProcessing extends javax.swing.JDialog {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel5)
-                .addContainerGap(161, Short.MAX_VALUE))
+                .addGap(29, 29, 29)
+                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(32, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel5)
-        );
-
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Colores", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.TOP, new java.awt.Font("DejaVu Sans", 0, 12))); // NOI18N
-        jPanel4.setPreferredSize(new java.awt.Dimension(371, 107));
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 228, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 47, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
+                .addContainerGap(7, Short.MAX_VALUE))
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Scores", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.TOP, new java.awt.Font("DejaVu Sans", 0, 12))); // NOI18N
@@ -242,52 +282,309 @@ public class ImageProcessing extends javax.swing.JDialog {
 
         studyDescLabel.setText("sdesc");
 
+        jTabbedPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        jTabbedPane1.setName("Colores"); // NOI18N
+
+        jPanel4.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel4.setPreferredSize(new java.awt.Dimension(371, 107));
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 245, Short.MAX_VALUE)
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 105, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Colores", jPanel4);
+
+        jPanel6.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        jLabel12.setText("Tonos Marron:");
+
+        jLabel13.setText("Tonos gris:");
+
+        jLabel14.setText("Tonos Rojos:");
+
+        grayFromButton.setText("...");
+        grayFromButton.setMaximumSize(new java.awt.Dimension(40, 25));
+        grayFromButton.setMinimumSize(new java.awt.Dimension(40, 25));
+        grayFromButton.setPreferredSize(new java.awt.Dimension(40, 25));
+        grayFromButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                grayFromButtonActionPerformed(evt);
+            }
+        });
+
+        grayToButton.setText("...");
+        grayToButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        grayToButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        grayToButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        grayToButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                grayToButtonActionPerformed(evt);
+            }
+        });
+
+        redFromButton.setText("...");
+        redFromButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        redFromButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        redFromButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        redFromButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redFromButtonActionPerformed(evt);
+            }
+        });
+
+        redToButton.setText("...");
+        redToButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        redToButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        redToButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        redToButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redToButtonActionPerformed(evt);
+            }
+        });
+
+        brownFromButton.setText("...");
+        brownFromButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        brownFromButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        brownFromButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        brownFromButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                brownFromButtonActionPerformed(evt);
+            }
+        });
+
+        brownToButton.setText("...");
+        brownToButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        brownToButton.setMinimumSize(new java.awt.Dimension(25, 25));
+        brownToButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        brownToButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                brownToButtonActionPerformed(evt);
+            }
+        });
+
+        grayFromIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        grayFromIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout grayFromIconLayout = new javax.swing.GroupLayout(grayFromIcon);
+        grayFromIcon.setLayout(grayFromIconLayout);
+        grayFromIconLayout.setHorizontalGroup(
+            grayFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        grayFromIconLayout.setVerticalGroup(
+            grayFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        redFromIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        redFromIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout redFromIconLayout = new javax.swing.GroupLayout(redFromIcon);
+        redFromIcon.setLayout(redFromIconLayout);
+        redFromIconLayout.setHorizontalGroup(
+            redFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        redFromIconLayout.setVerticalGroup(
+            redFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 23, Short.MAX_VALUE)
+        );
+
+        brownFromIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        brownFromIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout brownFromIconLayout = new javax.swing.GroupLayout(brownFromIcon);
+        brownFromIcon.setLayout(brownFromIconLayout);
+        brownFromIconLayout.setHorizontalGroup(
+            brownFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        brownFromIconLayout.setVerticalGroup(
+            brownFromIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        grayToIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        grayToIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout grayToIconLayout = new javax.swing.GroupLayout(grayToIcon);
+        grayToIcon.setLayout(grayToIconLayout);
+        grayToIconLayout.setHorizontalGroup(
+            grayToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        grayToIconLayout.setVerticalGroup(
+            grayToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        redToIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        redToIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout redToIconLayout = new javax.swing.GroupLayout(redToIcon);
+        redToIcon.setLayout(redToIconLayout);
+        redToIconLayout.setHorizontalGroup(
+            redToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        redToIconLayout.setVerticalGroup(
+            redToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 23, Short.MAX_VALUE)
+        );
+
+        brownToIcon.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        brownToIcon.setPreferredSize(new java.awt.Dimension(25, 25));
+
+        javax.swing.GroupLayout brownToIconLayout = new javax.swing.GroupLayout(brownToIcon);
+        brownToIcon.setLayout(brownToIconLayout);
+        brownToIconLayout.setHorizontalGroup(
+            brownToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 21, Short.MAX_VALUE)
+        );
+        brownToIconLayout.setVerticalGroup(
+            brownToIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 23, Short.MAX_VALUE)
+        );
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(jLabel12)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(brownFromButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel14)
+                            .addComponent(jLabel13))
+                        .addGap(22, 22, 22)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(redFromButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(grayFromButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                        .addComponent(redFromIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(redToButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                        .addComponent(grayFromIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(grayToButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                        .addComponent(brownFromIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(brownToButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGap(5, 5, 5)
+                        .addComponent(grayToIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(redToIcon, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(brownToIcon, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGap(7, 7, 7))
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(grayToIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel13)
+                        .addComponent(grayFromButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(grayToButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(grayFromIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel14)
+                            .addComponent(redFromButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(redToButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(7, 7, 7))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(redToIcon, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+                            .addComponent(redFromIcon, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(brownToIcon, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel12)
+                            .addComponent(brownFromButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(brownToButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(brownFromIcon, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
+                .addGap(8, 8, 8))
+        );
+
+        jTabbedPane1.addTab("Config", jPanel6);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(studyDateLabel))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(patienNameLabel)
-                    .addComponent(studyDescLabel)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(studyDescLabel))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(patienNameLabel))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(studyDateLabel))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 5, Short.MAX_VALUE))
+                    .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
+                .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(7, 7, 7)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(studyDateLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(patienNameLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(studyDescLabel)
-                .addContainerGap(19, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        algoCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Método segmentación...", "Otsu", "Region Growing" }));
 
         analyzeButton.setText("Calcular");
         analyzeButton.addActionListener(new java.awt.event.ActionListener() {
@@ -316,6 +613,16 @@ public class ImageProcessing extends javax.swing.JDialog {
         saveInDicom.setText(ApplicationContext.currentBundle.getString("ImageProcessing.saveInDicom")); // NOI18N
         saveInDicom.setToolTipText(ApplicationContext.currentBundle.getString("ImageProcessing.saveInDicom.tooltip")); // NOI18N
 
+        showCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Bordes", "Aislado", "Binario" }));
+        showCombo.setEnabled(false);
+        showCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showComboActionPerformed(evt);
+            }
+        });
+
+        jLabel15.setText("Ver:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -324,37 +631,47 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(imgScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 665, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
+                        .addGap(12, 12, 12)
                         .addComponent(analyzeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(undoButton, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(24, 24, 24)
+                        .addComponent(algoCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel15)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(showCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(saveInDicom)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(7, 7, 7)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(analyzeButton, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(undoButton)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(saveInDicom)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(7, 7, 7)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(undoButton)
+                            .addComponent(algoCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(analyzeButton)
+                            .addComponent(showCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel15)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(saveInDicom)
+                            .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(imgScrollPane))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -362,8 +679,100 @@ public class ImageProcessing extends javax.swing.JDialog {
 
     private void analyzeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_analyzeButtonActionPerformed
 
-//        long ini = System.currentTimeMillis();
+        if (algoCombo.getSelectedIndex()== SEG_OPT_NONE) {
+            JOptionPane.showMessageDialog(this, "mensaje", "title", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (this.algoCombo.getSelectedIndex() == SEG_OPT_OTSU) {
+            ImagePlus imp = new ImagePlus("", originalImage);
+            IJ.run(imp, "8-bit", "");
+            OtsuThresholding_ otsu = (OtsuThresholding_) IJ.runPlugIn(imp, "in.raster.mayam.process.OtsuThresholding_", "");
+            ImagePlus tempImp = otsu.getImp();
+            IJ.run(tempImp, "Fill Holes", "");
+            ParticleRemover pr = (ParticleRemover) IJ.runPlugIn(tempImp, "in.raster.mayam.process.ParticleRemover", "");
+        
+            ImagePlus prImp = pr.getImp();
+            binaryImage = prImp.getBufferedImage();
+            
+            CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(prImp, "in.raster.mayam.process.CustomParticleAnalyzerPlugin","");
+            this.areaField.setText(String.valueOf(cpa.getArea()));
+            this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
+            this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
+            this.circField.setText(String.valueOf(cpa.getCircularity()));
+        
+            RegionExtraction re = new RegionExtraction(originalImage, prImp.getBufferedImage());
+            re.execute();
+            
+            isolatedImage = re.getIsolatedImage().getBufferedImage();
+            
+            //IJ.runPlugIn(imp,"in.raster.mayam.process.ColorCounter", "");
+        
+            //parametros para dibujo de EJE Mayor y EJE Menor:
+            String X = String.valueOf(cpa.getCentroid().x);
+            String Y = String.valueOf(cpa.getCentroid().y);
+            String MAJOR = String.valueOf(cpa.getMajor());
+            String MINOR = String.valueOf(cpa.getMinor());
+            String ANGLE = String.valueOf(cpa.getAngle());
+            AxesPlugin ap = (AxesPlugin) IJ.runPlugIn(re.getOutlinedImage(),"in.raster.mayam.process.AxesPlugin",
+                X+","+Y+","+MAJOR+","+MINOR+","+ANGLE);
+        
+            outlinedImage = ap.getBufferedImage();
+            
+            imgPane.setImage(outlinedImage);
+            
+            if (showCombo.getItemCount() == 2) {
+                showCombo.addItem("Binary");
+            }
+            showCombo.setEnabled(true);
+            showCombo.setSelectedIndex(0);
+        }
+        
+        if (this.algoCombo.getSelectedIndex() == SEG_OPT_RGROWING) {
+            ImagePlus imp = new ImagePlus("", originalImage);
+            MultiRegionManagerView rgView = new MultiRegionManagerView(imp);
+            rgView.setLocationRelativeTo(this);
+            rgView.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            rgView.setModal(true);
+            rgView.setVisible(true);
+            MultiRegionManagerModel mRgModel = rgView.getModel();
+            RegionGrowingModel rgModel = new RegionGrowingModel(mRgModel);
+            rgModel.actionRun();
+            ImagePlus rgImp = rgModel.getImpResult();
+            
+            IJ.run(rgImp, "8-bit", "");           
+            CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(rgImp, "in.raster.mayam.process.CustomParticleAnalyzerPlugin","");
+            this.areaField.setText(String.valueOf(cpa.getArea()));
+            this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
+            this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
+            this.circField.setText(String.valueOf(cpa.getCircularity()));
+        
+            RegionExtraction re = new RegionExtraction(originalImage, rgImp.getBufferedImage());
+            re.execute();
+            
+            isolatedImage = re.getIsolatedImage().getBufferedImage();
+            
+            //parametros para dibujo de EJE Mayor y EJE Menor:
+            String X = String.valueOf(cpa.getCentroid().x);
+            String Y = String.valueOf(cpa.getCentroid().y);
+            String MAJOR = String.valueOf(cpa.getMajor());
+            String MINOR = String.valueOf(cpa.getMinor());
+            String ANGLE = String.valueOf(cpa.getAngle());
+            AxesPlugin ap = (AxesPlugin) IJ.runPlugIn(re.getOutlinedImage(),"in.raster.mayam.process.AxesPlugin",
+                X+","+Y+","+MAJOR+","+MINOR+","+ANGLE);
+            
+            outlinedImage = ap.getBufferedImage();
+            
+            imgPane.setImage(outlinedImage);
 
+            showCombo.setEnabled(true);
+            if (showCombo.getItemCount()==3) {
+                showCombo.removeItemAt(2);
+            }
+            showCombo.setSelectedIndex(0);
+        }
+        
+//        long ini = System.currentTimeMillis();
 //        GrayScaleConverter gs = new GrayScaleConverter(imgM);
 //        gs.execute();
 //        long end = System.currentTimeMillis();
@@ -379,44 +788,22 @@ public class ImageProcessing extends javax.swing.JDialog {
 //        int y = fm.getHeight();
 //        g2d.drawString(s, x, y);
 //        g2d.dispose();
-
-
 //	  BinaryConverter bb = new BinaryConverter(gs.getBlueChannel()); //binary sobre el canal blue del gris
 //	  BufferedImage binaryBlue = bb.execute();
 //        javax.swing.JFrame jb = new javax.swing.JFrame();
 //        jb.add(new JLabel(new ImageIcon(binaryBlue)));
 //        jb.setVisible(true);
-
 //        BinaryConverter bg = new BinaryConverter(gs.getGreenChannel()); //binary sobre el canal green del gris
 //        BufferedImage binaryGreen = bg.execute();
 //        javax.swing.JFrame jg = new javax.swing.JFrame();
 //        jg.add(new JLabel(new ImageIcon(binaryGreen)));
 //        jg.setVisible(true);
-
 //        BinaryConverter br = new BinaryConverter(gs.getMaxDecomp()); //binary sobre el canal red del gris
 //        BufferedImage binaryRed = br.execute();
-        
-        ImagePlus imp = new ImagePlus("",imgM);
-        IJ.run(imp, "8-bit", "");
-        OtsuThresholding_ otsu = (OtsuThresholding_) IJ.runPlugIn(imp, "in.raster.mayam.process.OtsuThresholding_", "");
-        ImagePlus tempImp = otsu.getImp();
-        IJ.run(tempImp, "Fill Holes", "");
-        ParticleRemover pr = (ParticleRemover) IJ.runPlugIn(tempImp, "in.raster.mayam.process.ParticleRemover", "size=0-50 circularity=0.00-1.00 show=Nothing");
-        
-        CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(pr.getImp(), "in.raster.mayam.process.CustomParticleAnalyzerPlugin","size=0-infinity circularity=0.00-1.00 show=Nothing");
-        this.areaField.setText(String.valueOf(cpa.getArea()));
-        this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
-        this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
-        
-        RegionExtraction re = new RegionExtraction(imgM, pr.getImp().getBufferedImage());
-        imp = new ImagePlus("",re.execute(cpa.getCentroid()));
-        IJ.runPlugIn(imp,"in.raster.mayam.process.ColorCounter", "");
-        
-        imgPane.setImage(imp.getBufferedImage());
     }//GEN-LAST:event_analyzeButtonActionPerformed
 
     private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
-        imgPane.setImage(imgM);
+        imgPane.setImage(originalImage);
     }//GEN-LAST:event_undoButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
@@ -446,19 +833,92 @@ public class ImageProcessing extends javax.swing.JDialog {
         JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("ImageProcessing.result.saved"));
     }//GEN-LAST:event_saveButtonActionPerformed
 
+    private void grayFromButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_grayFromButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+        this.grayFromIcon.setBackground(newColor);
+    }//GEN-LAST:event_grayFromButtonActionPerformed
+
+    private void redFromButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redFromButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+        this.redFromIcon.setBackground(newColor);
+    }//GEN-LAST:event_redFromButtonActionPerformed
+
+    private void brownFromButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_brownFromButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+       this.brownFromIcon.setBackground(newColor);
+    }//GEN-LAST:event_brownFromButtonActionPerformed
+
+    private void grayToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_grayToButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+        this.grayToIcon.setBackground(newColor);
+    }//GEN-LAST:event_grayToButtonActionPerformed
+
+    private void redToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redToButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+        this.redToIcon.setBackground(newColor);
+    }//GEN-LAST:event_redToButtonActionPerformed
+
+    private void brownToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_brownToButtonActionPerformed
+        Color newColor = JColorChooser.showDialog(
+                     this,
+                     "Choose Background Color",
+                     Color.WHITE);
+        this.brownToIcon.setBackground(newColor);
+    }//GEN-LAST:event_brownToButtonActionPerformed
+
+    private void showComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showComboActionPerformed
+        switch (showCombo.getSelectedIndex()) {
+            case 0: imgPane.setImage(outlinedImage);
+                break;
+            case 1: imgPane.setImage(isolatedImage);
+                break;
+            case 2: imgPane.setImage(binaryImage);
+                break;
+            default: break;    
+        }
+    }//GEN-LAST:event_showComboActionPerformed
+
     /**
      * @param args the command line arguments
      */
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox algoCombo;
     private javax.swing.JButton analyzeButton;
     private javax.swing.JTextField areaField;
+    private javax.swing.JButton brownFromButton;
+    private javax.swing.JPanel brownFromIcon;
+    private javax.swing.JPanel brownToIcon;
+    private javax.swing.JTextField circField;
     private javax.swing.JTextField diamField;
+    private javax.swing.JButton grayFromButton;
+    private javax.swing.JPanel grayFromIcon;
+    private javax.swing.JButton grayToButton;
+    private javax.swing.JPanel grayToIcon;
     private javax.swing.JLabel imgIcon;
     private javax.swing.JScrollPane imgScrollPane;
-    private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -472,13 +932,22 @@ public class ImageProcessing extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTextField jTextField1;
     private javax.swing.JLabel patienNameLabel;
     private javax.swing.JTextField perimeterField;
+    private javax.swing.JButton redFromButton;
+    private javax.swing.JPanel redFromIcon;
+    private javax.swing.JButton redToButton;
+    private javax.swing.JPanel redToIcon;
     private javax.swing.JButton saveButton;
     private javax.swing.JCheckBox saveInDicom;
+    private javax.swing.JComboBox showCombo;
     private javax.swing.JLabel studyDateLabel;
     private javax.swing.JLabel studyDescLabel;
+    private javax.swing.JTextField symField;
     private javax.swing.JButton undoButton;
     // End of variables declaration//GEN-END:variables
 

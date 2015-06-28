@@ -33,8 +33,10 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
 		if (imp.getBitDepth()==24)
 			{IJ.error("Grayscale image required"); return;}
                 rt = new ResultsTable();
-		CustomParticleAnalyzer pa = new CustomParticleAnalyzer(32,Analyzer.getMeasurements()|Measurements.AREA|Measurements.PERIMETER|Measurements.CENTROID,rt,0,Double.POSITIVE_INFINITY);
-		int flags = 415; //pa.setup(args, imp);
+		CustomParticleAnalyzer pa = new CustomParticleAnalyzer(512,Analyzer.getMeasurements()
+                        |Measurements.AREA|Measurements.PERIMETER|Measurements.CENTROID|Measurements.ELLIPSE
+                        |Measurements.CIRCULARITY,rt,0,Double.POSITIVE_INFINITY);
+		int flags = 415; 
 		if (flags==PlugInFilter.DONE)
 			return;
 		if ((flags&PlugInFilter.DOES_STACKS)!=0) {
@@ -57,13 +59,32 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
         }
         
         public Double getFeretDiam() {
-            return rt.getValueAsDouble(ResultsTable.FERET, 0);
+            return  new BigDecimal(rt.getValueAsDouble(ResultsTable.FERET, 0))
+                    .setScale(2, RoundingMode.HALF_UP).doubleValue();
         }
         
         public Point getCentroid() {
             return new Point (Double.valueOf(rt.getValueAsDouble(ResultsTable.X_CENTROID, 0)).intValue(),
                 Double.valueOf(rt.getValueAsDouble(ResultsTable.Y_CENTROID, 0)).intValue());
         }
+        
+        public Double getMajor() {
+            return rt.getValueAsDouble(ResultsTable.MAJOR, 0);
+        }
+        
+        public Double getMinor() {
+            return rt.getValueAsDouble(ResultsTable.MINOR, 0);
+        }
+        
+        public Double getAngle() {
+            return rt.getValueAsDouble(ResultsTable.ANGLE, 0);
+        }
+        
+        public Double getCircularity() {
+            return new BigDecimal(rt.getValueAsDouble(ResultsTable.CIRCULARITY, 0))
+                    .setScale(2, RoundingMode.HALF_UP).doubleValue();
+        }
+        
 }
 
 class CustomParticleAnalyzer extends ParticleAnalyzer {
@@ -84,7 +105,7 @@ class CustomParticleAnalyzer extends ParticleAnalyzer {
 		rt.addValue("Ytopl", y);
 		rt.addValue("nCoord", coordinates);
 		//if (showResults)
-			analyzer.displayResults();
+		//	analyzer.displayResults();
 	}
 	    
 }

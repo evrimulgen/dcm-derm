@@ -49,7 +49,7 @@ import java.lang.*;
  **/
 
 public class OtsuThresholding_ implements PlugInFilter {
-    private int threshold;
+    //private int threshold;
     final static int HMIN = 0;
     final static int HMAX = 256;
     private ImagePlus imp = null;
@@ -109,7 +109,7 @@ public class OtsuThresholding_ implements PlugInFilter {
 	    }
         }
 	//imp.show();
-	IJ.showMessage("Found threshold : "+threshold);
+	//IJ.showMessage("Found threshold : "+threshold);
     }
     
     void showAbout() {
