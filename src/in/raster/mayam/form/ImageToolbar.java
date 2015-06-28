@@ -1372,6 +1372,7 @@ public class ImageToolbar extends javax.swing.JPanel {
     private void doAnalyze() {
         BufferedImage bi = ApplicationContext.layeredCanvas.imgpanel.getCurrentbufferedimage();
         ImageProcessing ip = new ImageProcessing(bi);
+        ip.setLocationRelativeTo(this);
 //        ip.setExtendedState(Frame.MAXIMIZED_BOTH);
         ip.setVisible(true);
     }
