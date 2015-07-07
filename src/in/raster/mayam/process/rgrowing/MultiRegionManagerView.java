@@ -33,14 +33,10 @@ import net.sf.ij_plugins.ui.UIUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import net.sf.ij_plugins.ui.multiregion.Region;
-import org.netbeans.lib.awtextra.AbsoluteConstraints;
-import org.netbeans.lib.awtextra.AbsoluteLayout;
 
 
 /**
@@ -62,6 +58,7 @@ public class MultiRegionManagerView extends JDialog {
     private static final long serialVersionUID = 3522389261778035936L;
 
     private JPanel drwPane;
+    private boolean accepted;
     
     //private RunAction runAction;
 
@@ -71,6 +68,7 @@ public class MultiRegionManagerView extends JDialog {
     public MultiRegionManagerView(ImagePlus imgp) {
         model.setImageSource(imgp);
         this.model.setParent(this);
+        this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         this.drwPane = new DrawingPanel(imgp);
         //runAction = new RunAction(new RegionGrowingModel(model), this);
         initComponents();
@@ -79,6 +77,7 @@ public class MultiRegionManagerView extends JDialog {
         PropertyConnector.connectAndUpdate(regionSelectedItemHolder, model, "selectedRegion");
         PropertyConnector.connectAndUpdate(subRegionSelectedItemHolder, model, "selectedSubRegion");
         regionSelectedItemHolder.setIdentityCheckEnabled(true);
+        accepted = false;
     }
 
 
@@ -115,23 +114,23 @@ public class MultiRegionManagerView extends JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        final JMenuItem toROIManagerMenuItem = new JMenuItem();
-        JMenuItem fromROIManagerMenuItem = new JMenuItem();
-        JPanel jPanel1 = new JPanel();
-        JScrollPane rgrowingImgPane = new JScrollPane(drwPane);
-        final JScrollPane regionScrollPane = new JScrollPane();
-        final JLabel regionLabel = new JLabel();
-        final JScrollPane subRegionScrollPane = new JScrollPane();
-        final JLabel roiLabel = new JLabel();
-        final JButton addROIButton = new JButton(model.createAddCurrentROIAction());
-        final JButton removeROIButton = new JButton(model.createRemoveSubRegionAction());
-        final JSeparator jSeparator1 = new JSeparator();
-        JButton okButton = new JButton();
+        final javax.swing.JMenuItem toROIManagerMenuItem = new javax.swing.JMenuItem();
+        javax.swing.JMenuItem fromROIManagerMenuItem = new javax.swing.JMenuItem();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        javax.swing.JScrollPane rgrowingImgPane = new JScrollPane(drwPane);
+        final javax.swing.JScrollPane regionScrollPane = new javax.swing.JScrollPane();
+        final javax.swing.JLabel regionLabel = new javax.swing.JLabel();
+        final javax.swing.JScrollPane subRegionScrollPane = new javax.swing.JScrollPane();
+        final javax.swing.JLabel roiLabel = new javax.swing.JLabel();
+        final javax.swing.JButton addROIButton = new javax.swing.JButton(model.createAddCurrentROIAction());
+        final javax.swing.JButton removeROIButton = new javax.swing.JButton(model.createRemoveSubRegionAction());
+        final javax.swing.JSeparator jSeparator1 = new javax.swing.JSeparator();
+        javax.swing.JButton okButton = new javax.swing.JButton();
 
         toROIManagerMenuItem.setText("Send to ROI Manager");
         toROIManagerMenuItem.setToolTipText("Send all ROIs in this region to ROI Manager");
-        toROIManagerMenuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+        toROIManagerMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toROIManagerMenuItemActionPerformed(evt);
             }
         });
@@ -139,77 +138,78 @@ public class MultiRegionManagerView extends JDialog {
 
         fromROIManagerMenuItem.setText("Load from ROI Manager");
         fromROIManagerMenuItem.setToolTipText("Load ROIs in this region from ROI Manager");
-        fromROIManagerMenuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+        fromROIManagerMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fromROIManagerMenuItemActionPerformed(evt);
             }
         });
         regionPopupMenu.add(fromROIManagerMenuItem);
 
-        setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         setResizable(false);
 
-        jPanel1.setLayout(new AbsoluteLayout());
+        jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        rgrowingImgPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        rgrowingImgPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        jPanel1.add(rgrowingImgPane, new AbsoluteConstraints(6, 6, 391, 296));
+        rgrowingImgPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        rgrowingImgPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        jPanel1.add(rgrowingImgPane, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 6, 391, 296));
 
-        regionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        regionList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         regionList.setSelectedIndex(0);
-        regionList.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
+        regionList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
                 regionListMouseClicked(evt);
             }
         });
         regionScrollPane.setViewportView(regionList);
 
-        jPanel1.add(regionScrollPane, new AbsoluteConstraints(403, 59, 138, 61));
+        jPanel1.add(regionScrollPane, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 59, 138, 61));
 
         regionLabel.setText("Regions");
-        jPanel1.add(regionLabel, new AbsoluteConstraints(403, 38, -1, -1));
+        jPanel1.add(regionLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 38, -1, -1));
 
-        subRegionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        subRegionList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         subRegionScrollPane.setViewportView(subRegionList);
 
-        jPanel1.add(subRegionScrollPane, new AbsoluteConstraints(403, 153, 138, 58));
+        jPanel1.add(subRegionScrollPane, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 153, 138, 58));
 
-        roiLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        roiLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         roiLabel.setText("ROIs");
-        roiLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
-        jPanel1.add(roiLabel, new AbsoluteConstraints(403, 132, 32, -1));
+        roiLabel.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        jPanel1.add(roiLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 132, 32, -1));
 
         addROIButton.setText("+ ROI");
         addROIButton.setToolTipText("Add ROI from current image to selected region.");
-        addROIButton.setHorizontalAlignment(SwingConstants.LEADING);
-        jPanel1.add(addROIButton, new AbsoluteConstraints(403, 223, -1, -1));
+        addROIButton.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        jPanel1.add(addROIButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 223, -1, -1));
 
         removeROIButton.setText("- ROI");
         removeROIButton.setToolTipText("Remove ROI selected in the list.");
-        removeROIButton.setHorizontalAlignment(SwingConstants.LEADING);
-        jPanel1.add(removeROIButton, new AbsoluteConstraints(477, 223, 64, -1));
-        jPanel1.add(jSeparator1, new AbsoluteConstraints(403, 262, 138, 10));
+        removeROIButton.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        jPanel1.add(removeROIButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(477, 223, 64, -1));
+        jPanel1.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(403, 262, 138, 10));
 
         okButton.setText("Ok");
-        okButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+        okButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
-        jPanel1.add(okButton, new AbsoluteConstraints(453, 275, -1, -1));
+        jPanel1.add(okButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(453, 275, -1, -1));
 
-        GroupLayout layout = new GroupLayout(getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -218,14 +218,6 @@ public class MultiRegionManagerView extends JDialog {
 
 
     private void regionListMouseClicked(final MouseEvent evt) {//GEN-FIRST:event_regionListMouseClicked
-        // if right mouse button clicked (or me.isPopupTrigger())
-//        if (SwingUtilities.isRightMouseButton(evt)
-//                && !regionList.isSelectionEmpty()
-//                && regionList.locationToIndex(evt.getPoint())
-//                == regionList.getSelectedIndex()) {
-//            regionPopupMenu.show(regionList, evt.getX(), evt.getY());
-//        }
-
     }//GEN-LAST:event_regionListMouseClicked
 
 
@@ -239,14 +231,15 @@ public class MultiRegionManagerView extends JDialog {
     }//GEN-LAST:event_fromROIManagerMenuItemActionPerformed
 
     private void okButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+        accepted = true;
         this.setVisible(false);
     }//GEN-LAST:event_okButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private final JList regionList = BasicComponentFactory.createList(regionSelectionInList);
-    private final JPopupMenu regionPopupMenu = new JPopupMenu();
-    private final JList subRegionList = BasicComponentFactory.createList(subRegionSelectionInList);
+    private final javax.swing.JList regionList = BasicComponentFactory.createList(regionSelectionInList);
+    private final javax.swing.JPopupMenu regionPopupMenu = new javax.swing.JPopupMenu();
+    private final javax.swing.JList subRegionList = BasicComponentFactory.createList(subRegionSelectionInList);
     // End of variables declaration//GEN-END:variables
 
 
@@ -348,4 +341,7 @@ public class MultiRegionManagerView extends JDialog {
             
         }
    
+        public boolean isAccepted() {
+            return accepted;
+        }
 }

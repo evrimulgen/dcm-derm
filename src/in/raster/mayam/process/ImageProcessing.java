@@ -21,25 +21,26 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JColorChooser;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+
 /**
  *
  * @author mariano
  */
-public class ImageProcessing extends javax.swing.JDialog {
+public class ImageProcessing extends JFrame {
 
     private BufferedImage originalImage = null;
     private BufferedImage isolatedImage = null;
@@ -55,11 +56,11 @@ public class ImageProcessing extends javax.swing.JDialog {
      * Creates new form ImageProcessing
      */
     public ImageProcessing(BufferedImage img) {
-        setModal(true);
+//        setModal(true);
         originalImage = img;
-        imgPane = new ImagePanel(img);
-        imgPane.addMouseWheelListener(new ZoomListener());
+        imgPane = new ImagePanel();
         initComponents();
+        imgPane.setImage(img);
         patienNameLabel.setText(ApplicationContext.imgView.getPatientInfo()[0]+
                 " - " + ApplicationContext.imgView.getPatientInfo()[1]);
         studyDateLabel.setText(ApplicationContext.imgView.getPatientInfo()[3]);
@@ -130,7 +131,8 @@ public class ImageProcessing extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(ApplicationContext.currentBundle.getString("ImageProcessing.window.title")); // NOI18N
-        setResizable(false);
+        setAlwaysOnTop(true);
+        setMaximumSize(new java.awt.Dimension(938, 983));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -167,9 +169,9 @@ public class ImageProcessing extends javax.swing.JDialog {
                     .addComponent(jLabel11))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(areaField)
+                    .addComponent(areaField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
                     .addComponent(perimeterField)
-                    .addComponent(diamField, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
+                    .addComponent(diamField)
                     .addComponent(symField)
                     .addComponent(circField))
                 .addGap(34, 34, 34))
@@ -222,7 +224,7 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5))
-                .addContainerGap(7, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Scores", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.TOP, new java.awt.Font("DejaVu Sans", 0, 12))); // NOI18N
@@ -570,7 +572,7 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -583,6 +585,9 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addComponent(studyDescLabel)
                 .addContainerGap())
         );
+
+        imgScrollPane.setAutoscrolls(true);
+        imgScrollPane.setPreferredSize(new java.awt.Dimension(665, 937));
 
         algoCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Método segmentación...", "Otsu", "Region Growing" }));
 
@@ -628,11 +633,10 @@ public class ImageProcessing extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(imgScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 665, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap()
+                        .addComponent(imgScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addComponent(analyzeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -643,8 +647,11 @@ public class ImageProcessing extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel15)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(showCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(showCombo, 0, 135, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(saveInDicom)))
@@ -670,7 +677,7 @@ public class ImageProcessing extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(imgScrollPane))
+                    .addComponent(imgScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -732,74 +739,48 @@ public class ImageProcessing extends javax.swing.JDialog {
             ImagePlus imp = new ImagePlus("", originalImage);
             MultiRegionManagerView rgView = new MultiRegionManagerView(imp);
             rgView.setLocationRelativeTo(this);
-            rgView.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            rgView.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
             rgView.setModal(true);
             rgView.setVisible(true);
-            MultiRegionManagerModel mRgModel = rgView.getModel();
-            RegionGrowingModel rgModel = new RegionGrowingModel(mRgModel);
-            rgModel.actionRun();
-            ImagePlus rgImp = rgModel.getImpResult();
+            if (rgView.isAccepted()) {
             
-            IJ.run(rgImp, "8-bit", "");           
-            CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(rgImp, "in.raster.mayam.process.CustomParticleAnalyzerPlugin","");
-            this.areaField.setText(String.valueOf(cpa.getArea()));
-            this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
-            this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
-            this.circField.setText(String.valueOf(cpa.getCircularity()));
-        
-            RegionExtraction re = new RegionExtraction(originalImage, rgImp.getBufferedImage());
-            re.execute();
-            
-            isolatedImage = re.getIsolatedImage().getBufferedImage();
-            
-            //parametros para dibujo de EJE Mayor y EJE Menor:
-            String X = String.valueOf(cpa.getCentroid().x);
-            String Y = String.valueOf(cpa.getCentroid().y);
-            String MAJOR = String.valueOf(cpa.getMajor());
-            String MINOR = String.valueOf(cpa.getMinor());
-            String ANGLE = String.valueOf(cpa.getAngle());
-            AxesPlugin ap = (AxesPlugin) IJ.runPlugIn(re.getOutlinedImage(),"in.raster.mayam.process.AxesPlugin",
-                X+","+Y+","+MAJOR+","+MINOR+","+ANGLE);
-            
-            outlinedImage = ap.getBufferedImage();
-            
-            imgPane.setImage(outlinedImage);
+                MultiRegionManagerModel mRgModel = rgView.getModel();
+                RegionGrowingModel rgModel = new RegionGrowingModel(mRgModel);
+                rgModel.actionRun();
+                ImagePlus rgImp = rgModel.getImpResult();
 
-            showCombo.setEnabled(true);
-            if (showCombo.getItemCount()==3) {
-                showCombo.removeItemAt(2);
+                IJ.run(rgImp, "8-bit", "");           
+                CustomParticleAnalyzerPlugin cpa = (CustomParticleAnalyzerPlugin) IJ.runPlugIn(rgImp, "in.raster.mayam.process.CustomParticleAnalyzerPlugin","");
+                this.areaField.setText(String.valueOf(cpa.getArea()));
+                this.perimeterField.setText(String.valueOf(cpa.getPerimeter()));
+                this.diamField.setText(String.valueOf(cpa.getFeretDiam()));
+                this.circField.setText(String.valueOf(cpa.getCircularity()));
+
+                RegionExtraction re = new RegionExtraction(originalImage, rgImp.getBufferedImage());
+                re.execute();
+
+                isolatedImage = re.getIsolatedImage().getBufferedImage();
+
+                //parametros para dibujo de EJE Mayor y EJE Menor:
+                String X = String.valueOf(cpa.getCentroid().x);
+                String Y = String.valueOf(cpa.getCentroid().y);
+                String MAJOR = String.valueOf(cpa.getMajor());
+                String MINOR = String.valueOf(cpa.getMinor());
+                String ANGLE = String.valueOf(cpa.getAngle());
+                AxesPlugin ap = (AxesPlugin) IJ.runPlugIn(re.getOutlinedImage(),"in.raster.mayam.process.AxesPlugin",
+                    X+","+Y+","+MAJOR+","+MINOR+","+ANGLE);
+
+                outlinedImage = ap.getBufferedImage();
+
+                imgPane.setImage(outlinedImage);
+
+                showCombo.setEnabled(true);
+                if (showCombo.getItemCount()==3) {
+                    showCombo.removeItemAt(2);
+                }
+                showCombo.setSelectedIndex(0);
             }
-            showCombo.setSelectedIndex(0);
         }
-        
-//        long ini = System.currentTimeMillis();
-//        GrayScaleConverter gs = new GrayScaleConverter(imgM);
-//        gs.execute();
-//        long end = System.currentTimeMillis();
-//        System.out.println("time: "+(end-ini)); 
-//          imgM = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
-//        Graphics2D g2d = imgM.createGraphics();
-//        g2d.drawImage(img, 0, 0, null);
-//        g2d.setPaint(Color.red);
-//        g2d.setFont(new Font("Serif", Font.BOLD, 20));
-//        String s = "Hello, world!";
-//        FontMetrics fm = g2d.getFontMetrics();
-//        int x = imgM.getWidth() - fm.stringWidth(s) - 5;
-//        int y = fm.getHeight();
-//        g2d.drawString(s, x, y);
-//        g2d.dispose();
-//	  BinaryConverter bb = new BinaryConverter(gs.getBlueChannel()); //binary sobre el canal blue del gris
-//	  BufferedImage binaryBlue = bb.execute();
-//        javax.swing.JFrame jb = new javax.swing.JFrame();
-//        jb.add(new JLabel(new ImageIcon(binaryBlue)));
-//        jb.setVisible(true);
-//        BinaryConverter bg = new BinaryConverter(gs.getGreenChannel()); //binary sobre el canal green del gris
-//        BufferedImage binaryGreen = bg.execute();
-//        javax.swing.JFrame jg = new javax.swing.JFrame();
-//        jg.add(new JLabel(new ImageIcon(binaryGreen)));
-//        jg.setVisible(true);
-//        BinaryConverter br = new BinaryConverter(gs.getMaxDecomp()); //binary sobre el canal red del gris
-//        BufferedImage binaryRed = br.execute();
     }//GEN-LAST:event_analyzeButtonActionPerformed
 
     private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
@@ -1003,62 +984,52 @@ public class ImageProcessing extends javax.swing.JDialog {
         
     }
 
-    private class ZoomListener implements MouseWheelListener {
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-            double f = e.getWheelRotation()*0.01;
-            ((ImagePanel)imgPane).setScale(f);
-        }
-    }
-     
-    
     private class ImagePanel extends JPanel {
 
         BufferedImage image;
-        double scale;
-
-        public ImagePanel(BufferedImage image) {
-            this.image = image;
-            scale = 1.0;
+        float scale;
+        
+        public ImagePanel(/*BufferedImage image*/) {
+//            this.image = image;
+            scale = 1;
+            addMouseWheelListener(new MouseAdapter() {
+                @Override
+                public void mouseWheelMoved(MouseWheelEvent e) {
+                    double delta = 0.02f * e.getPreciseWheelRotation();
+                    scale += delta;
+                    revalidate();
+                    repaint();
+                }
+            });
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            int w = getWidth();
-            int h = getHeight();
-            int imageWidth = image.getWidth();
-            int imageHeight = image.getHeight();
-            double x = (w - scale * imageWidth) / 2;
-            double y = (h - scale * imageHeight) / 2;
-            AffineTransform at = AffineTransform.getTranslateInstance(x, y);
-            at.scale(scale, scale);
-            g2.drawRenderedImage(image, at);
+            if (image != null) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                AffineTransform at = new AffineTransform();
+                at.scale(scale, scale);
+                g2d.drawImage(image, at, this);
+                g2d.dispose();
+            }
         }
 
         @Override
         public Dimension getPreferredSize() {
-            int w = (int) (scale * image.getWidth());
-            int h = (int) (scale * image.getHeight());
-            return new Dimension(w, h);
-        }
-
-        public void setScale(double s) {
-            if ((scale + s) < 0.09) {
-                return;
+            Dimension size = new Dimension();
+            if (image!=null){
+                size.width =  Math.round(scale * image.getWidth());
+                size.height =  Math.round(scale * image.getHeight());
             }
-            scale += s;
-            revalidate();
-            repaint();
+            return size;
         }
-        
+           
         public void setImage(BufferedImage image) {
             this.image = image;
             revalidate();
             repaint();
         }
+        
     }
 }
