@@ -989,8 +989,7 @@ public class ImageProcessing extends JFrame {
         BufferedImage image;
         float scale;
         
-        public ImagePanel(/*BufferedImage image*/) {
-//            this.image = image;
+        public ImagePanel() {
             scale = 1;
             addMouseWheelListener(new MouseAdapter() {
                 @Override
