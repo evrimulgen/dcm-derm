@@ -52,7 +52,9 @@ import org.w3c.dom.NamedNodeMap;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import com.pixelmed.utils.XPathQuery;
+import java.awt.image.DataBufferInt;
 import java.util.Date;
+import org.imgscalr.Scalr;
 
 /**
  * <p>A class for converting RGB consumer image input format files (anything JIIO can recognize) into images of a specified SOP Class, or single or multi frame DICOM Secondary Capture images.</p>
@@ -193,6 +195,9 @@ public class ImageToDicom {
 		Iterator readers = ImageIO.getImageReaders(fiis);
 		if (readers.hasNext()) {
 			reader = (ImageReader)readers.next();	// assume 1st supplied reader is the "best" one to use :(
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): Using reader = "+reader);
+		}
+		if (reader != null) {
 			reader.setInput(fiis);
 			try {
 				numberOfFrames =  reader.getNumImages(true/*allowSearch*/);
@@ -200,8 +205,51 @@ public class ImageToDicom {
 			catch (Exception e) {	// IOException or IllegalStateException
 				numberOfFrames = 1;
 			}
+                        
+                        if ("jpeg".equalsIgnoreCase(reader.getFormatName()) || "png".equalsIgnoreCase(reader.getFormatName())) {
+                            numberOfFrames = 1;
+                        }
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): numberOfFrames = "+numberOfFrames);
+			
+			//ImageTypeSpecifier wantImageTypeSpecifier = null;
+			//{
+			//	Iterator<ImageTypeSpecifier> i = reader.getImageTypes(0);	// for the first (or only) frame
+			//	while (i.hasNext()) {
+			//		ImageTypeSpecifier its = i.next();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): ImageTypeSpecifier = "+its);
+			//		ColorModel cm = its.getColorModel();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): \tColorModel = "+cm);
+			//		ColorSpace cs = cm.getColorSpace();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): \tColorSpace = "+cs);
+			//		if (cs != null && cs instanceof ICC_ColorSpace) {
+			//			ICC_Profile profile = ((ICC_ColorSpace)cs).getProfile();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): \tICC_Profile = "+profile);
+			//			int profileClass = profile.getProfileClass();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): \tICC_Profile class = "+profileClass);
+			//			if (profileClass == ICC_Profile.CLASS_INPUT || profileClass == ICC_Profile.CLASS_COLORSPACECONVERSION) {	// i.e., not CLASS_DISPLAY
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): \tUsing this one as wanted");
+			//				wantImageTypeSpecifier = its;
+			//				break;
+			//			}
+			//		}
+			//	}
+			//}
+			//ImageReadParam param = new ImageReadParam();
+			//if (wantImageTypeSpecifier != null) {
+			//	param.setDestinationType(wantImageTypeSpecifier);
+			//}
+			//src = reader.read(0,param);						// start with first (or only) frame
+			
 			src = reader.read(0);								// start with first (or only) frame
+                        
+                        if (src == null) {
+                            throw new DicomException("Unrecognized image file type");
+                        }
+                        
+                        if (src.getWidth() > 1024) {
+                            src = Scalr.resize(src, 1024);
+                        }
+                        
 			IIOMetadata metadata = reader.getImageMetadata(0);
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): metadata = "+metadata);
 			if (metadata != null) {
@@ -230,9 +278,7 @@ public class ImageToDicom {
 				e.printStackTrace(System.err);
 			}
 		}
-		if (src == null) {
-			throw new DicomException("Unrecognized image file type");
-		}
+		
 //com.pixelmed.display.BufferedImageUtilities.describeImage(src,System.err);
 		int srcWidth = src.getWidth();
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): srcWidth = "+srcWidth);
@@ -253,6 +299,35 @@ public class ImageToDicom {
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): srcPixelsLength = "+srcPixelsLength);
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): srcWidth*srcHeight*srcNumBands = "+srcWidth*srcHeight*srcNumBands);
 
+		byte[] iccProfileData = null;
+		//{
+		//	ColorModel cm = src.getColorModel();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): ColorModel = "+cm);
+		//	if (cm != null) {
+		//		ColorSpace cs = cm.getColorSpace();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): ColorSpace = "+cs);
+		//		if (cs != null && cs instanceof ICC_ColorSpace) {
+		//			ICC_Profile profile = ((ICC_ColorSpace)cs).getProfile();
+//System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): ICC_Profile = "+profile);
+		//			if (profile != null) {
+		//				iccProfileData = profile.getData();
+		//				if (iccProfileData != null && iccProfileData.length >= 16) {
+		//					// change whatever profile class is to "scnr"
+		//					iccProfileData[12] = (char)('s');
+		//					iccProfileData[13] = (char)('c');
+		//					iccProfileData[14] = (char)('n');
+		//					iccProfileData[15] = (char)('r');
+		//				}
+		//				{
+		//					FileOutputStream fos = new FileOutputStream("crap.icc");
+		//					fos.write(iccProfileData);
+		//					fos.close();
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+
 		short rows = (short)srcHeight;
 		short columns = (short)srcWidth;
 
@@ -265,7 +340,7 @@ public class ImageToDicom {
 		String photometricInterpretation = srcNumBands == 3 ? "RGB" : (srcNumBands == 1 ? "MONOCHROME2" : "");		// have no way to detect MONOCHROME1 :(
 		short planarConfiguration = 0;	// by pixel
 
-		if (srcDataBuffer instanceof DataBufferByte) {
+		if (srcDataBuffer instanceof DataBufferByte  || srcDataBuffer instanceof DataBufferInt) {
 			int dstPixelsLength = srcWidth*srcHeight*srcNumBands*numberOfFrames;
 			byte dstPixels[] = new byte[dstPixelsLength];
 			int dstIndex=0;
@@ -277,11 +352,15 @@ public class ImageToDicom {
 					dstPixels[dstIndex++]=(byte)(srcPixels[srcIndex++]);
 				}
 				if (++frame<numberOfFrames) {
-					src = reader.read(frame);
+                                    try {
+                                        src = reader.read(frame);
 					// assume same srcWidth,srcHeight, etc. as first frame
 					srcPixels = null; // to disambiguate SampleModel.getPixels() method signature
 					srcPixels = src.getSampleModel().getPixels(0,0,srcWidth,srcHeight,srcPixels,src.getRaster().getDataBuffer());
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): srcPixels.length = "+srcPixels.length);
+                                    }catch(Exception e) {
+                                        moreFrames = false;
+                                    }
 				}
 				else {
 					moreFrames = false;
@@ -307,11 +386,15 @@ public class ImageToDicom {
 					dstPixels[dstIndex++]=(short)(srcPixels[srcIndex++]);
 				}
 				if (++frame<numberOfFrames) {
+                                     try {
 					src = reader.read(frame);
 					// assume same srcWidth,srcHeight, etc. as first frame
 					srcPixels = null; // to disambiguate SampleModel.getPixels() method signature
 					srcPixels = src.getSampleModel().getPixels(0,0,srcWidth,srcHeight,srcPixels,src.getRaster().getDataBuffer());
 //System.err.println("ImageToDicom.generateDICOMPixelModuleFromConsumerImageFile(): srcPixels.length = "+srcPixels.length);
+                                     }catch(Exception e) {
+                                        moreFrames = false;
+                                     }    
 				}
 				else {
 					moreFrames = false;
@@ -391,6 +474,12 @@ public class ImageToDicom {
 			list.remove(TagFromName.PlanarConfiguration);
 			if (samplesPerPixel > 1) {
 				 Attribute a = new UnsignedShortAttribute(TagFromName.PlanarConfiguration); a.addValue(planarConfiguration); list.put(a);
+			}
+			
+			if (iccProfileData != null) {
+				Attribute a = new OtherByteAttribute(TagFromName.ICCProfile);
+				a.setValues(iccProfileData);	// will be padded to even length on write if necessary
+				list.put(a);
 			}
 		}
 		return list;
