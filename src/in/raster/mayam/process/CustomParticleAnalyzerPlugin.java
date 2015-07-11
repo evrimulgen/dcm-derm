@@ -35,7 +35,7 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
                 rt = new ResultsTable();
 		CustomParticleAnalyzer pa = new CustomParticleAnalyzer(512,Analyzer.getMeasurements()
                         |Measurements.AREA|Measurements.PERIMETER|Measurements.CENTROID|Measurements.ELLIPSE
-                        |Measurements.CIRCULARITY,rt,0,Double.POSITIVE_INFINITY);
+                        |Measurements.CIRCULARITY|Measurements.RECT,rt,0,Double.POSITIVE_INFINITY);
 		int flags = 415; 
 		if (flags==PlugInFilter.DONE)
 			return;
@@ -85,6 +85,16 @@ public class CustomParticleAnalyzerPlugin implements PlugIn {
                     .setScale(2, RoundingMode.HALF_UP).doubleValue();
         }
         
+        public Double getRectangularity() {
+            //Rectangularidad = A / (H*W)
+            // A = Pi/4*a*b } a=eje mayor de best fitting ellipse y b = eje menor de best fitting ellipse
+            // H -> altura del bounding rectangle, W -> ancho del bounding rectangle
+            Double areaFittingEllipse = Math.PI / 4 * getMajor() * getMinor();
+            Double H = rt.getValueAsDouble(ResultsTable.ROI_HEIGHT, 0);
+            Double W = rt.getValueAsDouble(ResultsTable.ROI_WIDTH, 0);
+            Double rect = areaFittingEllipse/(H*W);
+            return new BigDecimal(rect).setScale(2, RoundingMode.HALF_UP).doubleValue();
+        }
 }
 
 class CustomParticleAnalyzer extends ParticleAnalyzer {
