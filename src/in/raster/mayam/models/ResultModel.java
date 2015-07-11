@@ -24,6 +24,20 @@ public class ResultModel {
 
     private String TDS;
     
+    private String area;
+    
+    private String perimeter;
+    
+    private String symmetry;
+    
+    private String diameter;
+    
+    private String circularity;
+    
+    private String rectangularity;
+    
+    private String border;
+    
     public String getPatientId() {
         return patientId;
     }
@@ -78,6 +92,62 @@ public class ResultModel {
 
     public void setTDS(String TDS) {
         this.TDS = TDS;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getPerimeter() {
+        return perimeter;
+    }
+
+    public void setPerimeter(String perimeter) {
+        this.perimeter = perimeter;
+    }
+
+    public String getSymmetry() {
+        return symmetry;
+    }
+
+    public void setSymmetry(String symmetry) {
+        this.symmetry = symmetry;
+    }
+
+    public String getDiameter() {
+        return diameter;
+    }
+
+    public void setDiameter(String diameter) {
+        this.diameter = diameter;
+    }
+
+    public String getCircularity() {
+        return circularity;
+    }
+
+    public void setCircularity(String circularity) {
+        this.circularity = circularity;
+    }
+
+    public String getRectangularity() {
+        return rectangularity;
+    }
+
+    public void setRectangularity(String rectangularity) {
+        this.rectangularity = rectangularity;
+    }
+
+    public String getBorder() {
+        return border;
+    }
+
+    public void setBorder(String border) {
+        this.border = border;
     }
     
 }
