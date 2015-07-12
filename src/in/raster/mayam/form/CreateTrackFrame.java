@@ -157,6 +157,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
         });
 
         autoOrderButton.setText(ApplicationContext.currentBundle.getString("autoOrderTitle")); // NOI18N
+        autoOrderButton.setToolTipText("Ordenar por fecha de estudio");
         autoOrderButton.setPreferredSize(new java.awt.Dimension(92, 29));
         autoOrderButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -308,6 +309,7 @@ public class CreateTrackFrame extends javax.swing.JFrame {
             ApplicationContext.databaseRef.updateTrackRecord(trackingModel);
         }
         JOptionPane.showMessageDialog(this, ApplicationContext.currentBundle.getString("Tracking.changes.saved"));
+        this.dispose();
     }//GEN-LAST:event_createButtonActionPerformed
 
     private void addAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAllButtonActionPerformed
