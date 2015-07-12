@@ -54,6 +54,7 @@ import in.raster.mayam.form.dialogs.PatientListDialog;
 import in.raster.mayam.form.dialogs.ServerListDialog;
 import in.raster.mayam.form.dialogs.StudyListDialog;
 import in.raster.mayam.form.dialogs.TrackingListDialog;
+import in.raster.mayam.form.dialogs.TrackingViewDialog;
 import in.raster.mayam.listeners.*;
 import in.raster.mayam.models.*;
 import in.raster.mayam.models.table.renderer.IconRenderer;
@@ -870,7 +871,14 @@ public class MainScreen extends javax.swing.JFrame {
      */
     
     private void doTrackingView() {
-        
+        PatientListDialog patientList = new PatientListDialog(this, true);
+        patientList.setLocationRelativeTo(this);
+        patientList.setVisible(true);
+        if (patientList.getSelectedPatient() != null) {
+            TrackingViewDialog trackingList = new TrackingViewDialog(this, true, patientList.getSelectedPatient().getPatientId());
+            trackingList.setLocationRelativeTo(this);
+            trackingList.setVisible(true);
+        }
     }
     /**
      * MDIAZ
@@ -911,9 +919,6 @@ public class MainScreen extends javax.swing.JFrame {
             TrackingListDialog trackingList = new TrackingListDialog(this, true, patientList.getSelectedPatient().getPatientId());
             trackingList.setLocationRelativeTo(this);
             trackingList.setVisible(true);
-            if (trackingList.getSelectedTracking() != null) {
-            
-            }
         }
     }
     
