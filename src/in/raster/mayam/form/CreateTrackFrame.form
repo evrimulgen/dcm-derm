@@ -277,6 +277,7 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="in/raster/mayam/form/i18n/Bundle.properties" key="autoOrderTitle" replaceFormat="ApplicationContext.currentBundle.getString(&quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" value="Ordenar por fecha de estudio"/>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[92, 29]"/>
             </Property>
