@@ -1992,5 +1992,25 @@ public class DatabaseHandler {
         }
         return ret;
     }
+
+    /**
+     * 
+     * @param localPatientId
+     * @param studyUID
+     * @param descriptorField
+     * @return 
+     */
+    public String listDescriptor(String localPatientId, String studyUID, String descriptorField) {
+        try {
+            ResultSet trackInfo = conn.createStatement().executeQuery("select "+descriptorField+ " from study_results where "
+                    + "patientid='"+localPatientId+"' and studyiuid='"+ studyUID +"'");
+            if (trackInfo.next()) {
+                return trackInfo.getString(1);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
     
 }
