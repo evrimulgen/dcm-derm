@@ -85,7 +85,7 @@ public class TrackingListDialog extends javax.swing.JDialog {
         jScrollPane1.setViewportView(jTable1);
         jTable1.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-        addButton.setText(ApplicationContext.currentBundle.getString("Preferences.servers.addButton.text")); // NOI18N
+        addButton.setText(ApplicationContext.currentBundle.getString("TrackingDialog.edit.button")); // NOI18N
         addButton.setPreferredSize(new java.awt.Dimension(92, 29));
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
