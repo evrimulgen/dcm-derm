@@ -70,7 +70,7 @@
                               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="1" attributes="0">
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Group type="102" attributes="0">
                                   <Component id="dateField" min="-2" pref="149" max="-2" attributes="0"/>
                                   <EmptySpace min="-2" pref="66" max="-2" attributes="0"/>
@@ -78,7 +78,7 @@
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="patientName" min="-2" pref="277" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="description" min="-2" pref="569" max="-2" attributes="0"/>
+                              <Component id="description" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
