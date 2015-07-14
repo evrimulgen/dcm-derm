@@ -24,9 +24,6 @@ import java.util.List;
  */
 public class GraphicDescriptor extends GraphicPanel {
     
-	/** Version id for serialization. */
-	private static final long serialVersionUID = 6832343098989019088L;
-
         private int selectedOption;
         private int AREA = 1;
         private int PERIM = 2;
@@ -38,38 +35,38 @@ public class GraphicDescriptor extends GraphicPanel {
 
 	public GraphicDescriptor(int selectedOption, List<StudyModel> patientStudies, String localPatientId) {
             
-            // Generate data
             DataTable data = new DataTable(Integer.class, Double.class);
             int x = 0;
             this.selectedOption = selectedOption;
+            
             for (StudyModel study : patientStudies) {
                 if (selectedOption == AREA) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "AREA");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == PERIM) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "PERIMETER");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == SYMM) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "SYMMETRY");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == DIAM) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "DIAMETER");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == CIRC) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "CIRC");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == RECT) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "RECT");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 if (selectedOption == BORDER) {
                     String info = ApplicationContext.databaseRef.listDescriptor(localPatientId, study.getStudyUID(), "BORDER");
-                    data.add(x, Double.valueOf(info) );
+                    data.add(x, Double.valueOf(info));
                 }
                 x++;
             }
@@ -91,7 +88,6 @@ public class GraphicDescriptor extends GraphicPanel {
             DrawableContainer plots = new DrawableContainer(new TableLayout(1));
             plots.add(plotUpper);
             InteractivePanel panel = new InteractivePanel(plots);
-            panel.setBackground(Color.gray);
             add(panel);
 	}
 
@@ -124,7 +120,7 @@ public class GraphicDescriptor extends GraphicPanel {
 
 	@Override
 	public String getDescription() {
-		return "Evolucion Descriptores.";
+            return "Evolucion Descriptores.";
 	}
 
 }
