@@ -6,6 +6,7 @@ package in.raster.mayam.form;
 
 import in.raster.mayam.context.ApplicationContext;
 import in.raster.mayam.form.graphic.GraphicDescriptor;
+import in.raster.mayam.form.graphic.GraphicTDS;
 import in.raster.mayam.models.StudyModel;
 import in.raster.mayam.models.TrackingModel;
 import java.awt.Component;
@@ -148,14 +149,14 @@ public class ViewTrackFrame extends javax.swing.JFrame {
                             .addComponent(jLabel2)
                             .addComponent(jLabel1))
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(66, 66, 66)
                                 .addComponent(jLabel5)
                                 .addGap(18, 18, 18)
                                 .addComponent(patientName, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(description, javax.swing.GroupLayout.PREFERRED_SIZE, 569, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(description)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -248,7 +249,8 @@ public class ViewTrackFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void showEvButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showEvButtonActionPerformed
-        // TODO add your handling code here:
+        new GraphicTDS(this.abcdCombo.getSelectedIndex(),
+                this.studies, localPatientId).showInFrame();
     }//GEN-LAST:event_showEvButtonActionPerformed
 
     private void showDescButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showDescButtonActionPerformed
